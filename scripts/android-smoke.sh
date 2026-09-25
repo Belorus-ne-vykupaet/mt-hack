@@ -15,5 +15,5 @@ adb exec-out screencap -p > android-smoke/device.png
 adb logcat -d -s "Capacitor/Console:*" "Capacitor:*" "chromium:*" > android-smoke/logcat.txt || true
 adb logcat -d > android-smoke/logcat-full.txt || true
 adb shell dumpsys activity exit-info ru.transithub.dispatcher > android-smoke/exit-info.txt || true
-echo "alive after test: $(adb shell pidof ru.transithub.dispatcher | tr -d '')"
+echo "alive after test: $(adb shell pidof ru.transithub.dispatcher | tr -d '\r')"
 exit $status
