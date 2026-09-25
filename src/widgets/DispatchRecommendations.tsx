@@ -2,6 +2,9 @@ import { ArrowRight, Route as RouteIcon } from "lucide-react";
 import type { Route } from "../entities/models";
 import type { DispatchRecommendation } from "../entities/dispatch-recommendations";
 import { RouteBadge } from "../shared/ui/primitives";
+import { useDispatchSettings } from "../app/dispatch-settings-store";
+import { busLabel } from "../entities/dispatch-decisions";
+import { deadlineLabel, urgency } from "./dispatch/decision-format";
 const intervalLabel = (cycle: number | null, fleet: number, dwellDelta = 0) => {
   if (cycle === null || fleet < 1) return "—";
   const seconds = Math.round((cycle * 60 + dwellDelta) / fleet);
@@ -39,6 +42,7 @@ export default function DispatchRecommendations({
   items: DispatchRecommendation[];
   onChoose: (item: DispatchRecommendation) => void;
 }) {
+  const settings = useDispatchSettings((s) => s.settings);
   return (
     <section
       className="dispatch-recommendations"
@@ -51,16 +55,18 @@ export default function DispatchRecommendations({
           </span>
           <h3>Что изменить на каждом маршруте</h3>
           <p>
-            Сейчас → предлагается. Вверху — маршруты с большей суммарной
-            задержкой.
+            Сейчас → предлагается. Вверху — самые срочные и серьёзные
+            решения.
           </p>
         </div>
         <span className="recommend-method">Подсказки по правилам</span>
       </div>
       <p className="recommend-explainer">
-        Демодопущения: оборот 120 мин, стоянка 30 с, нижняя граница 20 с. Общий
-        резерв распределяется между маршрутами. Это варианты для проверки,
-        эффект на задержку моделью ещё не оценён.
+        Демодопущения: оборот {settings.cycleMin} мин, стоянка{" "}
+        {settings.baseDwellSec} с, нижняя граница {settings.minDwellSec} с,
+        удержание до {settings.maxHoldSec} с. Общий резерв распределяется между
+        маршрутами. Эффект посчитан по правилу, не ML-моделью; параметры
+        меняются в «Параметрах правил».
       </p>
       <div
         className="recommend-table-wrap"
@@ -101,7 +107,13 @@ export default function DispatchRecommendations({
                       before={item.currentDwellSec}
                       after={item.targetDwellSec}
                     />
-                    <small>{item.stopName || "Нет данных об остановке"}</small>
+                    <small>
+                      {item.vehicleId ? `${busLabel(item.vehicleId)} · ` : ""}
+                      {item.stopName || "Нет данных об остановке"}
+                      {item.dwellStops && item.dwellStops > 1
+                        ? ` · ${item.dwellStops} ост.`
+                        : ""}
+                    </small>
                   </td>
                   <td data-label="Интервал, мин:с">
                     <span className="recommend-value">
@@ -119,7 +131,30 @@ export default function DispatchRecommendations({
                     <small>Расчёт равномерного выпуска</small>
                   </td>
                   <td data-label="Причина">
-                    <p>{item.reasons.join(" ")}</p>
+                    {item.decisions?.length ? (
+                      <ul className="recommend-actions">
+                        {item.decisions.map((d, i) => (
+                          <li key={d.id}>
+                            <strong>{d.title}</strong>
+                            <span
+                              className={`decision-deadline ${urgency(d)}`}
+                            >
+                              {deadlineLabel(d)}
+                            </span>
+                            {i === 0 && <small>{d.summary}</small>}
+                          </li>
+                        ))}
+                        {item.reasons
+                          .filter((r) => r.startsWith("Свободный резерв"))
+                          .map((r) => (
+                            <li key={r}>
+                              <small>{r}</small>
+                            </li>
+                          ))}
+                      </ul>
+                    ) : (
+                      <p>{item.reasons.join(" ")}</p>
+                    )}
                     <button
                       className="text-button"
                       disabled={item.status !== "suggested"}

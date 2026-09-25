@@ -43,6 +43,8 @@ import type { NetworkListKind } from "../widgets/NetworkList";
 import { NetworkStatus } from "../widgets/NetworkStatus";
 import { HeaderStatus } from "../widgets/HeaderStatus";
 import { installWebMcp } from "./webmcp";
+import { recordTrail } from "../entities/vehicle-trail";
+import { prepareRoutePaths } from "../entities/vehicle-motion";
 const Integrations = lazy(() => import("../widgets/Integrations"));
 const DispatchCenter = lazy(() => import("../widgets/DispatchCenter"));
 const Analytics = lazy(() => import("../widgets/Analytics"));
@@ -81,6 +83,15 @@ export default function App() {
   const summary = net.summary.data;
   const points = net.series.data || [];
   const geometry = useGeometries(routes.map((r) => r.id));
+  const trailPaths = useMemo(
+    () => prepareRoutePaths(geometry.data || []),
+    [geometry.data],
+  );
+  // Positions observed while the dashboard is open feed the dispatcher's timetable chart.
+  useEffect(
+    () => recordTrail(vehicles, Date.parse(summary?.timestamp || ""), trailPaths),
+    [vehicles, summary?.timestamp, trailPaths],
+  );
   const visibleRoutes = useMemo(
     () =>
       routes.filter(
@@ -539,6 +550,7 @@ export default function App() {
                   routes={routes}
                   vehicles={vehicles}
                   asOf={summary?.timestamp}
+                  geometries={geometry.data}
                 />
               </Suspense>
             </Boundary>

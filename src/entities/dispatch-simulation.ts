@@ -38,7 +38,30 @@ export function simulateDispatch(
         risk_level: "normal",
       });
     const targetStop = route.stops.find((stop) => stop.id === plan.stopId)!;
+    // Shorter stops cannot make a bus run ahead of its timetable; holds only add time.
+    const shift = (v: (typeof kept)[number], delta: number) => {
+      v.predicted_delay_sec =
+        delta < 0
+          ? Math.max(
+              Math.min(0, v.predicted_delay_sec),
+              v.predicted_delay_sec + delta,
+            )
+          : v.predicted_delay_sec + delta;
+      v.risk_level = csvRisk(v.predicted_delay_sec);
+    };
     for (const v of kept) {
+      if (plan.vehicleId) {
+        // A targeted instruction changes only that bus, on the stops it was issued for.
+        if (v.id === plan.vehicleId)
+          shift(v, estimate.dwellDelta * (plan.dwellStops || 1));
+        continue;
+      }
+      if (plan.dwellStops && plan.dwellStops > 1) {
+        // A route-wide dwell rule applies at every stop within the horizon.
+        if (!v.id.startsWith("reserve-"))
+          shift(v, estimate.dwellDelta * plan.dwellStops);
+        continue;
+      }
       // Apply one future dwell adjustment only before this stop; does not remove road congestion.
       const distanceM =
         Math.hypot(

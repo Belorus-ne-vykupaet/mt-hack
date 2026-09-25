@@ -35,6 +35,42 @@ export interface VehicleAnchor {
   distance: number;
   headingDeg?: number;
 }
+/** Nearest point of a route path: distance along it, offset from it and local heading. */
+export function locateOnPath(
+  path: RoutePath,
+  position: { lon: number; lat: number },
+) {
+  const point = [position.lon, position.lat],
+    scale = Math.cos((point[1] * Math.PI) / 180);
+  let separation = Infinity,
+    along = 0,
+    headingDeg = 0;
+  for (let i = 1; i < path.coordinates.length; i++) {
+    const a = path.coordinates[i - 1],
+      b = path.coordinates[i],
+      dx = (b[0] - a[0]) * scale,
+      dy = b[1] - a[1];
+    const t = Math.max(
+      0,
+      Math.min(
+        1,
+        ((point[0] - a[0]) * scale * dx + (point[1] - a[1]) * dy) /
+          (dx * dx + dy * dy || 1),
+      ),
+    );
+    const offset = distance(point, [
+      a[0] + (b[0] - a[0]) * t,
+      a[1] + (b[1] - a[1]) * t,
+    ]);
+    if (offset < separation) {
+      separation = offset;
+      headingDeg = trackHeading(a, b);
+      along =
+        path.distances[i - 1] + (path.distances[i] - path.distances[i - 1]) * t;
+    }
+  }
+  return { along, separation, headingDeg };
+}
 export function anchorVehicles(
   vehicles: Vehicle[],
   paths: Map<string, RoutePath[] | RoutePath>,
@@ -42,39 +78,19 @@ export function anchorVehicles(
   return vehicles.map((vehicle) => {
     const candidates = paths.get(vehicle.routeId);
     if (!candidates) return { vehicle, distance: 0 };
-    const point = [vehicle.position.lon, vehicle.position.lat],
-      scale = Math.cos((point[1] * Math.PI) / 180);
     let closest = Infinity,
       along = 0,
       headingDeg = 0,
       best: RoutePath | undefined;
-    for (const path of Array.isArray(candidates) ? candidates : [candidates])
-      for (let i = 1; i < path.coordinates.length; i++) {
-        const a = path.coordinates[i - 1],
-          b = path.coordinates[i],
-        dx = (b[0] - a[0]) * scale,
-        dy = b[1] - a[1];
-      const t = Math.max(
-        0,
-        Math.min(
-          1,
-          ((point[0] - a[0]) * scale * dx + (point[1] - a[1]) * dy) /
-            (dx * dx + dy * dy || 1),
-        ),
-      );
-      const separation = distance(point, [
-        a[0] + (b[0] - a[0]) * t,
-        a[1] + (b[1] - a[1]) * t,
-      ]);
-      if (separation < closest) {
-        closest = separation;
+    for (const path of Array.isArray(candidates) ? candidates : [candidates]) {
+      const hit = locateOnPath(path, vehicle.position);
+      if (hit.separation < closest) {
+        closest = hit.separation;
         best = path;
-        headingDeg = trackHeading(a, b);
-        along =
-          path.distances[i - 1] +
-          (path.distances[i] - path.distances[i - 1]) * t;
+        along = hit.along;
+        headingDeg = hit.headingDeg;
       }
-      }
+    }
     // Missing/incompatible geometry must not move a vehicle onto an unrelated track.
     return {
       vehicle,

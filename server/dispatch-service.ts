@@ -7,7 +7,11 @@ import {
 } from "node:fs";
 import { dirname } from "node:path";
 import { createHash, randomUUID } from "node:crypto";
-import { evaluatePlan, reserveRemaining } from "../src/entities/dispatch";
+import {
+  evaluatePlan,
+  planTarget,
+  reserveRemaining,
+} from "../src/entities/dispatch";
 import type { DispatchPlan } from "../src/entities/dispatch";
 import type { RouteDto } from "../src/shared/api/generated/models";
 export class ApiError extends Error {
@@ -123,6 +127,7 @@ export class DispatchService {
       targetDwellSec: p.targetDwellSec,
       createdAt: at,
       status: input.mode === "apply" ? "active" : "draft",
+      ...planTarget(p),
     };
     if (input.mode === "apply" && reserveRemaining(this.plans, plan) < 0)
       throw new ApiError(409, "В общем резерве недостаточно автобусов.");

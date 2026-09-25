@@ -194,6 +194,24 @@ describe("real HTTP integration API", () => {
     ]);
     ws.close();
   });
+  it("builds rules-v2 recommendations on the official road geometry", async () => {
+    const snapshot = { ...csvSnapshot(900), geometries: csvGeometries };
+    const official = {
+      routes: snapshot.routes,
+      stale: false,
+      snapshot: async () => snapshot,
+    } as unknown as OfficialSource;
+    const rec = await (
+      await fetch((await start({ official })).url + "/dispatch/recommendations")
+    ).json();
+    expect(rec.method).toBe("rules-v2");
+    expect(rec.items.some((i: any) => i.vehicleId && i.decisionKind)).toBe(true);
+    snapshot.geometries = [];
+    const bare = await (
+      await fetch((await start({ official })).url + "/dispatch/recommendations")
+    ).json();
+    expect(bare.items.some((i: any) => i.vehicleId)).toBe(false);
+  });
   it("marks cached official WebSocket updates stale and clears the flag after recovery", async () => {
     const snapshot = { ...csvSnapshot(900), geometries: csvGeometries };
     const official = {

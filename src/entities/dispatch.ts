@@ -11,6 +11,41 @@ export interface DispatchPlan {
   targetDwellSec: number;
   createdAt: string;
   status: "draft" | "active" | "cancelled" | "replaced";
+  /** Set when the dwell change targets one bus instead of every bus reaching the stop. */
+  vehicleId?: string;
+  decisionKind?: string;
+  /** Stops at which the new dwell applies to the targeted bus (1 = only the given stop). */
+  dwellStops?: number;
+}
+export const DECISION_KINDS = [
+  "hold_early",
+  "hold_bunching",
+  "shorten_late",
+  "shorten_all",
+  "add_bus",
+];
+/** Optional targeting fields of a plan; unknown or malformed values are dropped. */
+export function planTarget(plan: Partial<DispatchPlan>) {
+  const target: Pick<DispatchPlan, "vehicleId" | "decisionKind" | "dwellStops"> =
+    {};
+  if (
+    typeof plan.vehicleId === "string" &&
+    plan.vehicleId.length > 0 &&
+    plan.vehicleId.length <= 100
+  )
+    target.vehicleId = plan.vehicleId;
+  if (
+    typeof plan.decisionKind === "string" &&
+    DECISION_KINDS.includes(plan.decisionKind)
+  )
+    target.decisionKind = plan.decisionKind;
+  if (
+    Number.isInteger(plan.dwellStops) &&
+    plan.dwellStops! >= 1 &&
+    plan.dwellStops! <= 60
+  )
+    target.dwellStops = plan.dwellStops;
+  return target;
 }
 export function evaluatePlan(
   plan: Pick<

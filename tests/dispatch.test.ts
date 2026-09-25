@@ -63,3 +63,33 @@ it("updates demo fleet and scoped forecasts without mutating the original snapsh
   useDispatch.getState().cancel("test");
   expect(applyDispatch(original)).toEqual(original);
 });
+it("applies a targeted instruction only to its bus, over the stops it covers, never below the timetable", () => {
+  const original = scenarioSnapshot(30);
+  const [late, neighbour] = original.vehicles.filter((v) => v.route_id === "м3");
+  const shorten = {
+    ...base,
+    targetFleet: 8,
+    stopId: late.next_stop.id,
+    targetDwellSec: 20,
+    vehicleId: late.id,
+    decisionKind: "shorten_late",
+    dwellStops: 6,
+  };
+  useDispatch.getState().save(shorten, true);
+  const updated = applyDispatch(original);
+  const bus = updated.vehicles.find((v) => v.id === late.id)!;
+  expect(bus.predicted_delay_sec).toBe(
+    Math.max(0, late.predicted_delay_sec - 60),
+  );
+  expect(updated.vehicles.find((v) => v.id === neighbour.id)).toEqual(
+    neighbour,
+  );
+  useDispatch.getState().save(
+    { ...shorten, id: "hold", targetDwellSec: 120, dwellStops: 1 },
+    true,
+  );
+  expect(
+    applyDispatch(original).vehicles.find((v) => v.id === late.id)!
+      .predicted_delay_sec,
+  ).toBe(late.predicted_delay_sec + 90);
+});

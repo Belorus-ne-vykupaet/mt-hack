@@ -758,3 +758,257 @@
   /* The default fleet of eight buses stays on one row at 320px. */
   .fleet-visual { gap: 4px; }
 }
+
+/* Decisions first: a concrete action with a deadline and a computed effect,
+   then the timetable chart of the route, then the manual form. */
+.dispatch-urgent {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: -6px 0 14px;
+  padding: 8px 12px;
+  border-left: 3px solid var(--risk-critical);
+  background: color-mix(in srgb, var(--risk-critical) 8%, transparent);
+  font-size: 12px;
+}
+.dispatch-urgent svg { flex: none; color: var(--risk-critical); }
+.dispatch-settings {
+  margin-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+}
+.dispatch-settings > summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  align-items: center;
+  padding: 10px 0;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+.dispatch-settings > summary svg { color: var(--blue); }
+.dispatch-settings > summary small { color: var(--muted); font-weight: 400; }
+.dispatch-settings > p { margin: 0 0 12px; font-size: 12px; color: var(--secondary); }
+.dispatch-settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 14px 18px;
+  margin-bottom: 10px;
+}
+.dispatch-settings-grid .dispatch-field { gap: 5px; font-size: 12px; }
+.dispatch-settings-grid input { min-height: 36px; padding: 6px 10px; font-family: "IBM Plex Mono", monospace; }
+.dispatch-settings-grid small { color: var(--muted); font-size: 10px; line-height: 1.45; }
+.dispatch-settings > .text-button { margin-bottom: 12px; }
+.dispatch-queue-action {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  align-items: baseline;
+  font-size: 10px;
+  color: var(--muted);
+}
+.dispatch-queue-action strong { font-size: 11px; font-weight: 600; color: var(--text); }
+.dispatch-queue-action.urgent span { color: var(--risk-critical); font-weight: 600; }
+.dispatch-queue-action.soon span { color: var(--risk-high); }
+.decision-feed {
+  display: grid;
+  gap: 12px;
+  margin: 14px 0;
+}
+.decision-feed-heading {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+.decision-feed-heading .dispatch-eyebrow { display: inline-flex; gap: 6px; align-items: center; }
+.decision-feed-heading h3 { margin: 4px 0 0; font-size: 20px; }
+.decision-method {
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.decision-empty {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin: 0;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  font-size: 13px;
+  color: var(--secondary);
+}
+.decision-empty svg { flex: none; margin-top: 2px; color: var(--blue); }
+.decision-empty.active svg { color: var(--risk-normal); }
+.decision-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+.decision-tab {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 7px;
+  align-items: center;
+  min-width: 170px;
+  padding: 8px 11px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+  font-size: 12px;
+  cursor: pointer;
+}
+.decision-tab small { grid-column: 2; color: var(--muted); font-size: 10px; }
+.decision-tab.urgent small { color: var(--risk-critical); }
+.decision-tab[aria-selected="true"] { border-color: var(--blue); box-shadow: inset 0 -2px var(--blue); }
+.decision-tab svg { color: var(--blue); }
+.decision-card {
+  display: grid;
+  gap: 10px;
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--blue);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+}
+.decision-card.urgent { border-left-color: var(--risk-critical); }
+.decision-card.soon { border-left-color: var(--risk-high); }
+.decision-card-top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+.decision-kind {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--blue);
+}
+.decision-deadline {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 2px;
+  background: var(--surface-2);
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.decision-deadline.urgent {
+  background: color-mix(in srgb, var(--risk-critical) 14%, transparent);
+  color: var(--risk-critical);
+  font-weight: 600;
+}
+.decision-deadline.soon {
+  background: color-mix(in srgb, var(--risk-high) 14%, transparent);
+  color: var(--risk-high);
+}
+.decision-card h4 {
+  margin: 0;
+  font-family: "IBM Plex Sans Condensed", "IBM Plex Sans", sans-serif;
+  font-size: 21px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.decision-card > p { margin: 0; font-size: 13px; line-height: 1.5; color: var(--secondary); }
+.decision-facts {
+  display: grid;
+  gap: 3px;
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12px;
+  color: var(--secondary);
+}
+.decision-effect-block {
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 2px;
+  background: var(--surface-2);
+}
+.decision-effect-block > small { color: var(--muted); font-size: 11px; line-height: 1.45; }
+.decision-effects { display: grid; gap: 6px; margin: 0; }
+.decision-effects > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: baseline;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+.decision-effects > div:last-child { padding-bottom: 0; border-bottom: 0; }
+.decision-effects dt { font-size: 12px; color: var(--secondary); }
+.decision-effects dd {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  margin: 0;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.decision-effects dd span { color: var(--muted); }
+.decision-effects .better dd strong { color: var(--risk-normal); }
+.decision-effects .tradeoff dd strong { color: var(--risk-elevated); }
+.decision-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+}
+.decision-actions .primary-button,
+.decision-actions .dispatch-secondary { min-height: 42px; }
+.decision-note { color: var(--muted); font-size: 11px; }
+.route-timeline {
+  margin: 0 0 16px;
+  padding: 12px 14px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+}
+.route-timeline figcaption {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  align-items: center;
+  font-size: 11px;
+  color: var(--secondary);
+}
+.legend-line { display: inline-flex; gap: 6px; align-items: center; }
+.legend-line::before { content: ""; width: 22px; border-top: 2px solid var(--secondary); }
+.legend-line.dashed::before { border-top-style: dashed; }
+.legend-line.dotted::before { border-top-style: dotted; }
+.legend-line.action::before { border-top: 3px dashed var(--risk-normal); }
+.legend-note { flex-basis: 100%; color: var(--muted); font-size: 10px; }
+.route-timeline-empty { margin: 0 0 16px; font-size: 12px; color: var(--muted); }
+.dispatch-manual { padding-top: 6px; }
+.dispatch-manual-heading { margin-bottom: 10px; }
+.dispatch-manual-heading p { margin: 4px 0 0; font-size: 12px; color: var(--secondary); }
+.dispatch-target {
+  margin: 0;
+  padding: 6px 10px;
+  border-left: 2px solid var(--blue);
+  font-size: 12px;
+  color: var(--text);
+}
+.journal-kind { color: var(--blue); }
+.recommend-actions { display: grid; gap: 6px; margin: 0 0 8px; padding: 0; list-style: none; }
+.recommend-actions li { display: grid; gap: 3px; justify-items: start; }
+.recommend-actions strong { font-size: 12px; }
+.recommend-actions small { color: var(--secondary); font-size: 11px; line-height: 1.45; }
+@media (max-width: 700px) {
+  .decision-feed-heading { flex-direction: column; align-items: flex-start; }
+  .decision-tab { flex: 1 1 100%; min-width: 0; }
+  .decision-card { padding: 14px; }
+  .decision-card h4 { font-size: 19px; }
+  .decision-actions { grid-template-columns: 1fr; }
+  .decision-effects > div { grid-template-columns: 1fr; gap: 3px; }
+  .decision-effects dd { white-space: normal; }
+  .route-timeline { padding: 10px 8px 8px; }
+}

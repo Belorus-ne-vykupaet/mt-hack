@@ -771,7 +771,8 @@ test("dispatcher queue searches, filters and resets a draft", async ({ page }) =
   await expect(page.getByLabel("Плановое количество автобусов")).toHaveValue("8");
   await page.getByLabel("Поиск маршрута в диспетчерской").fill("");
   await page.locator(".dispatch-queue-filters").getByRole("button", { name: "С предложением" }).click();
-  await expect(queue).toHaveCount(5);
+  // Five delayed routes plus three routes where a bus runs early or closes in on its leader.
+  await expect(queue).toHaveCount(8);
   await page.locator(".dispatch-queue-filters").getByRole("button", { name: "Активные" }).click();
   await expect(queue).toHaveCount(0);
   await expect(page.locator(".dispatch-queue-empty")).toBeVisible();

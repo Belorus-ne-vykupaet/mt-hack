@@ -1,5 +1,5 @@
 import { matchesSearch } from "../shared/lib/search";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   BusFront,
   Clock3,
@@ -20,7 +20,7 @@ import { useUi, useConnection } from "../app/store";
 import { config } from "../shared/config/env";
 import { evaluatePlan, reserveRemaining } from "../entities/dispatch";
 import type { DispatchPlan } from "../entities/dispatch";
-import type { Route, Vehicle } from "../entities/models";
+import type { Geometry, Route, Vehicle } from "../entities/models";
 import { queryClient, resync } from "../entities/queries";
 import { RouteBadge } from "../shared/ui/primitives";
 import "../styles/dispatch.css";
@@ -30,7 +30,6 @@ import {
   integrationRequest,
   refreshApiDispatch,
   commandKey,
-  IntegrationError,
 } from "../shared/api/integrations";
 import type { CommandState } from "../shared/api/integrations";
 import { recommendDispatch } from "../entities/dispatch-recommendations";
@@ -38,6 +37,38 @@ import type { DispatchRecommendation } from "../entities/dispatch-recommendation
 import DispatchRecommendations, {
   RecommendationValue,
 } from "./DispatchRecommendations";
+import { useDispatchSettings } from "../app/dispatch-settings-store";
+import type { DispatchSettings } from "../entities/dispatch-settings";
+import { buildRouteLines } from "../entities/route-line";
+import {
+  busLabel,
+  planFromDecision,
+  plural,
+} from "../entities/dispatch-decisions";
+import type { DispatchDecision } from "../entities/dispatch-decisions";
+import { DecisionFeed } from "./dispatch/DecisionFeed";
+import {
+  deadlineLabel,
+  decisionKindLabel,
+  urgency,
+} from "./dispatch/decision-format";
+import { RouteTimeline } from "./dispatch/RouteTimeline";
+import { DispatchSettingsPanel } from "./dispatch/DispatchSettingsPanel";
+import { usePlanSubmit } from "./dispatch/usePlanSubmit";
+/** Targeting of a plan (one bus, several stops), taken from a suggestion or an applied plan. */
+type Target = Pick<DispatchPlan, "vehicleId" | "decisionKind" | "dwellStops">;
+const targetOf = (
+  source?:
+    | Pick<DispatchPlan, "vehicleId" | "decisionKind" | "dwellStops">
+    | Pick<
+        DispatchRecommendation,
+        "vehicleId" | "decisionKind" | "dwellStops"
+      >,
+): Target => ({
+  ...(source?.vehicleId ? { vehicleId: source.vehicleId } : {}),
+  ...(source?.decisionKind ? { decisionKind: source.decisionKind } : {}),
+  ...(source?.dwellStops ? { dwellStops: source.dwellStops } : {}),
+});
 const duration = (minutes: number) => {
   const seconds = Math.round(minutes * 60);
   return `${Math.floor(seconds / 60)} мин ${seconds % 60} с`;
@@ -46,10 +77,12 @@ export default function DispatchCenter({
   routes,
   vehicles,
   asOf,
+  geometries,
 }: {
   routes: Route[];
   vehicles: Vehicle[];
   asOf?: string;
+  geometries?: Geometry[];
 }) {
   const selected = useUi((s) => s.selectedRouteId);
   const online = useConnection((s) => s.status === "connected");
@@ -59,6 +92,7 @@ export default function DispatchCenter({
     "all" | "suggested" | "active"
   >("all");
   const route = routes.find((r) => r.id === routeId) || routes[0];
+  const settings = useDispatchSettings((s) => s.settings);
   const local = useDispatch();
   const api = useApiDispatch();
   const [apiNow, setApiNow] = useState(() => Date.now());
@@ -93,6 +127,8 @@ export default function DispatchCenter({
         asOf,
         demo: canApply,
         online,
+        geometries,
+        settings,
       });
   const recommendation = recommendations.find((r) => r.routeId === route?.id);
   const suggestedCount = recommendations.filter(
@@ -112,10 +148,30 @@ export default function DispatchCenter({
       matchesQuery && (queueFilter === "all" || item.status === queueFilter)
     );
   });
+  const [decisionId, setDecisionId] = useState<string>();
+  const decisionSubmit = usePlanSubmit(setNotice);
+  const decisions = recommendation?.decisions || [];
+  const decision = decisions.find((d) => d.id === decisionId) || decisions[0];
+  const urgentCount = recommendations.filter(
+    (r) => r.decisions?.[0] && urgency(r.decisions[0]) === "urgent",
+  ).length;
+  const line = useMemo(
+    () =>
+      route && geometries?.length
+        ? buildRouteLines(
+            [route],
+            vehicles,
+            geometries.filter((g) => g.routeId === route.id),
+          )[0]
+        : undefined,
+    [route, vehicles, geometries],
+  );
   const focusRoute = (id: string) => {
     setRouteId(id);
     setPrepared(null);
     setNotice("");
+    setDecisionId(undefined);
+    decisionSubmit.setError("");
     useUi.getState().selectRoute(id);
   };
   useEffect(() => {
@@ -141,6 +197,39 @@ export default function DispatchCenter({
   if (!route)
     return <div className="empty">Нет маршрутов для планирования.</div>;
   const active = plans.filter((p) => p.status === "active");
+  const applyDecision = async (d: DispatchDecision) => {
+    const draft = planFromDecision(d, route, settings);
+    if (canApply && reserveRemaining(plans, draft) < 0) {
+      decisionSubmit.setError(
+        "В общем резерве недостаточно автобусов для этого решения.",
+      );
+      return;
+    }
+    if (await decisionSubmit.submit(draft, canApply)) setDecisionId(undefined);
+  };
+  const prefillDecision = (d: DispatchDecision) => {
+    if (!recommendation) return;
+    const draft = planFromDecision(d, route, settings);
+    choose({
+      ...recommendation,
+      status: "suggested",
+      targetFleet: draft.targetFleet,
+      cycleMin: draft.cycleMin,
+      stopId: draft.stopId,
+      stopName: draft.stopName,
+      currentDwellSec: draft.baseDwellSec,
+      targetDwellSec: draft.targetDwellSec,
+      vehicleId: d.vehicleId || null,
+      decisionKind: d.kind,
+      dwellStops: d.dwell?.stops ?? null,
+    });
+  };
+  const decisionBlocked =
+    canApply && !online
+      ? "Поток недоступен: применить решение нельзя, дождитесь свежих данных."
+      : decisionSubmit.apiUnavailable
+        ? "API недоступен: дождитесь загрузки серверного журнала."
+        : "";
   const undo = async (id: string) => {
     const plan = plans.find((p) => p.id === id);
     if (config.dispatchApi) {
@@ -248,6 +337,16 @@ export default function DispatchCenter({
           </span>
         </div>
       </div>
+      {urgentCount > 0 && (
+        <p className="dispatch-urgent" role="status">
+          <Clock3 size={15} />
+          {urgentCount}{" "}
+          {plural(urgentCount, "маршрут требует", "маршрута требуют", "маршрутов требуют")}{" "}
+          решения в ближайшие 30 секунд: автобус подходит к остановке, где
+          нужно действовать.
+        </p>
+      )}
+      <DispatchSettingsPanel apiMode={config.dispatchApi} />
       <div className="dispatch-workspace">
         <aside className="dispatch-queue" aria-label="Очередь маршрутов">
           <div className="dispatch-queue-heading">
@@ -321,6 +420,14 @@ export default function DispatchCenter({
                     <span className="dispatch-queue-name">
                       {candidate.name}
                     </span>
+                    {item.decisions?.[0] && (
+                      <span
+                        className={`dispatch-queue-action ${urgency(item.decisions[0])}`}
+                      >
+                        <strong>{decisionKindLabel[item.decisions[0].kind]}</strong>
+                        <span>{deadlineLabel(item.decisions[0])}</span>
+                      </span>
+                    )}
                     <span className="dispatch-queue-bottom">
                       <span>
                         {item.currentFleet} автобусов · {item.affectedVehicles}{" "}
@@ -341,11 +448,11 @@ export default function DispatchCenter({
             )}
           </div>
           <p className="dispatch-queue-note">
-            Сначала маршруты с большей суммарной прогнозной задержкой. Подсказки
+            Сначала маршруты со срочными и серьёзными решениями. Подсказки
             сформированы правилами.
           </p>
         </aside>
-        <div ref={plannerRef} className="dispatch-planner-anchor">
+        <div className="dispatch-planner-anchor">
           <div className="dispatch-context">
             <label>
               Маршрут для управления
@@ -364,17 +471,63 @@ export default function DispatchCenter({
             <RouteBadge number={route.number} risk={route.riskLevel} />
             <span>{route.activeVehicleCount} на линии</span>
           </div>
-          <Planner
-            key={`${route.id}-${prepared?.version || 0}`}
-            route={route}
-            canApply={canApply}
-            online={online}
-            onNotice={setNotice}
-            recommendation={recommendation}
-            initialRecommendation={
-              prepared?.item.routeId === route.id ? prepared.item : undefined
+          <DecisionFeed
+            routeNumber={route.number}
+            decisions={decisions}
+            selectedId={decision?.id}
+            onSelect={(id) => {
+              setDecisionId(id);
+              decisionSubmit.setError("");
+            }}
+            onApply={(d) => void applyDecision(d)}
+            onPrefill={prefillDecision}
+            applyLabel={
+              config.dispatchApi
+                ? "Отправить решение по API"
+                : canApply
+                  ? "Применить решение"
+                  : "Сохранить решение в плане"
+            }
+            applyDisabled={decisionBlocked}
+            busy={decisionSubmit.busy}
+            error={decisionSubmit.error}
+            status={recommendation?.status || "unavailable"}
+            statusText={
+              recommendation?.status === "active"
+                ? "Решение по маршруту уже применено. Оцените результат на графике или отмените его в журнале."
+                : recommendation?.reasons.join(" ") ||
+                  "Нет свежих данных для подсказок."
             }
           />
+          {line && (
+            <RouteTimeline
+              line={line}
+              decision={decision}
+              asOf={asOf}
+              settings={settings}
+            />
+          )}
+          <div ref={plannerRef} className="dispatch-manual">
+            <div className="dispatch-manual-heading">
+              <span className="dispatch-eyebrow">РУЧНАЯ НАСТРОЙКА</span>
+              <p>
+                Своя комбинация выпуска и стоянки для маршрута. «Подставить»
+                переносит сюда подсказку без применения.
+              </p>
+            </div>
+            <Planner
+              key={`${route.id}-${prepared?.version || 0}`}
+              route={route}
+              canApply={canApply}
+              online={online}
+              onNotice={setNotice}
+              recommendation={recommendation}
+              settings={settings}
+              initialRecommendation={
+                prepared?.item.routeId === route.id ? prepared.item : undefined
+              }
+            />
+          </div>
         </div>
       </div>
       {notice && (
@@ -419,13 +572,28 @@ export default function DispatchCenter({
                       <small>
                         {new Date(p.createdAt).toLocaleString("ru-RU")}
                       </small>
+                      {p.decisionKind && p.decisionKind in decisionKindLabel && (
+                        <small className="journal-kind">
+                          {
+                            decisionKindLabel[
+                              p.decisionKind as keyof typeof decisionKindLabel
+                            ]
+                          }
+                        </small>
+                      )}
                     </td>
                     <td>
                       {p.baseFleet} → {p.targetFleet}
                     </td>
                     <td>
                       {p.baseDwellSec} → {p.targetDwellSec} с
-                      <small>{p.stopName}</small>
+                      <small>
+                        {p.vehicleId ? `${busLabel(p.vehicleId)} · ` : ""}
+                        {p.stopName}
+                        {p.dwellStops && p.dwellStops > 1
+                          ? ` и ещё ${p.dwellStops - 1} ост.`
+                          : ""}
+                      </small>
                     </td>
                     <td>
                       <span className={`dispatch-status ${p.status}`}>
@@ -476,6 +644,7 @@ function Planner({
   onNotice,
   recommendation,
   initialRecommendation,
+  settings,
 }: {
   route: Route;
   canApply: boolean;
@@ -483,6 +652,7 @@ function Planner({
   onNotice: (s: string) => void;
   recommendation?: DispatchRecommendation;
   initialRecommendation?: DispatchRecommendation;
+  settings: DispatchSettings;
 }) {
   const navigate = useNavigate();
   const local = useDispatch();
@@ -490,13 +660,8 @@ function Planner({
   const plans = config.dispatchApi
     ? api.commands.data?.commands.map((c) => c.plan) || []
     : local.plans;
-  const pendingApi = useRef<{
-    signature: string;
-    key: string;
-    body: string;
-  } | null>(null);
-  const apiUnavailable =
-    config.dispatchApi && (!api.commands.data || api.commands.isError);
+  const { submit, busy, error, setError, apiUnavailable } =
+    usePlanSubmit(onNotice);
   const active = plans.find(
     (p) => p.status === "active" && p.routeId === route.id,
   );
@@ -505,7 +670,7 @@ function Planner({
     initialRecommendation?.targetFleet ?? active?.targetFleet ?? baseFleet,
   );
   const [cycle, setCycle] = useState(
-    initialRecommendation?.cycleMin ?? active?.cycleMin ?? 120,
+    initialRecommendation?.cycleMin ?? active?.cycleMin ?? settings.cycleMin,
   );
   const [stopId, setStopId] = useState(
     initialRecommendation?.stopId ||
@@ -515,13 +680,18 @@ function Planner({
       "",
   );
   const [before, setBefore] = useState(
-    initialRecommendation?.currentDwellSec ?? active?.baseDwellSec ?? 30,
+    initialRecommendation?.currentDwellSec ??
+      active?.baseDwellSec ??
+      settings.baseDwellSec,
   );
   const [after, setAfter] = useState(
-    initialRecommendation?.targetDwellSec ?? active?.targetDwellSec ?? 30,
+    initialRecommendation?.targetDwellSec ??
+      active?.targetDwellSec ??
+      settings.baseDwellSec,
   );
-  const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
+  const [target, setTarget] = useState<Target>(() =>
+    targetOf(initialRecommendation ?? active),
+  );
   const stop = route.stops.find((s) => s.id === stopId) || route.stops[0];
   const draft: DispatchPlan = {
     id: "preview",
@@ -536,6 +706,7 @@ function Planner({
     targetDwellSec: after,
     createdAt: "",
     status: "draft",
+    ...target,
   };
   let result: ReturnType<typeof evaluatePlan> | undefined,
     invalid = "";
@@ -551,14 +722,16 @@ function Planner({
       cycle !== active.cycleMin ||
       stopId !== active.stopId ||
       before !== active.baseDwellSec ||
-      after !== active.targetDwellSec
+      after !== active.targetDwellSec ||
+      target.vehicleId !== active.vehicleId
     : fleet !== baseFleet || before !== after;
   const resetForm = () => {
     setFleet(active?.targetFleet ?? baseFleet);
-    setCycle(active?.cycleMin ?? 120);
+    setCycle(active?.cycleMin ?? settings.cycleMin);
     setStopId(active?.stopId ?? route.stops[0]?.id ?? "");
-    setBefore(active?.baseDwellSec ?? 30);
-    setAfter(active?.targetDwellSec ?? 30);
+    setBefore(active?.baseDwellSec ?? settings.baseDwellSec);
+    setAfter(active?.targetDwellSec ?? settings.baseDwellSec);
+    setTarget(targetOf(active));
     setError("");
   };
   const takeDwell = () => {
@@ -571,6 +744,7 @@ function Planner({
     setStopId(recommendation.stopId);
     setBefore(recommendation.currentDwellSec);
     setAfter(recommendation.targetDwellSec);
+    setTarget(targetOf(recommendation));
   };
   const takeAll = () => {
     if (recommendation?.status !== "suggested") return;
@@ -583,88 +757,17 @@ function Planner({
   };
   const commit = async (activate: boolean) => {
     setError("");
-    setBusy(true);
-    try {
-      if (invalid || !changed)
-        throw new Error(invalid || "Измените выпуск или время стоянки.");
-      if (activate && !online)
-        throw new Error(
-          "Поток недоступен. Дождитесь свежих данных или сохраните только план.",
-        );
-      if (config.dispatchApi) {
-        if (!api.commands.data)
-          throw new Error("Дождитесь загрузки серверного журнала.");
-        const signature = JSON.stringify({ draft, activate });
-        if (!pendingApi.current || pendingApi.current.signature !== signature)
-          pendingApi.current = {
-            signature,
-            key: crypto.randomUUID(),
-            body: JSON.stringify({
-              plan: draft,
-              mode: activate ? "apply" : "plan",
-              revision: api.commands.data.revision,
-            }),
-          };
-        const response = await integrationRequest<CommandState>(
-          "/dispatch/commands",
-          {
-            method: "POST",
-            headers: { "Idempotency-Key": pendingApi.current.key },
-            body: pendingApi.current.body,
-          },
-        );
-        pendingApi.current = null;
-        queryClient.setQueryData(commandKey, response);
-        await refreshApiDispatch();
-        if (activate) {
-          try {
-            await resync();
-          } catch {
-            onNotice(
-              "API подтвердил применение команды. Данные карты пока не обновились. Не отправляйте команду повторно; проверьте подключение.",
-            );
-            return;
-          }
-        }
-        onNotice(
-          activate
-            ? "API подтвердил: команда принята и применена в учебном контуре."
-            : "План сохранён в серверном журнале.",
-        );
-        return;
-      }
-      local.save(
-        {
-          ...draft,
-          id: crypto.randomUUID(),
-          createdAt: new Date().toISOString(),
-        },
-        activate,
-      );
-      if (activate) {
-        try {
-          await resync();
-        } catch {
-          onNotice(
-            "Демосценарий сохранён и применён. Данные карты пока не обновились; проверьте подключение или перезагрузите страницу. Сценарий можно отменить в журнале.",
-          );
-          return;
-        }
-      }
-      onNotice(
-        activate
-          ? "Демосценарий применён. Количество автобусов и расчётный прогноз обновлены на карте."
-          : "План сохранён в журнале. Он не меняет данные на карте.",
-      );
-    } catch (e) {
-      if (e instanceof IntegrationError && e.status >= 400 && e.status < 500) {
-        pendingApi.current = null;
-        await refreshApiDispatch();
-      }
-      setError((e as Error).message);
-    } finally {
-      setBusy(false);
+    if (invalid || !changed) {
+      setError(invalid || "Измените выпуск или время стоянки.");
+      return;
     }
+    if (activate && !online) {
+      setError(
+        "Поток недоступен. Дождитесь свежих данных или сохраните только план.",
+      );
+      return;
+    }
+    await submit(draft, activate);
   };
   return (
     <>
@@ -798,7 +901,11 @@ function Planner({
             <select
               aria-label="Остановка для стоянки"
               value={stop?.id || ""}
-              onChange={(e) => setStopId(e.target.value)}
+              onChange={(e) => {
+                setStopId(e.target.value);
+                // A different stop is a manual plan for every bus, not the suggested one.
+                setTarget({});
+              }}
             >
               {route.stops.map((s) => (
                 <option key={s.id} value={s.id}>
@@ -886,6 +993,14 @@ function Planner({
           <span className="dispatch-simulation-label">
             РАСЧЁТ СЦЕНАРИЯ · НЕ ML-ПРОГНОЗ
           </span>
+          {target.vehicleId && (
+            <p className="dispatch-target">
+              Только для {busLabel(target.vehicleId)}
+              {target.dwellStops && target.dwellStops > 1
+                ? ` · на ${target.dwellStops} остановках подряд`
+                : ""}
+            </p>
+          )}
           {result ? (
             <>
               <div className="dispatch-comparison">

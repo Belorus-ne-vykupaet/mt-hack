@@ -172,16 +172,34 @@ export function scenarioSnapshot(
       risk: (i === 3 ? "elevated" : "high") as RouteDto["risk_level"],
     };
   };
+  // Timetable deviations on otherwise healthy routes, for the dispatcher: a bus running early
+  // that caught up with its leader, a lone early bus and an on-time bus closing in on its leader.
+  const drift: Record<
+    string,
+    { offset: number; current: number; predicted: number }
+  > = normalScenario
+    ? {}
+    : {
+        "5:2": { offset: 0.07, current: -150, predicted: -170 },
+        "6:5": { offset: 0, current: -90, predicted: -100 },
+        "8:4": { offset: 0.08, current: 20, predicted: 20 },
+      };
   const vehicles: VehicleDto[] = routes.flatMap((r, i) =>
     Array.from({ length: r.vehicle_count }, (_, j) => {
+      const deviation = drift[`${i}:${j}`];
       const progress =
         i === 1
           ? [0.03, 0.15, 0.28, 0.46, 0.53, 0.6, 0.82, 0.93][j % 8] +
             Math.sin(seconds / 180) * 0.025
           : ((i === 0 && j === 0 ? 0.51 : j / r.vehicle_count) +
+              (deviation?.offset || 0) +
               seconds * 0.00035) %
             1;
       const local = localSeverity(i, progress, j);
+      if (deviation) {
+        local.current = deviation.current;
+        local.predicted = deviation.predicted;
+      }
       return {
         id: i === 0 && j === 0 ? "vehicle-742" : `vehicle-${800 + i * 10 + j}`,
         route_id: r.id,

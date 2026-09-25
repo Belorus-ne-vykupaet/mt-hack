@@ -11,7 +11,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import { csvSnapshot, csvGeometries } from "../src/mocks/csv-scenario";
 import { simulateDispatch } from "../src/entities/dispatch-simulation";
 import { recommendDispatch } from "../src/entities/dispatch-recommendations";
-import { mapRoute, mapVehicle } from "../src/entities/adapters";
+import { mapGeometry, mapRoute, mapVehicle } from "../src/entities/adapters";
 import { riskFromDelay } from "../src/entities/forecast";
 import { DispatchService, ApiError } from "./dispatch-service";
 import { Providers } from "./providers";
@@ -37,6 +37,7 @@ export function createApi(options: ServerOptions = {}) {
       ...csvSnapshot(900),
       ...(options.official ? { routes: options.official.routes } : {}),
     },
+    geometries = csvGeometries.map(mapGeometry),
     dispatch = new DispatchService(options.journal, base.routes);
   const providers = new Providers(
     options.trafficKey,
@@ -404,7 +405,7 @@ export function createApi(options: ServerOptions = {}) {
           revision: dispatch.state.revision,
           generatedAt: new Date().toISOString(),
           expiresAt: new Date(Date.now() + 30000).toISOString(),
-          method: "rules-v1",
+          method: "rules-v2",
           reserve: dispatch.publicState().reserve,
           items: recommendDispatch({
             routes: s.routes.filter((r) => r.predicted_delay_sec !== null && r.stops.length).map(mapRoute),
@@ -412,6 +413,9 @@ export function createApi(options: ServerOptions = {}) {
             plans: dispatch.plans,
             asOf: s.summary.timestamp,
             demo: true,
+            geometries: options.official
+              ? (await options.official.snapshot()).geometries.map(mapGeometry)
+              : geometries,
           }),
         });
       if (path === "/network/summary") return json(res, 200, s.summary);
