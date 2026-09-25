@@ -11,7 +11,7 @@ on:
       - "capacitor.config.ts"
       - "package.json"
       - "pnpm-lock.yaml"
-      - "scripts/android-smoke.mjs"
+      - "scripts/android-smoke.*"
       - ".github/workflows/android.yml"
   workflow_dispatch:
 
