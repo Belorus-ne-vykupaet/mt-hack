@@ -80,6 +80,8 @@ export interface DelayPoint {
 export interface Geometry {
   routeId: string;
   coordinates: number[][];
+  validFrom?: string;
+  validUntil?: string;
 }
 
 export interface Segment {

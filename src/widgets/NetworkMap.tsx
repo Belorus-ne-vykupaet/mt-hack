@@ -46,13 +46,16 @@ import "maplibre-gl/dist/maplibre-gl.css";
 
 const MOSCOW: [number, number] = [37.68, 55.76];
 const EMPTY_STOPS: Stop[] = [];
-// The pitched map and road paths share the ground plane. At city scale their
-// depth values become indistinguishable and the GPU draws the route as dots.
-// Keep route paint above the basemap without writing depth over buses/buildings.
+// Lift route paint just above the road to avoid ground z-fighting. Keep depth
+// testing enabled so a building still hides the part of a road behind it.
 const PITCHED_ROUTE_DEPTH = {
-  depthCompare: "always" as const,
+  depthCompare: "less-equal" as const,
   depthWriteEnabled: false,
 };
+const roadPath = (coordinates: number[][], pitched: boolean) =>
+  pitched
+    ? coordinates.map(([lon, lat]): [number, number, number] => [lon, lat, 1.5])
+    : coordinates as [number, number][];
 export default function NetworkMap({
   mode,
   routes,
@@ -473,7 +476,7 @@ export default function NetworkMap({
         id: "road-reference-casing",
         data: ui.routesVisible ? data : [],
         parameters: mode === "flow" ? PITCHED_ROUTE_DEPTH : undefined,
-        getPath: (d) => d.coordinates,
+        getPath: (d) => roadPath(d.coordinates, mode === "flow"),
         getColor: dark ? [9, 23, 37, 185] : [255, 255, 255, 210],
         getWidth: (d) => d.routeId === selected ? 9 : 7,
         widthUnits: "pixels",
@@ -484,7 +487,7 @@ export default function NetworkMap({
           ? data.filter((d) => d.routeId === selected)
           : [],
         parameters: mode === "flow" ? PITCHED_ROUTE_DEPTH : undefined,
-        getPath: (d) => d.coordinates,
+        getPath: (d) => roadPath(d.coordinates, mode === "flow"),
         getColor: [60, 170, 235, 95],
         getWidth: 13,
         widthUnits: "pixels",
@@ -493,7 +496,7 @@ export default function NetworkMap({
         id: "routes",
         data: ui.routesVisible ? data : [],
         parameters: mode === "flow" ? PITCHED_ROUTE_DEPTH : undefined,
-        getPath: (d) => d.coordinates,
+        getPath: (d) => roadPath(d.coordinates, mode === "flow"),
         getColor: (d) => [
           ...(config.officialMode ? routeRgb(d.routeId) : [122, 142, 165]),
           selected && d.routeId !== selected ? 38 : config.officialMode ? 225 : 65,
@@ -584,7 +587,7 @@ export default function NetworkMap({
                 a.riskProbability - b.riskProbability,
             )
           : [],
-        getPath: (d) => d.coordinates as [number, number][],
+        getPath: (d) => roadPath(d.coordinates, mode === "flow"),
         getColor: (d) => color(d.routeId, riskAt(d, ui.forecastOffsetMin)),
         getWidth: (d) =>
           d.routeId === selected

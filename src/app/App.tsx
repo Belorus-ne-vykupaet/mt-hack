@@ -102,9 +102,14 @@ export default function App() {
   const visibleGeo = useMemo(
     () => {
       const ids = new Set(visibleRouteIdsKey.split("|"));
-      return (geometry.data || []).filter((g) => ids.has(g.routeId));
+      const asOf = summary?.timestamp ? Date.parse(summary.timestamp) : null;
+      return (geometry.data || []).filter(
+        (g) => ids.has(g.routeId) &&
+          (asOf === null || !g.validFrom ||
+            (Date.parse(g.validFrom) <= asOf && asOf <= Date.parse(g.validUntil || g.validFrom))),
+      );
     },
-    [geometry.data, visibleRouteIdsKey],
+    [geometry.data, visibleRouteIdsKey, summary?.timestamp],
   );
   const visibleSegments = useMemo(
     () => (net.segments.data || []).filter((segment) => visibleIds.has(segment.routeId)),

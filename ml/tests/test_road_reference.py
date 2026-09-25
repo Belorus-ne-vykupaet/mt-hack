@@ -13,7 +13,9 @@ def test_official_road_reference_is_bounded_and_attributed():
     artifact = json.loads((root / "public/data/official-road-routes.json").read_text())
     assert "OpenStreetMap" in artifact["source"]["roads"]
     assert "ODbL" in artifact["source"]["roads"]
-    assert len(artifact["routes"]) >= 12
+    # Only duties present near the replay start have a line. Archive-only
+    # duties must not add unrelated afternoon routes to the live morning map.
+    assert len(artifact["routes"]) >= 10
     assert len({route["routeId"] for route in artifact["routes"]}) == len(artifact["routes"])
     for route in artifact["routes"]:
         assert route["source"] in {"schedule-stops", "gps-trace"}
@@ -53,3 +55,22 @@ def test_plan_points_follow_full_timestamp_even_when_csv_rows_are_shuffled():
     assert builder.plan_stops(shuffled, 0, 4) == [[
         (37.601, 55.7), (37.602, 55.7), (37.603, 55.7)
     ]]
+
+
+def test_road_reference_is_near_each_bus_at_replay_start():
+    root = Path(__file__).resolve().parents[2]
+    spec = importlib.util.spec_from_file_location(
+        "build_official_road_routes", root / "scripts/build-official-road-routes.py"
+    )
+    builder = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(builder)
+    reference = json.loads((root / "public/data/official-road-routes.json").read_text())
+    traffic = pd.read_csv(root / "ml/data/official/test/traffic.csv", low_memory=False)
+    traffic["ts"] = builder.seconds(traffic.event_time)
+    traffic = traffic[traffic.location_valid.eq(True) & traffic.ts.le(builder.REFERENCE)]
+    for route in reference["routes"]:
+        tr = int(route["routeId"].removeprefix("duty-"))
+        gps = traffic[traffic.tr_id.eq(tr)].sort_values("ts").iloc[-1]
+        assert builder.REFERENCE - gps.ts <= 180
+        assert route["window"][0] <= "2026-01-06T07:27:00+00:00" <= route["window"][1]
+        assert builder.distance_to_paths((gps.lon, gps.lat), route["paths"]) <= 120

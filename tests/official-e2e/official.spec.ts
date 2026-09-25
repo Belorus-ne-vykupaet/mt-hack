@@ -90,7 +90,7 @@ test("all GPS buses remain available in 2D, 3D and cards without a forecast", as
   expect(geometry.items.length).toBeGreaterThanOrEqual(18);
   expect(geometry.items.flatMap((g: any) => g.properties.observed_paths || []).length).toBeGreaterThan(20);
   const roadReference = await (await request.get("/data/official-road-routes.json")).json();
-  expect(roadReference.routes.length).toBeGreaterThanOrEqual(12);
+  expect(roadReference.routes.length).toBeGreaterThanOrEqual(10);
   expect(roadReference.routes.flatMap((route: any) => route.paths).length).toBeGreaterThan(20);
   const emptyForecast = await (await request.get(`/api/v1/forecast/vehicles/${noPlan.id}`)).json();
   expect(emptyForecast.points).toEqual([]);

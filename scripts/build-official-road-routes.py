@@ -24,7 +24,11 @@ from transit_ml.features import seconds
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / "public/data/official-road-routes.json"
-REFERENCE = pd.Timestamp("2026-01-06T17:50:00Z").timestamp()
+# The checked-in map must describe the same part of the archive as the
+# dashboard's initial replay. The former 17:50 reference was ten hours away
+# from REPLAY_START (07:27), so it drew unrelated afternoon journeys.
+REFERENCE = pd.Timestamp("2026-01-06T07:27:00Z").timestamp()
+WINDOW_SECONDS = 3600
 OSRM = "https://router.project-osrm.org/route/v1/driving/"
 USER_AGENT = "MT-Hackathon-TransitHub/0.1 (noncommercial hackathon; github.com/Belorus-ne-vykupaet/mt-hack)"
 LAST_REQUEST = 0.0
@@ -38,24 +42,23 @@ def metres(a, b):
 
 
 def representative_window(gps):
-    """Prefer the replay neighbourhood if it contains travel, not depot jitter."""
-    near = gps[gps.ts.between(REFERENCE - 7200, REFERENCE + 7200)]
-    xy = gps[["lon", "lat"]].to_numpy()
-    times = gps.ts.to_numpy()
-    if len(times) < 2:
-        return REFERENCE - 7200, REFERENCE + 7200
-    step = np.array([metres(a, b) for a, b in zip(xy, xy[1:])])
-    elapsed = np.diff(times)
-    travel = np.r_[0, np.where((elapsed > 0) & (elapsed <= 180) & (step <= np.maximum(180, elapsed * 30)), step, 0)]
-    if len(near) >= 20 and travel[(times >= REFERENCE - 7200) & (times <= REFERENCE + 7200)].sum() >= 1000:
-        return REFERENCE - 7200, REFERENCE + 7200
-    # Most traveled four-hour observation window, not the densest idle period.
-    starts = np.searchsorted(times, times - 14400, side="left")
-    cumulative = np.cumsum(travel)
-    end = int(np.argmax(cumulative - np.where(starts > 0, cumulative[np.maximum(0, starts - 1)], 0)))
-    if cumulative[end] < 300:
-        return REFERENCE - 7200, REFERENCE + 7200
-    return float(times[end] - 14400), float(times[end])
+    """Only draw a duty if its GPS is present near the displayed replay time."""
+    near = gps[gps.ts.between(REFERENCE - WINDOW_SECONDS, REFERENCE + WINDOW_SECONDS)]
+    if len(near) < 3 or not gps.ts.between(REFERENCE - 180, REFERENCE).any():
+        return None
+    return REFERENCE - WINDOW_SECONDS, REFERENCE + WINDOW_SECONDS
+
+
+def distance_to_paths(point, paths):
+    """Shortest distance to a rendered road edge, including its interior."""
+    scale = math.cos(math.radians(point[1]))
+    closest = math.inf
+    for path in paths:
+        for a, b in zip(path, path[1:]):
+            dx, dy = (b[0] - a[0]) * scale, b[1] - a[1]
+            t = max(0, min(1, ((point[0] - a[0]) * scale * dx + (point[1] - a[1]) * dy) / (dx * dx + dy * dy or 1)))
+            closest = min(closest, metres(point, (a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t)))
+    return closest
 
 
 def clean_gps(gps, lo, hi):
@@ -167,15 +170,24 @@ def main():
     schedule = schedule.sort_values("ts", kind="stable")
     records = []
     for tr, gps in traffic.groupby("tr_id"):
-        lo, hi = representative_window(gps)
+        window = representative_window(gps)
+        if window is None:
+            continue
+        lo, hi = window
         plan = schedule[schedule.tr_id.eq(tr)]
         stops = plan_stops(plan, lo, hi)
         source = "schedule-stops" if stops else "gps-trace"
         candidates = stops or clean_gps(gps, lo, hi)
         paths = list(route_pieces(candidates))
-        if not paths and stops:
+        latest = gps[gps.ts.le(REFERENCE)].iloc[-1]
+        current_point = (float(latest.lon), float(latest.lat))
+        # A schedule may contain another branch or trip for this vehicle.
+        # Do not display it beside a bus on a different street.
+        if stops and (not paths or distance_to_paths(current_point, paths) > 120):
             source = "gps-trace"
             paths = list(route_pieces(clean_gps(gps, lo, hi)))
+        if paths and distance_to_paths(current_point, paths) > 120:
+            paths = []
         if paths:
             records.append({
                 "routeId": f"duty-{int(tr)}",
@@ -187,7 +199,7 @@ def main():
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(json.dumps({
         "version": 1,
-        "description": "Archive-derived road reference, not observed up to replay time or ML input",
+        "description": "Road reference around the replay start, not ML input or evidence of future observed movement",
         "source": {
             "traffic": "official test/traffic.csv",
             "schedule": "official test/schedule.csv",

@@ -88,13 +88,18 @@ export function useGeometries(ids: string[]) {
         const response = await fetch("/data/official-road-routes.json");
         if (!response.ok) throw new Error("Дорожная схема недоступна");
         const reference = (await response.json()) as {
-          routes: { routeId: string; paths: number[][][] }[];
+          routes: { routeId: string; window: [string, string]; paths: number[][][] }[];
         };
         const wanted = new Set(ids);
         return reference.routes
           .filter((item) => wanted.has(item.routeId))
           .flatMap((item) =>
-            item.paths.map((coordinates) => ({ routeId: item.routeId, coordinates })),
+            item.paths.map((coordinates) => ({
+              routeId: item.routeId,
+              coordinates,
+              validFrom: item.window[0],
+              validUntil: item.window[1],
+            })),
           );
       }
       return Promise.all(
