@@ -24,7 +24,8 @@ services:
       API_ORIGINS: http://localhost:8080,http://127.0.0.1:8080
       API_JOURNAL: /app/server/data/official-commands.json
       OFFICIAL_BACKEND_URL: http://backend:8093
-      WEATHER_ENABLED: "false"
+      WEATHER_ENABLED: ${WEATHER_ENABLED:-true}
+      YANDEX_WEATHER_KEY: ${YANDEX_WEATHER_KEY:-}
     volumes:
       - dispatch-journal:/app/server/data
     ports:

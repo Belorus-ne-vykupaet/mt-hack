@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { WEATHER_LOCATIONS } from "../../src/entities/weather-current";
 test("official Sasha predictions, archive clock, map and themes", async ({
   page,
   request,
@@ -116,4 +117,45 @@ test("all GPS buses remain available in 2D, 3D and cards without a forecast", as
   await page.waitForTimeout(2500); // include a live WS update with nullable values
   expect(errors).toEqual([]);
   await page.screenshot({path:"/private/tmp/transit-fleet-card.png", fullPage:true});
+});
+
+test("official 3D map restores current weather without changing archive forecasts", async ({ page }) => {
+  const asOf = new Date().toISOString();
+  await page.route("**/api/v1/external/yandex-weather/status", (route) =>
+    route.fulfill({ json: { configured: true, source: "Яндекс Погода" } }),
+  );
+  await page.route("**/api/v1/external/yandex-weather/current", (route) =>
+    route.fulfill({
+      json: {
+        schemaVersion: 1,
+        source: "Яндекс Погода",
+        mode: "current-points",
+        fetchedAt: asOf,
+        refreshAfterSec: 900,
+        unavailablePoints: [],
+        points: WEATHER_LOCATIONS.map((point) => ({
+          ...point,
+          cloudiness: "OVERCAST",
+          precipitationType: point.id === "center" ? "RAIN" : "NO_TYPE",
+          precipitationStrength: point.id === "center" ? "AVERAGE" : "ZERO",
+        })),
+      },
+    }),
+  );
+  await page.goto("/overview?source=official&visual-test=1");
+  await expect(page.getByRole("button", { name: "Погода на 3D-карте" })).toHaveCount(0);
+  await page.getByRole("button", { name: "Переключить карту в 3D" }).click();
+  const weather = page.locator(".weather-control");
+  await expect(weather).toHaveAttribute("data-weather-active", "true", { timeout: 60000 });
+  await expect(weather).toHaveAttribute("data-weather-rain-points", "1");
+  await page.getByRole("button", { name: "Погода на 3D-карте" }).click();
+  await expect(page.getByRole("region", { name: "Настройки погоды" })).toContainText(
+    "Погода показывает текущий момент, а движение автобусов — архивный поток.",
+  );
+  await page.getByRole("switch", { name: "Погодный слой" }).uncheck();
+  await expect(weather).toHaveAttribute("data-weather-active", "false");
+  await page.getByRole("button", { name: "Переключить карту в 2D" }).click();
+  await expect(weather).toHaveCount(0);
+  await page.getByRole("button", { name: "Переключить карту в 3D" }).click();
+  await expect(weather).toHaveAttribute("data-weather-active", "false");
 });

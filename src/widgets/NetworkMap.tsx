@@ -827,7 +827,7 @@ export default function NetworkMap({
           <span>Автобусная сеть</span>
         </div>
         <div className="map-view-controls">
-          {mode === "flow" && ready && weatherMap && !config.officialMode && (
+          {mode === "flow" && ready && weatherMap && (
             <WeatherControl map={weatherMap} dark={dark} />
           )}
           <button
