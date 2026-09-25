@@ -1,0 +1,41 @@
+asyncapi: 3.0.0
+info:
+  title: Transit Control realtime
+  version: 1.0.0
+  description: REST remains authoritative after reconnect. API sandbox uses per-client consecutive sequences.
+servers:
+  local:
+    host: localhost:8081
+    protocol: ws
+channels:
+  realtime:
+    address: /api/v1/stream
+    messages:
+      streamEvent:
+        $ref: '#/components/messages/StreamEvent'
+operations:
+  receiveEvents:
+    action: receive
+    channel:
+      $ref: '#/channels/realtime'
+components:
+  messages:
+    StreamEvent:
+      payload:
+        type: object
+        required: [type, version, timestamp, sequence, payload]
+        properties:
+          type:
+            type: string
+            enum: [system.hello, system.heartbeat, network.updated, route.updated, vehicle.updated, vehicle.removed, alert.created, alert.updated, alert.resolved, forecast.updated, alerts.snapshot, analytics.snapshot]
+          version:
+            type: integer
+            const: 1
+          timestamp:
+            type: string
+            format: date-time
+          sequence:
+            type: integer
+          payload:
+            type: object
+            description: Event-specific DTO or partial DTO from openapi.json. Entity patches include id; removed/resolved events include id. alerts.snapshot contains the complete items array of AlertDto; analytics.snapshot contains points (DelayPointDto array). Never infer risk in UI.

@@ -1,0 +1,9 @@
+{
+  "scope": "Python CSV features + loopback HTTP CatBoost inference, warmed process; not a production load test",
+  "requests": 25,
+  "vehiclesPerRequest": 7,
+  "pipelineMedianMs": 20.8,
+  "pipelineP95Ms": 24.04,
+  "platform": "arm64",
+  "python": "3.12.12"
+}

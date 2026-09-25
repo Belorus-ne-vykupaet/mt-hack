@@ -1,0 +1,1268 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Transit Control — proposed frontend contract",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/v1/network/summary": {
+      "get": {
+        "operationId": "getNetworkSummary",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkSummaryDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/routes": {
+      "get": {
+        "operationId": "getRoutes",
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "risk_levels",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "transport_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoutesDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/routes/{routeId}": {
+      "get": {
+        "operationId": "getRoute",
+        "parameters": [
+          {
+            "name": "routeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouteDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/routes/{routeId}/geometry": {
+      "get": {
+        "operationId": "getRouteGeometry",
+        "parameters": [
+          {
+            "name": "routeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouteGeometryDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/routes/{routeId}/segments": {
+      "get": {
+        "operationId": "getRouteSegments",
+        "parameters": [
+          {
+            "name": "routeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SegmentsDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/vehicles": {
+      "get": {
+        "operationId": "getVehicles",
+        "parameters": [
+          {
+            "name": "route_ids",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "risk_levels",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "bbox",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehiclesDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/vehicles/{vehicleId}": {
+      "get": {
+        "operationId": "getVehicle",
+        "parameters": [
+          {
+            "name": "vehicleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehicleDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/alerts": {
+      "get": {
+        "operationId": "getAlerts",
+        "parameters": [
+          {
+            "name": "severity",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "route_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertsDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/delay-series": {
+      "get": {
+        "operationId": "getDelaySeries",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "bucket",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "route_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DelaySeriesDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/risk-distribution": {
+      "get": {
+        "operationId": "getRiskDistribution",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RiskDistributionDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/top-routes": {
+      "get": {
+        "operationId": "getTopRoutes",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TopRoutesDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/forecast": {
+      "get": {
+        "operationId": "getForecast",
+        "parameters": [
+          {
+            "name": "horizon_min",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForecastDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/forecast/vehicles/{vehicleId}": {
+      "get": {
+        "operationId": "getVehicleForecast",
+        "parameters": [
+          {
+            "name": "vehicleId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehicleForecastDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDto"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorDto"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "PositionDto": {
+        "type": "object",
+        "properties": {
+          "lat": {
+            "type": "number"
+          },
+          "lon": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "lat",
+          "lon"
+        ]
+      },
+      "StopDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "sequence": {
+            "type": "integer"
+          },
+          "position": {
+            "$ref": "#/components/schemas/PositionDto"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "sequence",
+          "position"
+        ]
+      },
+      "RouteDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "number": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "transport_type": {
+            "type": "string",
+            "enum": [
+              "bus",
+              "tram",
+              "trolleybus",
+              "other"
+            ]
+          },
+          "current_delay_sec": {
+            "type": "number"
+          },
+          "predicted_delay_sec": {
+            "type": "number"
+          },
+          "risk_probability": {
+            "type": "number"
+          },
+          "risk_level": {
+            "type": "string",
+            "enum": [
+              "normal",
+              "elevated",
+              "high",
+              "critical"
+            ]
+          },
+          "vehicle_count": {
+            "type": "integer"
+          },
+          "stops": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StopDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "number",
+          "name",
+          "transport_type",
+          "current_delay_sec",
+          "predicted_delay_sec",
+          "risk_probability",
+          "risk_level",
+          "vehicle_count",
+          "stops"
+        ]
+      },
+      "VehicleDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "route_id": {
+            "type": "string"
+          },
+          "position": {
+            "$ref": "#/components/schemas/PositionDto"
+          },
+          "bearing_deg": {
+            "type": "number"
+          },
+          "speed_kmh": {
+            "type": "number"
+          },
+          "current_delay_sec": {
+            "type": "number"
+          },
+          "predicted_delay_sec": {
+            "type": "number"
+          },
+          "risk_probability": {
+            "type": "number"
+          },
+          "risk_level": {
+            "type": "string",
+            "enum": [
+              "normal",
+              "elevated",
+              "high",
+              "critical"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "stopped",
+              "inactive",
+              "unknown"
+            ]
+          },
+          "next_stop": {
+            "$ref": "#/components/schemas/StopDto"
+          },
+          "updated_at": {
+            "type": "string"
+          },
+          "forecast_horizon_sec": {
+            "type": "number",
+            "description": "Exact target-stop horizon in (600,900] seconds for official model."
+          },
+          "forecast_target_time": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "forecast_model": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "route_id",
+          "position",
+          "bearing_deg",
+          "speed_kmh",
+          "current_delay_sec",
+          "predicted_delay_sec",
+          "risk_probability",
+          "risk_level",
+          "status",
+          "next_stop",
+          "updated_at"
+        ]
+      },
+      "AlertDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "info",
+              "warning",
+              "high",
+              "critical"
+            ]
+          },
+          "type": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "route_id": {
+            "type": "string"
+          },
+          "vehicle_id": {
+            "type": "string"
+          },
+          "risk_probability": {
+            "type": "number"
+          },
+          "predicted_delay_sec": {
+            "type": "number"
+          },
+          "created_at": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "severity",
+          "type",
+          "title",
+          "description",
+          "route_id",
+          "vehicle_id",
+          "risk_probability",
+          "predicted_delay_sec",
+          "created_at"
+        ]
+      },
+      "NetworkSummaryDto": {
+        "type": "object",
+        "properties": {
+          "vehicles_total": {
+            "type": "number"
+          },
+          "vehicles_active": {
+            "type": "number"
+          },
+          "routes_active": {
+            "type": "number"
+          },
+          "on_time_percent": {
+            "type": "number"
+          },
+          "at_risk_percent": {
+            "type": "number"
+          },
+          "delayed_percent": {
+            "type": "number"
+          },
+          "average_delay_sec": {
+            "type": "number"
+          },
+          "average_predicted_delay_sec": {
+            "type": "number"
+          },
+          "timestamp": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "vehicles_total",
+          "vehicles_active",
+          "routes_active",
+          "on_time_percent",
+          "at_risk_percent",
+          "delayed_percent",
+          "average_delay_sec",
+          "average_predicted_delay_sec",
+          "timestamp"
+        ]
+      },
+      "GeometryDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "LineString"
+            ]
+          },
+          "coordinates": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "required": [
+          "type",
+          "coordinates"
+        ]
+      },
+      "GeometryPropertiesDto": {
+        "type": "object",
+        "properties": {
+          "route_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "route_id"
+        ]
+      },
+      "RouteGeometryDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "Feature"
+            ]
+          },
+          "properties": {
+            "$ref": "#/components/schemas/GeometryPropertiesDto"
+          },
+          "geometry": {
+            "$ref": "#/components/schemas/GeometryDto"
+          }
+        },
+        "required": [
+          "type",
+          "properties",
+          "geometry"
+        ]
+      },
+      "SegmentDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "route_id": {
+            "type": "string"
+          },
+          "geometry": {
+            "$ref": "#/components/schemas/GeometryDto"
+          },
+          "current_delay_sec": {
+            "type": "number"
+          },
+          "predicted_delay_sec": {
+            "type": "number"
+          },
+          "risk_probability": {
+            "type": "number"
+          },
+          "risk_level": {
+            "type": "string",
+            "enum": [
+              "normal",
+              "elevated",
+              "high",
+              "critical"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "route_id",
+          "geometry",
+          "current_delay_sec",
+          "predicted_delay_sec",
+          "risk_probability",
+          "risk_level"
+        ]
+      },
+      "DelayPointDto": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string"
+          },
+          "actual_delay_sec": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "predicted_delay_sec": {
+            "type": [
+              "number",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "timestamp",
+          "actual_delay_sec",
+          "predicted_delay_sec"
+        ]
+      },
+      "ForecastDto": {
+        "type": "object",
+        "properties": {
+          "generated_at": {
+            "type": "string"
+          },
+          "horizon_min": {
+            "type": "integer"
+          },
+          "routes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RouteDto"
+            }
+          },
+          "vehicles": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VehicleDto"
+            }
+          },
+          "segments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SegmentDto"
+            }
+          }
+        },
+        "required": [
+          "generated_at",
+          "horizon_min",
+          "routes",
+          "vehicles",
+          "segments"
+        ]
+      },
+      "ErrorBodyDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "request_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "request_id"
+        ]
+      },
+      "ErrorDto": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ErrorBodyDto"
+          }
+        },
+        "required": [
+          "error"
+        ]
+      },
+      "RoutesDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RouteDto"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "SegmentsDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SegmentDto"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "VehiclesDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/VehicleDto"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "AlertsDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AlertDto"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "DelaySeriesDto": {
+        "type": "object",
+        "properties": {
+          "points": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DelayPointDto"
+            }
+          }
+        },
+        "required": [
+          "points"
+        ]
+      },
+      "RiskDistributionDto": {
+        "type": "object",
+        "properties": {
+          "normal": {
+            "type": "integer"
+          },
+          "elevated": {
+            "type": "integer"
+          },
+          "high": {
+            "type": "integer"
+          },
+          "critical": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "normal",
+          "elevated",
+          "high",
+          "critical"
+        ]
+      },
+      "TopRoutesDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RouteDto"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "ForecastPointDto": {
+        "type": "object",
+        "properties": {
+          "offset_sec": {
+            "type": "integer"
+          },
+          "predicted_delay_sec": {
+            "type": "number"
+          },
+          "risk_probability": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "offset_sec",
+          "predicted_delay_sec",
+          "risk_probability"
+        ]
+      },
+      "VehicleForecastDto": {
+        "type": "object",
+        "properties": {
+          "vehicle_id": {
+            "type": "string"
+          },
+          "points": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ForecastPointDto"
+            }
+          }
+        },
+        "required": [
+          "vehicle_id",
+          "points"
+        ]
+      }
+    }
+  }
+}

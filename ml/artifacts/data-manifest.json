@@ -1,0 +1,74 @@
+{
+  "source": "https://disk.yandex.ru/d/CA6tsj4aJJ4Aaw",
+  "archiveBytes": 147448993,
+  "archiveSha256": "fce28b4121dbaae793eee855b8efa523484c91ac203d782ff33853884c527760",
+  "verifiedAgainstYandexDiskMetadata": true,
+  "archiveCrcVerified": true,
+  "files": [
+    {
+      "name": "ndtp-telemetry-emulator.tar",
+      "bytes": 134284800,
+      "extracted": false
+    },
+    {
+      "name": "README.md",
+      "bytes": 12870,
+      "extracted": true
+    },
+    {
+      "name": "sample_submission.csv",
+      "bytes": 3696,
+      "extracted": true
+    },
+    {
+      "name": "docs/Emulator-and-Telematic-Packets-Specification.md",
+      "bytes": 16084,
+      "extracted": true
+    },
+    {
+      "name": "labels/labels_test.csv",
+      "bytes": 33775,
+      "extracted": true
+    },
+    {
+      "name": "labels/labels_train.csv",
+      "bytes": 463478,
+      "extracted": true
+    },
+    {
+      "name": "test/schedule.csv",
+      "bytes": 794336,
+      "extracted": true
+    },
+    {
+      "name": "test/traffic.csv",
+      "bytes": 17117773,
+      "extracted": true
+    },
+    {
+      "name": "train/schedule.csv",
+      "bytes": 2690246,
+      "extracted": true
+    },
+    {
+      "name": "train/traffic.csv",
+      "bytes": 49170493,
+      "extracted": true
+    },
+    {
+      "name": "validate/points.csv",
+      "bytes": 12645,
+      "extracted": true
+    },
+    {
+      "name": "validate/schedule_plan.csv",
+      "bytes": 683160,
+      "extracted": true
+    },
+    {
+      "name": "validate/traffic.csv",
+      "bytes": 17117773,
+      "extracted": true
+    }
+  ]
+}

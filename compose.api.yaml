@@ -1,0 +1,25 @@
+services:
+  frontend:
+    build:
+      args:
+        VITE_DATA_SOURCE: api
+        NGINX_CONF: nginx.api.conf
+    depends_on:
+      - api
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    environment:
+      API_HOST: 0.0.0.0
+      API_TOKEN: ${API_TOKEN:?Set a random API_TOKEN of at least 24 characters}
+      API_ORIGINS: ${API_ORIGINS:-http://localhost:8080,http://127.0.0.1:8080}
+      YANDEX_ROUTER_KEY: ${YANDEX_ROUTER_KEY:-}
+      YANDEX_WEATHER_KEY: ${YANDEX_WEATHER_KEY:-}
+      ML_SERVICE_URL: ${ML_SERVICE_URL:-}
+      ML_SERVICE_TOKEN: ${ML_SERVICE_TOKEN:-}
+      WEATHER_ENABLED: ${WEATHER_ENABLED:-true}
+    volumes:
+      - dispatch-journal:/app/server/data
+volumes:
+  dispatch-journal:

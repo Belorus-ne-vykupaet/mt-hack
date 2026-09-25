@@ -1,0 +1,69 @@
+{
+  "label": "Учебный автобусный поток · синтетические данные",
+  "encoding": "utf8",
+  "delimiter": ",",
+  "decimal": ",",
+  "time": {
+    "schedule": "iso",
+    "telemetry": "unix_ms",
+    "utcOffset": "+03:00"
+  },
+  "units": {
+    "speed": "mps",
+    "delay": "minutes"
+  },
+  "tables": {
+    "routes": {
+      "file": "routes.csv",
+      "columns": {
+        "route_id": "route_id",
+        "route_number": "route_number",
+        "route_name": "route_name"
+      }
+    },
+    "stops": {
+      "file": "stops.csv",
+      "columns": {
+        "stop_id": "stop_id",
+        "stop_name": "stop_name",
+        "lat": "lat",
+        "lon": "lon"
+      }
+    },
+    "schedule": {
+      "file": "schedule.csv",
+      "columns": {
+        "trip_id": "trip_id",
+        "vehicle_id": "vehicle_id",
+        "route_id": "route_id",
+        "stop_id": "stop_id",
+        "stop_sequence": "stop_sequence",
+        "arrival_time": "arrival_time",
+        "departure_time": "departure_time"
+      }
+    },
+    "telemetry": {
+      "file": "telemetry-ru.csv",
+      "delimiter": ";",
+      "columns": {
+        "timestamp": "время_ms",
+        "trip_id": "рейс",
+        "vehicle_id": "автобус",
+        "lat": "широта",
+        "lon": "долгота",
+        "speed": "скорость_мс",
+        "delay": "задержка_мин",
+        "next_stop_id": "следующая_остановка"
+      }
+    },
+    "shapes": {
+      "file": "shapes.csv",
+      "columns": {
+        "route_id": "route_id",
+        "point_sequence": "point_sequence",
+        "lat": "lat",
+        "lon": "lon"
+      }
+    }
+  }
+}

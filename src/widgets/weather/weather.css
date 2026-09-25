@@ -1,0 +1,264 @@
+.map-view-controls {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  pointer-events: auto;
+}
+.weather-control {
+  position: relative;
+  pointer-events: auto;
+}
+.app .weather-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 6px 12px;
+  color: var(--secondary);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 3px 14px #0001;
+}
+.weather-trigger > span {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  font-size: 11px;
+  line-height: 1.3;
+}
+.app .weather-trigger small {
+  font-size: 9px;
+  color: var(--muted);
+}
+.app .weather-trigger.is-active {
+  border-color: var(--blue);
+}
+.weather-trigger.is-active > svg {
+  color: var(--blue);
+}
+.weather-popover {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 10px);
+  width: min(338px, calc(100vw - 72px));
+  max-height: min(610px, calc(100dvh - 230px));
+  overflow: auto;
+  overscroll-behavior: contain;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--blue);
+  border-radius: 6px;
+  box-shadow: 0 16px 48px #0003;
+  padding: 18px;
+  z-index: 30;
+}
+.weather-popover header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.weather-eyebrow {
+  font:
+    9px "IBM Plex Mono",
+    monospace;
+  color: var(--blue);
+  letter-spacing: 1.2px;
+}
+.app .weather-popover h3 {
+  font-size: 21px;
+  margin: 5px 0 0;
+}
+.weather-master {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 18px;
+  padding: 14px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+.weather-popover label strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+}
+.app .weather-popover label small {
+  display: block;
+  font-size: 10px;
+  margin-top: 4px;
+  color: var(--muted);
+}
+.weather-popover input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  min-height: 16px;
+  accent-color: var(--blue);
+  cursor: pointer;
+}
+.weather-source {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 15px 0 8px;
+}
+.weather-source-mark {
+  width: 27px;
+  height: 27px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #ef4135;
+  color: #fff;
+  font-size: 18px;
+}
+.weather-source strong {
+  font-size: 12px;
+  font-weight: 500;
+}
+.app .weather-source small {
+  display: block;
+  font-size: 9px;
+  margin-top: 3px;
+}
+.weather-source > a {
+  margin-left: auto;
+  color: var(--muted);
+}
+.weather-status {
+  padding: 11px;
+  margin: 10px 0;
+  border-left: 2px solid var(--blue);
+  background: var(--hover);
+  color: var(--secondary);
+  font-size: 11px;
+  line-height: 1.65;
+}
+.weather-popover fieldset {
+  border: 0;
+  padding: 0;
+  margin: 7px 0 0;
+}
+.weather-popover fieldset:disabled {
+  opacity: 0.45;
+}
+.weather-popover fieldset > label {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+.weather-popover fieldset > label > svg {
+  color: var(--blue);
+}
+.weather-popover fieldset > label > input[type="checkbox"] {
+  margin-left: auto;
+}
+.weather-popover .weather-strength {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  font-size: 11px;
+}
+.weather-strength span {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.weather-strength output {
+  font:
+    10px "IBM Plex Mono",
+    monospace;
+  color: var(--blue);
+}
+.weather-strength input {
+  width: 100%;
+  grid-column: 1 / -1;
+  accent-color: var(--blue);
+}
+.weather-motion {
+  font-size: 11px;
+}
+.weather-note {
+  font-size: 10px;
+  line-height: 1.6;
+  color: var(--muted);
+  margin: 13px 0;
+}
+.weather-popover footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.weather-popover footer > a {
+  font-size: 10px;
+  color: var(--blue);
+}
+@media (max-width: 700px) {
+  .weather-trigger small {
+    display: none;
+  }
+  .app .weather-trigger {
+    min-height: 34px;
+    padding: 5px 8px;
+  }
+  .weather-popover {
+    right: -75px;
+    padding: 14px;
+  }
+  .map-top .map-location {
+    display: none;
+  }
+  .map-view-controls {
+    margin-left: auto;
+  }
+}
+.weather-current-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 11px;
+  background: var(--hover);
+  border-left: 2px solid var(--blue);
+  margin-top: 10px;
+  font-size: 11px;
+}
+.weather-current-summary strong {
+  font-weight: 500;
+}
+.weather-current-summary span,
+.weather-current-summary small {
+  font-size: 10px;
+  color: var(--muted);
+}
+.weather-point-list {
+  margin: 12px 0 18px;
+  font-size: 11px;
+}
+.weather-point-list summary {
+  cursor: pointer;
+  color: var(--blue);
+  padding: 8px 0;
+}
+.app .weather-point {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+  padding: 9px 0;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: none;
+  color: var(--text);
+  font-size: 11px;
+}
+.weather-point small {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 10px;
+}

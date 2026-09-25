@@ -1,0 +1,311 @@
+import { afterEach, describe, expect, it } from "vitest";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { WebSocket } from "ws";
+import { createApi } from "../server/app";
+import type { ServerOptions } from "../server/app";
+import { csvSnapshot } from "../src/mocks/csv-scenario";
+import { ModelProvider, validatePredictions } from "../server/model";
+import { Providers, parseTraffic } from "../server/providers";
+const cleanups: (() => Promise<unknown>)[] = [];
+afterEach(async () => {
+  for (const cleanup of cleanups.splice(0).reverse()) await cleanup();
+});
+async function start(options: ServerOptions = {}) {
+  const api = createApi({ frozen: true, ...options });
+  await new Promise<void>((r) => api.server.listen(0, "127.0.0.1", r));
+  cleanups.push(() => api.close());
+  const address = api.server.address() as { port: number };
+  return { ...api, url: `http://127.0.0.1:${address.port}/api/v1` };
+}
+const base = csvSnapshot(900).routes[0];
+const plan = {
+  id: "unused",
+  routeId: base.id,
+  routeNumber: base.number,
+  baseFleet: 8,
+  targetFleet: 10,
+  cycleMin: 120,
+  stopId: base.stops[0].id,
+  stopName: base.stops[0].name,
+  baseDwellSec: 30,
+  targetDwellSec: 20,
+  createdAt: "",
+  status: "draft",
+};
+const post = (url: string, body: unknown, key = "key-one", headers = {}) =>
+  fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Idempotency-Key": key,
+      ...headers,
+    },
+    body: JSON.stringify(body),
+  });
+describe("real HTTP integration API", () => {
+  it("serves network and recommendations; applies, deduplicates, rejects conflicts and cancels commands", async () => {
+    const api = await start();
+    const input = { plan, mode: "apply", revision: 0 };
+    expect(
+      (await (await fetch(api.url + "/routes")).json()).items,
+    ).toHaveLength(15);
+    const rec = await (
+      await fetch(api.url + "/dispatch/recommendations")
+    ).json();
+    expect(rec.items).toHaveLength(15);
+    expect(rec.revision).toBe(0);
+    const response = await post(api.url + "/dispatch/commands", input);
+    expect(response.status).toBe(201);
+    const state = await response.json();
+    expect(state.reserve).toBe(2);
+    expect(state.commands[0].status).toBe("applied_demo");
+    expect(state.commands[0].history.map((h: any) => h.status)).toEqual([
+      "accepted",
+      "applied_demo",
+    ]);
+    expect(
+      (await (await fetch(api.url + "/network/summary")).json())
+        .vehicles_active,
+    ).toBe(122);
+    expect(
+      await (await post(api.url + "/dispatch/commands", input)).json(),
+    ).toEqual(state);
+    expect(
+      (
+        await post(api.url + "/dispatch/commands", {
+          ...input,
+          plan: { ...plan, targetFleet: 9 },
+        })
+      ).status,
+    ).toBe(409);
+    expect(
+      (await post(api.url + "/dispatch/commands", input, "new-key")).status,
+    ).toBe(409);
+    expect(
+      (
+        await post(
+          api.url + "/dispatch/commands",
+          { ...input, revision: 1, plan: { ...plan, targetDwellSec: 5 } },
+          "bad-dwell",
+        )
+      ).status,
+    ).toBe(422);
+    expect(
+      (
+        await post(
+          api.url + "/dispatch/commands",
+          { ...input, revision: 1, plan: { ...plan, targetFleet: 13 } },
+          "no-reserve",
+        )
+      ).status,
+    ).toBe(409);
+    const cancel = await post(
+      api.url + `/dispatch/commands/${state.commands[0].id}/cancel`,
+      { revision: 1 },
+    );
+    expect(cancel.status).toBe(200);
+    expect((await cancel.json()).reserve).toBe(4);
+    expect(
+      (await (await fetch(api.url + "/network/summary")).json())
+        .vehicles_active,
+    ).toBe(120);
+  });
+  it("serializes concurrent mutations and retains journal/idempotency after restart", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "transit-api-"));
+    cleanups.push(() => rm(dir, { recursive: true, force: true }));
+    const journal = join(dir, "commands.json");
+    const a = await start({ journal });
+    const input = { plan, mode: "apply", revision: 0 };
+    const results = await Promise.all([
+      post(a.url + "/dispatch/commands", input, "a"),
+      post(a.url + "/dispatch/commands", input, "b"),
+    ]);
+    expect(results.map((r) => r.status).sort()).toEqual([201, 409]);
+    const successfulKey = results[0].status === 201 ? "a" : "b";
+    await a.close();
+    const b = await start({ journal });
+    const replay = await (
+      await post(b.url + "/dispatch/commands", input, successfulKey)
+    ).json();
+    expect(replay.commands).toHaveLength(1);
+    expect(replay.revision).toBe(1);
+  });
+  it("requires authentication when configured, supports an HttpOnly session and blocks other origins", async () => {
+    const api = await start({
+      token: "test-token-1234567890123456",
+      trafficKey: "PRIVATE_PROVIDER_KEY",
+    });
+    expect((await fetch(api.url + "/integrations")).status).toBe(401);
+    expect(
+      (
+        await fetch(api.url + "/integrations", {
+          headers: { Origin: "https://untrusted.example" },
+        })
+      ).status,
+    ).toBe(403);
+    const login = await post(api.url + "/session", {
+      token: "test-token-1234567890123456",
+    });
+    expect(login.status).toBe(200);
+    expect(login.headers.get("set-cookie")).toContain("HttpOnly");
+    const cookie = login.headers.get("set-cookie")!.split(";")[0];
+    const result = await (
+      await fetch(api.url + "/integrations", { headers: { Cookie: cookie } })
+    ).text();
+    expect(result).toContain("configured");
+    expect(result).not.toContain("PRIVATE_PROVIDER_KEY");
+    expect(result).not.toContain("test-token");
+  });
+  it("streams real WebSocket events with consecutive client sequences", async () => {
+    const api = await start();
+    const ws = new WebSocket(api.url.replace("http:", "ws:") + "/stream");
+    const received: any[] = [];
+    await new Promise<void>((resolve, reject) => {
+      const timeout = setTimeout(
+        () => reject(new Error("No websocket data")),
+        5000,
+      );
+      ws.on("message", (data) => {
+        received.push(JSON.parse(data.toString()));
+        if (received.length >= 5) {
+          clearTimeout(timeout);
+          resolve();
+        }
+      });
+      ws.on("error", reject);
+    });
+    expect(received[0].type).toBe("system.hello");
+    expect(received.slice(0, 5).map((e) => e.sequence)).toEqual([
+      1, 2, 3, 4, 5,
+    ]);
+    ws.close();
+  });
+  it("does not fabricate traffic when no key exists", async () => {
+    const api = await start();
+    const r = await fetch(
+      api.url + "/external/traffic?route_id=" + encodeURIComponent(base.id),
+    );
+    expect(r.status).toBe(503);
+    expect((await r.json()).error.message).toContain("серверный ключ");
+  });
+});
+it("caches and coalesces external weather, with timestamps and no model leakage", async () => {
+  let calls = 0;
+  const providers = new Providers("", true, async () => {
+    calls++;
+    return new Response(
+      JSON.stringify({
+        current: {
+          temperature_2m: 12,
+          precipitation: 0.4,
+          time: "2026-09-24T08:00",
+        },
+      }),
+    );
+  });
+  const [a, b] = await Promise.all([providers.weather(), providers.weather()]);
+  expect(calls).toBe(1);
+  expect(a).toEqual(b);
+  expect(a.usedInModel).toBe(false);
+  expect((await providers.weather()).cached).toBe(true);
+  const bad = new Providers("", true, async () => new Response("{}"));
+  await expect(bad.weather()).rejects.toThrow("недоступен");
+});
+it("rejects bad routing durations and compares geometry before producing a ratio", async () => {
+  expect(() =>
+    parseTraffic({ route: { legs: [{ status: "FAIL" }] } }),
+  ).toThrow();
+  let calls = 0;
+  const provider = new Providers("private", true, async () => {
+    calls++;
+    return new Response(
+      JSON.stringify({
+        route: {
+          legs: [
+            {
+              status: "OK",
+              steps: [{ duration: 50, polyline: { points: [calls] } }],
+            },
+          ],
+        },
+      }),
+    );
+  });
+  const result = await provider.traffic(base);
+  expect(result.comparable).toBe(false);
+  expect(result.ratio).toBeNull();
+  expect(result.usedInModel).toBe(false);
+});
+it("validates ML coverage and time, and falls back explicitly if the provider fails", async () => {
+  const vehicles = csvSnapshot(900).vehicles,
+    asOf = vehicles[0].updated_at;
+  const data = {
+    asOf,
+    modelVersion: "test-v1",
+    predictions: vehicles.map((v) => ({ vehicleId: v.id, delaySec: 123 })),
+  };
+  expect(validatePredictions(data, vehicles, asOf).size).toBe(120);
+  expect(() =>
+    validatePredictions({ ...data, asOf: "wrong" }, vehicles, asOf),
+  ).toThrow();
+  expect(() =>
+    validatePredictions(
+      { ...data, predictions: data.predictions.slice(1) },
+      vehicles,
+      asOf,
+    ),
+  ).toThrow();
+  const connected = new ModelProvider(
+    "https://example.test/predict",
+    "",
+    async () => new Response(JSON.stringify(data)),
+  );
+  expect((await connected.predict(vehicles, asOf))!.size).toBe(120);
+  expect(connected.status).toBe("connected");
+  const failed = new ModelProvider(
+    "https://example.test/predict",
+    "",
+    async () => {
+      throw new Error("private-provider-error");
+    },
+  );
+  expect(await failed.predict(vehicles, asOf)).toBeNull();
+  expect(failed.status).toBe("fallback");
+});
+
+it("propagates a connected model through vehicles, network aggregates, alerts and forecast series", async () => {
+  const api = await start({
+    modelUrl: "https://example.test/predict",
+    fetcher: async (_url, options) => {
+      const request = JSON.parse(String(options?.body));
+      return new Response(
+        JSON.stringify({
+          asOf: request.asOf,
+          modelVersion: "test-model",
+          predictions: request.vehicles.map((v: any) => ({
+            vehicleId: v.id,
+            delaySec: 900,
+          })),
+        }),
+      );
+    },
+  });
+  const vehicles = await (await fetch(api.url + "/vehicles")).json();
+  expect(vehicles.items.every((v: any) => v.predicted_delay_sec === 900)).toBe(
+    true,
+  );
+  const summary = await (await fetch(api.url + "/network/summary")).json();
+  expect(summary.average_predicted_delay_sec).toBe(900);
+  expect(summary.on_time_percent).toBe(0);
+  const alerts = await (await fetch(api.url + "/alerts")).json();
+  expect(alerts.items).toHaveLength(15);
+  expect(alerts.items[0].title).toContain("модели");
+  const series = await (
+    await fetch(api.url + "/analytics/delay-series")
+  ).json();
+  expect(series.points.at(-1).predicted_delay_sec).toBe(900);
+  const status = await (await fetch(api.url + "/integrations")).json();
+  expect(status.model.status).toBe("connected");
+});

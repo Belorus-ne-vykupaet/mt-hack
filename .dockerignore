@@ -1,0 +1,13 @@
+node_modules
+dist
+.git
+.openai
+.sites-runtime
+.env*
+playwright-report
+test-results
+
+server/.env
+server/data
+test-results-api
+test-results-csv

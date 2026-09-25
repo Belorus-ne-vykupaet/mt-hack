@@ -1,0 +1,7 @@
+catboost==1.2.10
+pandas==3.0.6
+numpy==2.5.3
+fastapi==0.141.1
+uvicorn==0.54.0
+httpx==0.28.1
+pytest==9.1.1

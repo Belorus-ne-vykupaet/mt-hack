@@ -1,0 +1,10 @@
+services:
+  frontend:
+    build:
+      context: .
+      args:
+        VITE_DATA_SOURCE: ${VITE_DATA_SOURCE:-mock}
+        VITE_API_URL: ${VITE_API_URL:-/api/v1}
+        VITE_WS_URL: ${VITE_WS_URL:-}
+    ports:
+      - "8080:80"
