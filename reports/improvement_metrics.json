@@ -1,0 +1,55 @@
+{
+  "configuration": {
+    "leaf": 1,
+    "features": 0.4,
+    "residual": 0,
+    "weight": 0.25,
+    "trees": 400,
+    "criterion": "squared_error"
+  },
+  "seeds": [
+    2026,
+    17,
+    43
+  ],
+  "groups": [
+    "ctx",
+    "all"
+  ],
+  "reference_sasha_mae": 58.087528328611896,
+  "reference_main_mae": 62.68858066458513,
+  "evaluation": "Provided test is a tuning/selection set, not independent final data.",
+  "removed_synthetic_rows": 295,
+  "full": {
+    "mae_s": 27.422096317280452,
+    "rows": 4434,
+    "seed_mae_s": {
+      "ctx_2026": 27.903682719546744,
+      "ctx_17": 28.21246458923513,
+      "ctx_43": 27.403682719546744,
+      "all_2026": 28.242209631728045,
+      "all_17": 28.11473087818697,
+      "all_43": 27.596317280453256
+    }
+  },
+  "purged": {
+    "mae_s": 37.03045325779037,
+    "rows": 4139,
+    "seed_mae_s": {
+      "ctx_2026": 38.56232294617564,
+      "ctx_17": 37.906515580736546,
+      "ctx_43": 38.57507082152974,
+      "all_2026": 37.10339943342776,
+      "all_17": 37.20963172804532,
+      "all_43": 37.69971671388102
+    }
+  },
+  "chronological_stress": {
+    "mae_s": 59.8563829787234,
+    "train_rows": 2961,
+    "audit_rows": 141,
+    "reference_sasha_mae_s": 57.79947695035462
+  },
+  "final_training_rows": 4787,
+  "submission_rows": 151
+}
