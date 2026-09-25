@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-test("official CatBoost predictions, archive clock, map and themes", async ({
+test("official Sasha predictions, archive clock, map and themes", async ({
   page,
   request,
 }) => {
@@ -27,7 +27,7 @@ test("official CatBoost predictions, archive clock, map and themes", async ({
       (v: any) =>
         v.forecast_horizon_sec > 600 &&
         v.forecast_horizon_sec <= 900 &&
-        v.forecast_model === "catboost-official-v1",
+        v.forecast_model === "sasha-extra-trees-v2",
     ),
   ).toBeTruthy();
   expect(
@@ -37,12 +37,12 @@ test("official CatBoost predictions, archive clock, map and themes", async ({
   ).toBeTruthy();
   await page.goto("/overview?source=official");
   await expect(
-    page.getByText("CatBoost · официальный датасет", { exact: true }),
+    page.getByText("ExtraTrees · официальный датасет", { exact: true }),
   ).toBeVisible();
-  await expect(page.getByText("62.7 с", { exact: true })).toBeVisible();
+  await expect(page.getByText("58.1 с", { exact: true })).toBeVisible();
   await expect(page.getByLabel("Горизонт прогноза в минутах")).toHaveCount(0);
   await page
-    .getByRole("button", { name: "Прогноз CatBoost", exact: true })
+    .getByRole("button", { name: "Прогноз ExtraTrees", exact: true })
     .click();
   await page
     .getByRole("button", { name: "Переключить карту в 3D", exact: true })
@@ -55,7 +55,7 @@ test("official CatBoost predictions, archive clock, map and themes", async ({
   ).toBeVisible();
   await expect(page.locator("body")).not.toContainText("nan");
   await page.screenshot({
-    path: "/private/tmp/transit-catboost-dark.png",
+    path: "/private/tmp/transit-sasha-dark.png",
     fullPage: true,
   });
   await page.getByRole("link", { name: "Аналитика", exact: true }).click();
@@ -71,7 +71,7 @@ test("official CatBoost predictions, archive clock, map and themes", async ({
   );
   await page.getByRole("link", { name: "Интеграции", exact: true }).click();
   await expect(
-    page.getByText("catboost-official-v1", { exact: false }),
+    page.getByText("sasha-extra-trees-v2", { exact: false }),
   ).toBeVisible({timeout: 20000});
   expect(errors).toEqual([]);
 });

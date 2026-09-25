@@ -471,7 +471,7 @@ export default function App() {
             <span className="demo-caption">
               <span className="status-dot" />
               {config.officialMode
-                ? "Официальные данные · CatBoost"
+                ? "Официальные данные · ExtraTrees"
                 : config.csvMode
                   ? "Воспроизведение CSV"
                   : config.dataSource === "mock"

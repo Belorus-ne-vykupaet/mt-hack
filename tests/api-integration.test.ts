@@ -46,6 +46,17 @@ const post = (url: string, body: unknown, key = "key-one", headers = {}) =>
     body: JSON.stringify(body),
   });
 describe("real HTTP integration API", () => {
+  it("allows local Docker dashboard reads but keeps dispatch writes authenticated", async () => {
+    const api = await start({
+      token: "local-demo-key-1234567890123456",
+      publicRead: true,
+    });
+    expect((await fetch(api.url + "/health")).status).toBe(200);
+    expect((await fetch(api.url + "/vehicles")).status).toBe(200);
+    expect(
+      (await post(api.url + "/dispatch/commands", { plan, mode: "save", revision: 0 })).status,
+    ).toBe(401);
+  });
   it("serves network and recommendations; applies, deduplicates, rejects conflicts and cancels commands", async () => {
     const api = await start();
     const input = { plan, mode: "apply", revision: 0 };

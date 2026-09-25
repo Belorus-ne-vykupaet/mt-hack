@@ -49,3 +49,17 @@ ml/data/
 ml/artifacts/*.csv
 ml/artifacts/*.parquet
 ml/artifacts/catboost_info/
+
+# Locally trained Sasha model and generated competition files
+.venv/
+*.py[cod]
+*.egg-info/
+data/
+work/
+/artifacts/
+/outputs/
+catboost_info/
+reports/*predictions.csv
+reports/example_request.json
+reports/example_response.json
+docker/local-data/

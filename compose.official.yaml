@@ -1,0 +1,77 @@
+name: transit-hub-official
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_DATA_SOURCE: api
+        VITE_OFFICIAL_MODE: "true"
+        NGINX_CONF: nginx.api.conf
+    ports:
+      - "127.0.0.1:8080:80"
+    depends_on:
+      api:
+        condition: service_healthy
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    environment:
+      API_HOST: 0.0.0.0
+      API_TOKEN: ${API_TOKEN:?Set a random API_TOKEN of at least 24 characters}
+      API_PUBLIC_READ: "true"
+      API_ORIGINS: http://localhost:8080,http://127.0.0.1:8080
+      API_JOURNAL: /app/server/data/official-commands.json
+      OFFICIAL_BACKEND_URL: http://backend:8093
+      WEATHER_ENABLED: "false"
+    volumes:
+      - dispatch-journal:/app/server/data
+    ports:
+      - "127.0.0.1:8081:8081"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8081/api/v1/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    depends_on:
+      backend:
+        condition: service_healthy
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.python
+    command: ["uvicorn", "transit_ml.backend:app", "--host", "0.0.0.0", "--port", "8093", "--no-access-log"]
+    environment:
+      OFFICIAL_DATA_DIR: /app/ml/data/official
+      ML_URL: http://ml:8092
+      TELEMETRY_MODE: ${TELEMETRY_MODE:-replay}
+      LIVE_PLAN_DIR: ${LIVE_PLAN_DIR:-}
+      NDTP_HOST: 0.0.0.0
+      REPLAY_START: ${REPLAY_START:-2026-01-06 07:27:00}
+      REPLAY_SPEED: ${REPLAY_SPEED:-0.25}
+    ports:
+      - "127.0.0.1:8093:8093"
+      - "127.0.0.1:9201:9201"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8093/status', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    depends_on:
+      ml:
+        condition: service_healthy
+  ml:
+    build:
+      context: .
+      dockerfile: Dockerfile.python
+    command: ["uvicorn", "transit_ml.inference:app", "--host", "0.0.0.0", "--port", "8092", "--no-access-log"]
+    ports:
+      - "127.0.0.1:8092:8092"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8092/health', timeout=2)"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+volumes:
+  dispatch-journal:

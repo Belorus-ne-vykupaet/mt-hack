@@ -1,0 +1,12 @@
+FROM python:3.12-slim
+WORKDIR /app
+ENV PYTHONUNBUFFERED=1 OMP_NUM_THREADS=4 PYTHONPATH=/app/ml:/app/src
+RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 && rm -rf /var/lib/apt/lists/*
+COPY ml/requirements-runtime.txt ./requirements-runtime.txt
+COPY src/mt_hack ./src/mt_hack
+RUN pip install --no-cache-dir -r requirements-runtime.txt
+COPY ml/transit_ml ./ml/transit_ml
+COPY docker/local-data/test/schedule.csv docker/local-data/test/traffic.csv ./ml/data/official/test/
+COPY docker/local-data/live ./ml/data/live
+COPY ml/artifacts/delay.cbm ml/artifacts/late.cbm ml/artifacts/metrics.json ./ml/artifacts/
+COPY ml/artifacts/sasha ./ml/artifacts/sasha

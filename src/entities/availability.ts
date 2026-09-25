@@ -6,7 +6,7 @@ export function forecastAvailability(item: PredictionAvailability): string {
     case "stale_gps": return "GPS устарел · прогноз недоступен";
     case "unavailable": return "Прогноз недоступен";
     case "fallback": return "Резервный прогноз";
-    default: return item.hasForecast === false ? "Нет прогноза" : "Прогноз CatBoost";
+    default: return item.hasForecast === false ? "Нет прогноза" : "Прогноз ML";
   }
 }
 export function telemetryAge(vehicle: Vehicle): string {

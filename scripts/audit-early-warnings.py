@@ -1,7 +1,7 @@
 """Replay the official stream through the real model and audit first warning times.
 
 Run from the repository root:
-    PYTHONPATH=ml ml/.venv/bin/python scripts/audit-early-warnings.py
+    PYTHONPATH=ml:src ml/.venv/bin/python scripts/audit-early-warnings.py
 
 Future actual arrivals are read only after inference to verify issue timing.
 """

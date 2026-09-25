@@ -43,6 +43,15 @@ def finite(record):
     }
 
 
+def finite_number(value):
+    """Keep missing NDTP fields nullable in JSON instead of emitting NaN."""
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if math.isfinite(number) else None
+
+
 def stop(row, sequence=0):
     return {
         "id": str(row["tt_action_item_id"]),
@@ -168,6 +177,18 @@ class Engine:
                 int(k): int(v)
                 for k, v in json.loads((live / "unit-map.json").read_text()).items()
             }
+        self.model_plans = {
+            tr: [
+                {
+                    "tt_action_item_id": int(row.tt_action_item_id),
+                    "tr_id": tr,
+                    "time_begin": str(row.time_begin),
+                    "geom": str(row.geom),
+                }
+                for row in plan.itertuples()
+            ]
+            for tr, plan in self.plans.items()
+        }
         self.catalog = []
         self.geometry = []
         self.series = deque(maxlen=240)
@@ -331,7 +352,31 @@ class Engine:
                     feature = self.dataset.feature(point, h)
                     targets[vehicle_id] = target
                     features[vehicle_id] = feature
-                    items.append({"vehicleId": vehicle_id, "features": finite(feature)})
+                    items.append({
+                        "vehicleId": vehicle_id,
+                        "features": finite(feature),
+                        "point": {
+                            "sample_id": vehicle_id,
+                            "tr_id": tr,
+                            "T": timestamp,
+                            "target_stop_id": int(target["tt_action_item_id"]),
+                            "target_time_begin": str(target["time_begin"]),
+                            "cur_dev_s": finite_number(cur),
+                        },
+                        "telemetry": [
+                            {
+                                "tr_id": tr,
+                                "event_time": iso(float(row.ts)),
+                                "location_valid": bool(row.location_valid),
+                                "lon": finite_number(row.lon),
+                                "lat": finite_number(row.lat),
+                                "speed": finite_number(row.speed),
+                                "heading": finite_number(row.heading),
+                            }
+                            for row in h.itertuples()
+                        ],
+                        "schedule": self.model_plans[tr],
+                    })
                 vehicles.append(
                     {
                         "id": vehicle_id,
@@ -382,7 +427,7 @@ class Engine:
             if items:
                 try:
                     response = await self.client.post(
-                        self.ml_url + "/predict",
+                        self.ml_url + "/predict/raw",
                         json={"asOf": timestamp, "items": items},
                     )
                     response.raise_for_status()
@@ -507,7 +552,7 @@ class Engine:
                         "title": f"ТС {v['id'].removeprefix('vehicle-')} · {v['next_stop']['name']}",
                         "description": f"Остановка через {lead_time / 60:.1f} мин · план {iso(target['ts'])[11:16]}, ожидается {iso(eta)[11:16]} (часы CSV). Наблюдаемый фактор: {reason}. "
                         + (
-                            "CatBoost; вероятность опоздания >120 с."
+                            "ExtraTrees; вероятность опоздания >120 с по отдельному классификатору."
                             if self.status == "connected"
                             else "ML недоступен: текущая задержка сохранится, вероятность не оценена."
                         ),
@@ -572,7 +617,9 @@ async def lifespan(app):
         engine.client = client
         pump = asyncio.create_task(engine.stream_forecasts()) if engine.mode == "ndtp" else None
         tcp = await asyncio.start_server(
-            engine.receiver.handle, "127.0.0.1", int(os.getenv("NDTP_PORT", "9201"))
+            engine.receiver.handle,
+            os.getenv("NDTP_HOST", "127.0.0.1"),
+            int(os.getenv("NDTP_PORT", "9201")),
         )
         try:
             async with tcp:

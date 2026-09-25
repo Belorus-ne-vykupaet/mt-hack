@@ -11,3 +11,10 @@ server/.env
 server/data
 test-results-api
 test-results-csv
+ml/data
+work
+artifacts
+outputs
+__pycache__
+.pytest_cache
+.venv

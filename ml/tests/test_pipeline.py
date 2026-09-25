@@ -124,7 +124,7 @@ def test_backend_ml_failure_fallback_and_recovery(monkeypatch):
     asyncio.run(run())
 
 
-def test_live_ndtp_features_to_real_catboost(tmp_path, monkeypatch):
+def test_live_ndtp_features_to_real_sasha_model(tmp_path, monkeypatch):
     """A current binary navigation frame + matching plan reaches the actual loaded ML model."""
     import struct
     import time
@@ -190,7 +190,7 @@ def test_live_ndtp_features_to_real_catboost(tmp_path, monkeypatch):
             assert engine.status == "connected" and len(result["vehicles"]) == 1
             v = result["vehicles"][0]
             assert (
-                v["id"] == "vehicle-1" and v["forecast_model"] == "catboost-official-v1"
+            v["id"] == "vehicle-1" and v["forecast_model"] == "sasha-extra-trees-v2"
             )
             assert 600 < v["forecast_horizon_sec"] <= 900 and np.isfinite(
                 v["predicted_delay_sec"]

@@ -26,7 +26,7 @@ export function Timeline({ compact = false }: { compact?: boolean }) {
             className={ui.forecastOffsetMin !== 0 ? "active" : ""}
             onClick={() => ui.set({ forecastOffsetMin: 15 })}
           >
-            Прогноз CatBoost
+            Прогноз ExtraTrees
           </button>
         </div>
         <span className="forecast-live">

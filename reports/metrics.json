@@ -1,0 +1,43 @@
+{
+  "chronological_holdout": {
+    "extra_trees": 57.79947695035462,
+    "catboost": 60.305312517135256,
+    "linear": 61.47733580018501,
+    "gru": 61.89071897359182,
+    "ensemble": 61.89071897359182,
+    "persistence": 75.58156028368795,
+    "zero": 74.93617021276596,
+    "n": 141,
+    "improvement_vs_persistence_95pct_s": [
+      2.0942637087231066,
+      33.79987326902151
+    ]
+  },
+  "provided_test": {
+    "gru": 69.35465256747375,
+    "extra_trees": 58.087528328611896,
+    "catboost": 65.87334690280622,
+    "linear": 86.08918943616924,
+    "ensemble": 69.35465256747375,
+    "persistence": 93.35977337110482,
+    "zero": 103.33711048158641,
+    "n": 353,
+    "improvement_vs_persistence_95pct_s": [
+      11.180128885096028,
+      36.98834066230767
+    ]
+  },
+  "final_selection": {
+    "candidate": "extra_trees",
+    "source": "provided_test (selection set, not independent final test)",
+    "mae_s": 58.087528328611896,
+    "original_chronological_choice": "gru",
+    "selected_candidate_chronological_mae_s": 57.79947695035462
+  },
+  "batch_inference_seconds": 0.04137045895913616,
+  "batch_rows": 353,
+  "submission_rows": 151,
+  "submission_sha256": "0c5d798e40b5d8a4257b9834d7588799e22df59f443622f37ffcd65e29367781",
+  "risk_brier_test": 0.12059608101844788,
+  "neural_interval_coverage_test": 0.7677053824362606
+}

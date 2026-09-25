@@ -26,8 +26,12 @@
     "demo": "pnpm build && node scripts/start-demo.mjs",
     "test:api": "playwright test --config playwright.api.config.ts",
     "hackathon": "node scripts/start-hackathon.mjs",
+    "docker:official": "node scripts/start-official-docker.mjs",
     "ml:train": "PYTHONPATH=ml ml/.venv/bin/python -m transit_ml.train",
-    "ml:test": "PYTHONPATH=ml ml/.venv/bin/python -m pytest ml/tests -q"
+    "ml:sasha:features": "PYTHONPATH=src ml/.venv/bin/python -m mt_hack.features --data ml/data/official --out ml/data/sasha-features",
+    "ml:sasha:train": "PYTHONPATH=src ml/.venv/bin/python -m mt_hack.train --features ml/data/sasha-features --out ml/artifacts/sasha --reports reports",
+    "ml:sasha:submission": "PYTHONPATH=src ml/.venv/bin/python -m mt_hack.predict --data ml/data/official --model ml/artifacts/sasha --out ml/artifacts/submission-sasha.csv",
+    "ml:test": "PYTHONPATH=ml:src ml/.venv/bin/python -m pytest ml/tests tests/test_causality.py tests/test_submission.py -q"
   },
   "dependencies": {
     "@deck.gl/core": "^9.3.0",

@@ -4,7 +4,8 @@ const python = process.env.TRANSIT_PYTHON || "ml/.venv/bin/python";
 if (
   !existsSync(python) ||
   !existsSync("ml/data/official/test/traffic.csv") ||
-  !existsSync("ml/artifacts/delay.cbm")
+  !existsSync("ml/artifacts/delay.cbm") ||
+  !existsSync("ml/artifacts/sasha/ensemble.joblib")
 ) {
   console.error(
     "Сначала подготовьте Python, официальные CSV и модель по ml/README.md.",
@@ -53,7 +54,7 @@ try {
       "--port",
       "8092",
     ],
-    { PYTHONPATH: "ml" },
+    { PYTHONPATH: "ml:src" },
   );
   await ready("http://127.0.0.1:8092/health");
   run(
@@ -67,7 +68,7 @@ try {
       "--port",
       "8093",
     ],
-    { PYTHONPATH: "ml" },
+    { PYTHONPATH: "ml:src" },
   );
   await ready("http://127.0.0.1:8093/status");
   run(

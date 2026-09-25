@@ -19,6 +19,7 @@ const { server, close } = createApi({
   official,
   journal: process.env.API_JOURNAL || "server/data/commands.json",
   token: process.env.API_TOKEN,
+  publicRead: process.env.API_PUBLIC_READ === "true" && !!official,
   origins: process.env.API_ORIGINS?.split(","),
   weather: process.env.WEATHER_ENABLED !== "false",
   yandexWeatherKey: process.env.YANDEX_WEATHER_KEY,

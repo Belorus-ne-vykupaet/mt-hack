@@ -21,6 +21,7 @@ export interface ServerOptions {
   official?: OfficialSource;
   journal?: string;
   token?: string;
+  publicRead?: boolean;
   origins?: string[];
   weather?: boolean;
   trafficKey?: string;
@@ -213,7 +214,7 @@ export function createApi(options: ServerOptions = {}) {
           );
         return json(res, 200, { authenticated: true });
       }
-      if (!authorized(req))
+      if (!authorized(req) && !(options.publicRead && req.method === "GET"))
         throw new ApiError(401, "Требуется вход в API. Откройте «Интеграции».");
       if (req.method === "GET" && path === "/health")
         return json(res, 200, {
@@ -524,7 +525,7 @@ export function createApi(options: ServerOptions = {}) {
     if (
       new URL(req.url!, "http://localhost").pathname !== "/api/v1/stream" ||
       !allowedOrigin(req) ||
-      !authorized(req)
+      (!authorized(req) && !options.publicRead)
     ) {
       socket.write("HTTP/1.1 403 Forbidden\r\n\r\n");
       socket.destroy();

@@ -44,14 +44,14 @@ export function ModelStatus() {
   return (
     <section
       className={`model-status ${ready ? "" : "model-status-warning"}`}
-      aria-label="Статус модели CatBoost"
+      aria-label="Статус модели прогноза"
     >
       <div className="model-status-heading">
         {ready ? <BrainCircuit size={22} /> : <AlertTriangle size={22} />}
         <div>
           <strong>
             {ready
-              ? "CatBoost · официальный датасет"
+              ? "ExtraTrees · официальный датасет"
               : s?.status === "fallback"
                 ? "Резервный прогноз · модель недоступна"
                 : s?.status === "no_targets"
@@ -70,7 +70,7 @@ export function ModelStatus() {
       {s?.metrics && (
         <div className="model-status-metrics">
           <span>
-            MAE на тесте <b>{s.metrics.maeSec.toFixed(1)} с</b>
+            MAE на тестовом сплите <b>{s.metrics.maeSec.toFixed(1)} с</b>
           </span>
           <span>
             Базовый прогноз <b>{s.metrics.persistenceMaeSec.toFixed(1)} с</b>
@@ -96,6 +96,7 @@ export function ModelStatus() {
           через 10–15 минут и вероятность опоздания более 120 секунд.
           Используются только наблюдения, уже доступные к моменту прогноза.
           Вероятности отдельного классификатора пока не откалиброваны.
+          Модель задержки выбрана по доступному тестовому сплиту; оценка на скрытых данных может отличаться.
         </p>
         <p>
           {s?.metrics?.trainRows} обучающих примеров · {s?.metrics?.testRows}{" "}

@@ -80,7 +80,7 @@ export function AlertsPanel({ alerts }: { alerts: Alert[] }) {
               <div className="alert-location">
                 <MapPin size={12} />
                 {config.officialMode && a.targetTime && a.expectedArrivalAt
-                  ? `План ${time(a.targetTime)} → ожидается ${time(a.expectedArrivalAt)}. Наблюдаемый фактор: ${a.observedFactor ?? "данные телеметрии"}. ${a.modelStatus === "fallback" ? "ML недоступен; резервная оценка." : "Прогноз CatBoost."}`
+                  ? `План ${time(a.targetTime)} → ожидается ${time(a.expectedArrivalAt)}. Наблюдаемый фактор: ${a.observedFactor ?? "данные телеметрии"}. ${a.modelStatus === "fallback" ? "ML недоступен; резервная оценка." : "Прогноз ExtraTrees."}`
                   : a.description}
               </div>
               <div className="alert-bottom">
