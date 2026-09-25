@@ -1,0 +1,71 @@
+name: Android app
+
+on:
+  push:
+    branches: [main, zhenya]
+    paths:
+      - "src/**"
+      - "public/**"
+      - "index.html"
+      - "android/**"
+      - "capacitor.config.ts"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "scripts/android-smoke.mjs"
+      - ".github/workflows/android.yml"
+  workflow_dispatch:
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: corepack enable && pnpm install --frozen-lockfile
+      # Demo build: the app carries its own demo stream, no server is needed on the phone.
+      - run: pnpm build
+      - run: pnpm exec cap sync android
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: ./gradlew assembleDebug --no-daemon
+        working-directory: android
+      - run: cp android/app/build/outputs/apk/debug/app-debug.apk transit-hub.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: transit-hub-apk
+          path: transit-hub.apk
+
+  emulator-smoke:
+    needs: apk
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: corepack enable && pnpm install --frozen-lockfile
+      - uses: actions/download-artifact@v4
+        with:
+          name: transit-hub-apk
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: true
+          script: bash scripts/android-smoke.sh
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-smoke
+          path: android-smoke/

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Transit Hub</string>
+    <string name="title_activity_main">Transit Hub</string>
+    <string name="package_name">ru.transithub.dispatcher</string>
+    <string name="custom_url_scheme">ru.transithub.dispatcher</string>
+</resources>
