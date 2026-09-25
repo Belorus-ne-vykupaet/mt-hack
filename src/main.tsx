@@ -16,6 +16,8 @@ import "@fontsource/ibm-plex-mono/latin-500.css";
 import "./styles/base.css";
 import "./app/theme";
 import Root from "./app/Root";
+import { startInstallSupport } from "./app/install";
+startInstallSupport();
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <BrowserRouter>

@@ -42,6 +42,7 @@ import { NetworkList } from "../widgets/NetworkList";
 import type { NetworkListKind } from "../widgets/NetworkList";
 import { NetworkStatus } from "../widgets/NetworkStatus";
 import { HeaderStatus } from "../widgets/HeaderStatus";
+import { InstallApp } from "../widgets/InstallApp";
 import { installWebMcp } from "./webmcp";
 import { recordTrail } from "../entities/vehicle-trail";
 import { prepareRoutePaths } from "../entities/vehicle-motion";
@@ -220,6 +221,7 @@ export default function App() {
             {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
             <span>{theme === "dark" ? "Светлая тема" : "Тёмная тема"}</span>
           </button>
+          <InstallApp />
           <HeaderStatus />
         </div>
       </header>

@@ -3130,3 +3130,24 @@ h1 {
   color: var(--muted);
   font-size: 11px;
 }
+
+.install-app {
+  position: relative;
+  flex-shrink: 0;
+}
+.install-hint {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 30;
+  width: 230px;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 12px;
+  line-height: 1.4;
+  box-shadow: 0 8px 24px #0003;
+}
