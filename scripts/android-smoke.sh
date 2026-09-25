@@ -13,4 +13,7 @@ node scripts/android-smoke.mjs || status=$?
 adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS > /dev/null || true
 adb exec-out screencap -p > android-smoke/device.png
 adb logcat -d -s "Capacitor/Console:*" "Capacitor:*" "chromium:*" > android-smoke/logcat.txt || true
+adb logcat -d > android-smoke/logcat-full.txt || true
+adb shell dumpsys activity exit-info ru.transithub.dispatcher > android-smoke/exit-info.txt || true
+echo "alive after test: $(adb shell pidof ru.transithub.dispatcher | tr -d '')"
 exit $status

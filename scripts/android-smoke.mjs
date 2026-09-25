@@ -15,6 +15,7 @@ for (let i = 0; i < 30 && !target; i++) {
 if (!target) throw new Error("No WebView page to inspect");
 
 const ws = new WebSocket(target.webSocketDebuggerUrl);
+const closed = new Promise((resolve) => ws.once("close", resolve));
 await new Promise((resolve, reject) => ws.once("open", resolve).once("error", reject));
 let nextId = 0;
 const pending = new Map(),
@@ -29,8 +30,15 @@ ws.on("message", (raw) => {
     errors.push(d.exception?.description ?? d.text);
   }
 });
+let alive = true;
+closed.then(() => {
+  alive = false;
+  for (const reply of pending.values()) reply({ error: { message: "WebView connection closed" } });
+  pending.clear();
+});
 const send = (method, params = {}) =>
   new Promise((resolve, reject) => {
+    if (!alive) return reject(new Error(`${method}: WebView connection closed`));
     const id = ++nextId;
     pending.set(id, (m) => (m.error ? reject(new Error(`${method}: ${m.error.message}`)) : resolve(m.result)));
     ws.send(JSON.stringify({ id, method, params }));
@@ -52,6 +60,9 @@ try {
   await waitFor(`!!document.querySelector(".connection.connected")`, 90000);
   await sleep(3000);
   await shot("android-smoke/overview.png");
+  // Stay on the overview while the WebGL map starts: a crash here is the map, not the dispatcher.
+  await sleep(20000);
+  await shot("android-smoke/overview-map.png");
   await evaluate(`history.pushState({}, "", "/dispatch"); dispatchEvent(new PopStateEvent("popstate")); true`);
   await waitFor(`document.querySelectorAll(".dispatch-queue-item").length > 0`, 60000);
   await sleep(2000);
@@ -60,15 +71,15 @@ try {
   failure = error.message;
   await shot("android-smoke/failure.png").catch(() => undefined);
 }
-const report = await evaluate(`({
+const report = alive ? await evaluate(`({
   url: location.href,
   width: innerWidth,
   horizontalScroll: document.documentElement.scrollWidth > innerWidth,
   connection: document.querySelector(".connection")?.className ?? null,
   queue: document.querySelectorAll(".dispatch-queue-item").length,
   decision: document.querySelector(".decision-card h4")?.textContent ?? null,
-})`);
-Object.assign(report, { errors, failure });
+})`).catch(() => ({})) : {};
+Object.assign(report, { errors, failure, webviewAlive: alive });
 writeFileSync("android-smoke/report.json", JSON.stringify(report, null, 2));
 console.log(JSON.stringify(report, null, 2));
 ws.close();
