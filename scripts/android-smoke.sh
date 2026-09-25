@@ -10,6 +10,7 @@ pid=$(adb shell pidof ru.transithub.dispatcher | tr -d '\r')
 adb forward tcp:9222 "localabstract:webview_devtools_remote_${pid}"
 status=0
 node scripts/android-smoke.mjs || status=$?
+adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS > /dev/null || true
 adb exec-out screencap -p > android-smoke/device.png
 adb logcat -d -s "Capacitor/Console:*" "Capacitor:*" "chromium:*" > android-smoke/logcat.txt || true
 exit $status

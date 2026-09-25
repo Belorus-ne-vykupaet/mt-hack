@@ -8,7 +8,8 @@ const config: CapacitorConfig = {
   backgroundColor: "#173037",
   plugins: {
     // Light status-bar icons over the dark header colour.
-    SystemBars: { style: "DARK" },
+    // "native" pads the WebView under the system bars without injecting CSS variables.
+    SystemBars: { style: "DARK", insetsHandling: "native" },
   },
 };
 

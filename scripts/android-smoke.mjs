@@ -1,32 +1,75 @@
-// Drives the app inside the emulator's WebView: overview, then the dispatcher.
-import { chromium } from "@playwright/test";
+// Drives the app inside the emulator's WebView over the raw DevTools protocol:
+// waits for the demo stream, opens the dispatcher and saves screenshots and a report.
+import WebSocket from "ws";
 import { writeFileSync } from "node:fs";
 
-const browser = await chromium.connectOverCDP("http://127.0.0.1:9222");
-const page = browser.contexts()[0].pages()[0];
-const errors = [];
-page.on("pageerror", (e) => errors.push(e.message));
-await page.waitForSelector(".header", { timeout: 90000 });
-await page.waitForFunction(
-  () => document.querySelector(".connection")?.classList.contains("connected"),
-  null,
-  { timeout: 90000 },
-);
-await page.screenshot({ path: "android-smoke/overview.png" });
-await page.evaluate(() => {
-  history.pushState({}, "", "/dispatch");
-  dispatchEvent(new PopStateEvent("popstate"));
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+let target;
+for (let i = 0; i < 30 && !target; i++) {
+  try {
+    const targets = await (await fetch("http://127.0.0.1:9222/json")).json();
+    target = targets.find((t) => t.type === "page");
+  } catch {}
+  if (!target) await sleep(1000);
+}
+if (!target) throw new Error("No WebView page to inspect");
+
+const ws = new WebSocket(target.webSocketDebuggerUrl);
+await new Promise((resolve, reject) => ws.once("open", resolve).once("error", reject));
+let nextId = 0;
+const pending = new Map(),
+  errors = [];
+ws.on("message", (raw) => {
+  const m = JSON.parse(raw.toString());
+  if (m.id && pending.has(m.id)) {
+    pending.get(m.id)(m);
+    pending.delete(m.id);
+  } else if (m.method === "Runtime.exceptionThrown") {
+    const d = m.params.exceptionDetails;
+    errors.push(d.exception?.description ?? d.text);
+  }
 });
-await page.waitForSelector(".dispatch-queue-item", { timeout: 60000 });
-await page.screenshot({ path: "android-smoke/dispatch.png" });
-const report = await page.evaluate(() => ({
+const send = (method, params = {}) =>
+  new Promise((resolve, reject) => {
+    const id = ++nextId;
+    pending.set(id, (m) => (m.error ? reject(new Error(`${method}: ${m.error.message}`)) : resolve(m.result)));
+    ws.send(JSON.stringify({ id, method, params }));
+  });
+const evaluate = async (expression) =>
+  (await send("Runtime.evaluate", { expression, awaitPromise: true, returnByValue: true })).result.value;
+async function waitFor(expression, ms) {
+  for (const end = Date.now() + ms; Date.now() < end; await sleep(500))
+    if (await evaluate(expression)) return;
+  throw new Error(`Timed out waiting for ${expression}`);
+}
+const shot = async (path) =>
+  writeFileSync(path, Buffer.from((await send("Page.captureScreenshot", { format: "png" })).data, "base64"));
+
+await send("Runtime.enable");
+let failure = null;
+try {
+  await waitFor(`!!document.querySelector(".header")`, 90000);
+  await waitFor(`!!document.querySelector(".connection.connected")`, 90000);
+  await sleep(3000);
+  await shot("android-smoke/overview.png");
+  await evaluate(`history.pushState({}, "", "/dispatch"); dispatchEvent(new PopStateEvent("popstate")); true`);
+  await waitFor(`document.querySelectorAll(".dispatch-queue-item").length > 0`, 60000);
+  await sleep(2000);
+  await shot("android-smoke/dispatch.png");
+} catch (error) {
+  failure = error.message;
+  await shot("android-smoke/failure.png").catch(() => undefined);
+}
+const report = await evaluate(`({
   url: location.href,
   width: innerWidth,
   horizontalScroll: document.documentElement.scrollWidth > innerWidth,
+  connection: document.querySelector(".connection")?.className ?? null,
   queue: document.querySelectorAll(".dispatch-queue-item").length,
   decision: document.querySelector(".decision-card h4")?.textContent ?? null,
-}));
-writeFileSync("android-smoke/report.json", JSON.stringify({ ...report, errors }, null, 2));
-console.log(report, errors);
-await browser.close();
-if (!report.queue || errors.length) process.exit(1);
+})`);
+Object.assign(report, { errors, failure });
+writeFileSync("android-smoke/report.json", JSON.stringify(report, null, 2));
+console.log(JSON.stringify(report, null, 2));
+ws.close();
+if (failure || errors.length || !report.queue) process.exit(1);
