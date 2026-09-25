@@ -1,0 +1,285 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Transport ML",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/predict": {
+      "post": {
+        "summary": "Predict",
+        "operationId": "predict_predict_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PredictRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "PlanStop": {
+        "properties": {
+          "tt_action_item_id": {
+            "type": "integer",
+            "title": "Tt Action Item Id"
+          },
+          "tr_id": {
+            "type": "integer",
+            "title": "Tr Id"
+          },
+          "time_begin": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Time Begin"
+          },
+          "geom": {
+            "type": "string",
+            "title": "Geom"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tt_action_item_id",
+          "tr_id",
+          "time_begin",
+          "geom"
+        ],
+        "title": "PlanStop"
+      },
+      "Point": {
+        "properties": {
+          "sample_id": {
+            "type": "string",
+            "title": "Sample Id"
+          },
+          "tr_id": {
+            "type": "integer",
+            "title": "Tr Id"
+          },
+          "T": {
+            "type": "string",
+            "format": "date-time",
+            "title": "T"
+          },
+          "target_stop_id": {
+            "type": "integer",
+            "title": "Target Stop Id"
+          },
+          "target_time_begin": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Target Time Begin"
+          },
+          "cur_dev_s": {
+            "type": "number",
+            "title": "Cur Dev S"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sample_id",
+          "tr_id",
+          "T",
+          "target_stop_id",
+          "target_time_begin",
+          "cur_dev_s"
+        ],
+        "title": "Point"
+      },
+      "PredictRequest": {
+        "properties": {
+          "point": {
+            "$ref": "#/components/schemas/Point"
+          },
+          "telemetry": {
+            "items": {
+              "$ref": "#/components/schemas/Telemetry"
+            },
+            "type": "array",
+            "maxItems": 10000,
+            "title": "Telemetry"
+          },
+          "schedule": {
+            "items": {
+              "$ref": "#/components/schemas/PlanStop"
+            },
+            "type": "array",
+            "maxItems": 10000,
+            "minItems": 1,
+            "title": "Schedule"
+          }
+        },
+        "type": "object",
+        "required": [
+          "point",
+          "schedule"
+        ],
+        "title": "PredictRequest"
+      },
+      "Telemetry": {
+        "properties": {
+          "tr_id": {
+            "type": "integer",
+            "title": "Tr Id"
+          },
+          "event_time": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Event Time"
+          },
+          "location_valid": {
+            "type": "boolean",
+            "title": "Location Valid",
+            "default": false
+          },
+          "lon": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lon"
+          },
+          "lat": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lat"
+          },
+          "speed": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speed"
+          },
+          "heading": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Heading"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tr_id",
+          "event_time"
+        ],
+        "title": "Telemetry"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

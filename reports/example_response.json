@@ -1,0 +1,18 @@
+{
+  "sample_id": "131672_1767670500",
+  "prediction_s": 69.7075,
+  "neural_late_probability": 0.037654295563697815,
+  "neural_q10_s": -137.33628845214844,
+  "neural_q90_s": 70.3313217163086,
+  "forecast_time": "2026-01-06T03:35:00",
+  "target_time": "2026-01-06T03:50:00",
+  "horizon_s": 900.0,
+  "telemetry_age_s": 15.0,
+  "data_status": "fresh",
+  "observed_patterns": [
+    "Уже накоплена задержка более двух минут"
+  ],
+  "patterns_are_causal_explanations": false,
+  "probability_is_calibrated": false,
+  "latency_ms": 143.6636250000447
+}

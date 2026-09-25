@@ -1,0 +1,26 @@
+{
+  "weights": {
+    "gru": 1.0,
+    "extra_trees": 0.0,
+    "linear": 0.0
+  },
+  "extra_trees_leaf": 5,
+  "neural_epochs": [
+    38,
+    43,
+    28
+  ],
+  "train_count": 2961,
+  "tune_count": 186,
+  "audit_count": 141,
+  "cutoff": "2026-01-06 16:00:00",
+  "embargo_seconds": 1800,
+  "audit_start": "2026-01-06 20:00:00",
+  "tune_mae": {
+    "gru": 93.4467988268983,
+    "extra_trees": 103.10579973118278,
+    "catboost": 99.76841036360196,
+    "linear": 114.66584852734923
+  },
+  "tune_ensemble_mae": 93.4467988268983
+}

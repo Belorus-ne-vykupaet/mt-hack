@@ -1,0 +1,9 @@
+.git
+.venv
+data
+work
+outputs
+artifacts
+Предиктор*
+__pycache__
+.pytest_cache

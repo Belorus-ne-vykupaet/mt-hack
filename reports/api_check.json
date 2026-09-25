@@ -1,0 +1,8 @@
+{
+  "status": "passed",
+  "offline_online_prediction_equal": true,
+  "missing_telemetry_supported": true,
+  "n_runs": 10,
+  "p50_ms": 58.687999997346196,
+  "p95_ms": 59.76227909886802
+}
