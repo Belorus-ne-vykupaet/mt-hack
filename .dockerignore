@@ -8,6 +8,7 @@ playwright-report
 test-results
 
 server/.env
+server/weather-demo.env
 server/data
 test-results-api
 test-results-csv

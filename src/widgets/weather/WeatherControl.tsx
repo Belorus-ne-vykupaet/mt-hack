@@ -291,6 +291,12 @@ export function WeatherControl({
               <ExternalLink size={15} />
             </a>
           </div>
+          {config.officialMode && (
+            <p className="weather-note">
+              Погода показывает текущий момент, а движение автобусов — архивный
+              поток. Этот слой не участвует в прогнозе задержек.
+            </p>
+          )}
           {message && prefs.enabled && (
             <p className="weather-status" role="status">
               {message}
