@@ -16,7 +16,7 @@ test("official CatBoost predictions, archive clock, map and themes", async ({
       state.scheduledStale + state.scheduledWithoutPosition,
   ).toBe(state.scheduledVehicles);
   const network = await (await request.get("/api/v1/vehicles")).json();
-  expect(network.items.length).toBeGreaterThanOrEqual(20);
+  expect(network.items.length).toBeGreaterThanOrEqual(18);
   const predicted = network.items.filter((v: any) => v.forecast_status === "ready");
   expect(predicted.length).toBeGreaterThan(0);
   expect(predicted.length).toBeLessThan(network.items.length);
@@ -87,7 +87,7 @@ test("all GPS buses remain available in 2D, 3D and cards without a forecast", as
   expect(noPlan).toBeTruthy();
   expect(stale).toBeTruthy();
   const geometry = await (await request.get("/api/v1/routes/geometry")).json();
-  expect(geometry.items.length).toBeGreaterThanOrEqual(20);
+  expect(geometry.items.length).toBeGreaterThanOrEqual(18);
   expect(geometry.items.flatMap((g: any) => g.properties.observed_paths || []).length).toBeGreaterThan(20);
   const roadReference = await (await request.get("/data/official-road-routes.json")).json();
   expect(roadReference.routes.length).toBeGreaterThanOrEqual(12);
@@ -97,11 +97,11 @@ test("all GPS buses remain available in 2D, 3D and cards without a forecast", as
   await page.goto("/overview?source=official");
   await expect(page.getByLabel("Полнота транспортных данных")).toContainText("30 ТС");
   await expect(page.getByLabel("Полнота транспортных данных")).toContainText("17 контекстных");
-  await expect(page.locator("[data-visible-vehicles]")).toHaveAttribute("data-visible-vehicles", /2[0-3]/);
+  await expect(page.locator("[data-visible-vehicles]")).toHaveAttribute("data-visible-vehicles", String(items.length));
   await expect(page.locator("[data-road-paths]")).toHaveAttribute("data-road-paths", /[1-9][0-9]/);
   for (const mode of ["3D", "2D", "3D"]) {
     await page.getByRole("button", {name: `Переключить карту в ${mode}`, exact: true}).click();
-    await expect(page.locator("[data-visible-vehicles]")).toHaveAttribute("data-visible-vehicles", /2[0-3]/);
+    await expect(page.locator("[data-visible-vehicles]")).toHaveAttribute("data-visible-vehicles", String(items.length));
   }
   await expect.poll(async () => Number(await page.locator(".map-shell").getAttribute("data-bus-models"))).toBeGreaterThan(0);
   expect(Number(await page.locator(".map-shell").getAttribute("data-bus-models")))

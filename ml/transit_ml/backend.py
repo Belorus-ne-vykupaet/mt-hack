@@ -133,9 +133,9 @@ class Engine:
         self.plans = {int(k): v for k, v in self.dataset.schedule.groupby("tr_id")}
         self.started = time.monotonic()
         self.start = pd.Timestamp(
-            os.getenv("REPLAY_START", "2026-01-06 11:55:00"), tz="UTC"
+            os.getenv("REPLAY_START", "2026-01-06 07:27:00"), tz="UTC"
         ).timestamp()
-        self.speed = float(os.getenv("REPLAY_SPEED", "1"))
+        self.speed = float(os.getenv("REPLAY_SPEED", "0.25"))
         self.mode = os.getenv("TELEMETRY_MODE", "replay")
         if self.mode not in ("replay", "ndtp"):
             raise ValueError("TELEMETRY_MODE must be replay or ndtp")

@@ -43,6 +43,36 @@ def test_model_schema_and_actual_inference():
         assert client.post("/predict", json=body).status_code == 422
 
 
+def test_default_replay_has_ten_real_targets_with_fresh_gps(monkeypatch):
+    monkeypatch.delenv("REPLAY_START", raising=False)
+    monkeypatch.delenv("REPLAY_SPEED", raising=False)
+    engine = Engine()
+
+    def predicted(request):
+        body = json.loads(request.content)
+        return httpx.Response(200, json={
+            "asOf": body["asOf"],
+            "latencyMs": 1,
+            "predictions": [
+                {"vehicleId": item["vehicleId"], "delaySec": 60, "lateProbability": 0.2}
+                for item in body["items"]
+            ],
+        })
+
+    async def run():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(predicted)) as client:
+            engine.client = client
+            return await engine.snapshot()
+
+    result = asyncio.run(run())
+    forecasted = [v for v in result["vehicles"] if v["forecast_status"] == "ready"]
+    assert result["summary"]["timestamp"].startswith("2026-01-06T07:27:")
+    assert result["summary"]["vehicles_predicted"] == len(forecasted) == 10
+    assert all(v["telemetry_age_sec"] <= 180 for v in forecasted)
+    assert all(600 < v["forecast_horizon_sec"] <= 900 for v in forecasted)
+    assert all(v["next_stop"] is not None for v in forecasted)
+
+
 def test_backend_ml_failure_fallback_and_recovery(monkeypatch):
     monkeypatch.setenv("REPLAY_SPEED", "0")
 
