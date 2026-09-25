@@ -90,9 +90,10 @@ def parse_frame(frame: bytes):
 class Receiver:
     """Bounded per-unit histories and idle timeout; reconnecting clients retain last known state."""
 
-    def __init__(self, max_units=1000):
+    def __init__(self, max_units=1000, on_packet=None):
         self.histories = {}
         self.max_units = max_units
+        self.on_packet = on_packet
         self.frames = 0
         self.errors = 0
         self.connections = 0
@@ -119,6 +120,8 @@ class Receiver:
                 history.append(row)
                 self.frames += 1
                 self.last_packet_at = time.time()
+                if self.on_packet is not None:
+                    self.on_packet(row)
         except (asyncio.IncompleteReadError, ConnectionError):
             pass
         except (ValueError, TimeoutError):

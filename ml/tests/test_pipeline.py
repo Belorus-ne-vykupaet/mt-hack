@@ -58,9 +58,9 @@ def test_backend_ml_failure_fallback_and_recovery(monkeypatch):
             assert s["vehicles"] and engine.status == "fallback"
             assert all(
                 v["current_delay_sec"] == v["predicted_delay_sec"]
-                for v in s["vehicles"]
+                for v in s["vehicles"] if v["forecast_status"] == "fallback"
             )
-            assert all(600 < v["forecast_horizon_sec"] <= 900 for v in s["vehicles"])
+            assert all(600 < v["forecast_horizon_sec"] <= 900 for v in s["vehicles"] if v["forecast_horizon_sec"] is not None)
 
         def recovered(request):
             body = json.loads(request.content)
@@ -87,9 +87,9 @@ def test_backend_ml_failure_fallback_and_recovery(monkeypatch):
         ) as client:
             engine.client = client
             s = await engine.snapshot()
-            assert engine.status == "connected" and all(
-                v["predicted_delay_sec"] == 123 for v in s["vehicles"]
-            )
+            ready = [v for v in s["vehicles"] if v["forecast_status"] == "ready"]
+            assert engine.status == "connected" and ready
+            assert all(v["predicted_delay_sec"] == 123 for v in ready)
 
     asyncio.run(run())
 

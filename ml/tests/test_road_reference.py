@@ -1,0 +1,55 @@
+"""Guard the checked-in offline OSM road reference against malformed paths."""
+
+import json
+import importlib.util
+import math
+from pathlib import Path
+
+import pandas as pd
+
+
+def test_official_road_reference_is_bounded_and_attributed():
+    root = Path(__file__).resolve().parents[2]
+    artifact = json.loads((root / "public/data/official-road-routes.json").read_text())
+    assert "OpenStreetMap" in artifact["source"]["roads"]
+    assert "ODbL" in artifact["source"]["roads"]
+    assert len(artifact["routes"]) >= 12
+    assert len({route["routeId"] for route in artifact["routes"]}) == len(artifact["routes"])
+    for route in artifact["routes"]:
+        assert route["source"] in {"schedule-stops", "gps-trace"}
+        assert route["paths"]
+        for path in route["paths"]:
+            assert len(path) >= 2
+            assert all(
+                len(point) == 2
+                and all(math.isfinite(value) for value in point)
+                and 37.0 <= point[0] <= 38.0
+                and 55.4 <= point[1] <= 56.1
+                for point in path
+            )
+            # A large coordinate jump means independent pieces were accidentally
+            # concatenated into an aerial straight line.
+            assert all(
+                math.hypot(
+                    (b[0] - a[0]) * math.cos(math.radians((a[1] + b[1]) / 2)),
+                    b[1] - a[1],
+                ) * 111195 < 500
+                for a, b in zip(path, path[1:])
+            )
+
+
+def test_plan_points_follow_full_timestamp_even_when_csv_rows_are_shuffled():
+    root = Path(__file__).resolve().parents[2]
+    spec = importlib.util.spec_from_file_location(
+        "build_official_road_routes", root / "scripts/build-official-road-routes.py"
+    )
+    builder = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(builder)
+    shuffled = pd.DataFrame([
+        {"ts": 3, "lon": 37.603, "lat": 55.7},
+        {"ts": 1, "lon": 37.601, "lat": 55.7},
+        {"ts": 2, "lon": 37.602, "lat": 55.7},
+    ])
+    assert builder.plan_stops(shuffled, 0, 4) == [[
+        (37.601, 55.7), (37.602, 55.7), (37.603, 55.7)
+    ]]

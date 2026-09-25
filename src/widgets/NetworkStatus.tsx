@@ -10,7 +10,7 @@ import type { Summary, Route, DelayPoint } from "../entities/models";
 import { Panel, RouteBadge } from "../shared/ui/primitives";
 import { Chart } from "../shared/ui/Chart";
 import { riskHex, riskInk, minutes, time } from "../shared/ui/format";
-import { useUi } from "../app/store";
+import { useConnection, useUi } from "../app/store";
 export function DelayChart({
   points,
   height = 164,
@@ -99,8 +99,10 @@ export function NetworkStatus({
   onShowRoutes: () => void;
 }) {
   const selectRoute = useUi((s) => s.selectRoute);
+  const connection = useConnection((s) => s.status);
+  const current = connection === "connected";
   const top = routes
-    .filter((r) => r.riskLevel !== "normal")
+    .filter((r) => r.riskLevel !== "normal" && r.riskLevel !== "unknown")
     .sort((a, b) => b.predictedDelaySec - a.predictedDelaySec)
     .slice(0, 5);
   return (
@@ -108,9 +110,9 @@ export function NetworkStatus({
       <Panel
         title="Состояние сети"
         action={
-          <span className="live-small">
+          <span className={`live-small ${current ? "" : "degraded"}`}>
             <i />
-            LIVE
+            {current ? config.officialMode ? "АРХИВ" : "LIVE" : "СНИМОК"}
           </span>
         }
       >
@@ -151,27 +153,27 @@ export function NetworkStatus({
           <div>
             <span>
               <BusFront size={14} />
-              Транспорт на линии
+              {config.officialMode ? "GPS-позиции на карте" : "Транспорт на линии"}
             </span>
             <strong>
-              {summary.vehiclesActive}
+              {summary.vehiclesLocated ?? summary.vehiclesActive}
               <small> / {summary.vehiclesTotal}</small>
             </strong>
           </div>
           <div>
             <span>
               <RouteIcon size={14} />
-              Маршруты
+              {config.officialMode ? "С прогнозом" : "Маршруты"}
             </span>
             <strong>
-              {summary.routesActive}
+              {summary.vehiclesPredicted ?? summary.routesActive}
               <small> активны</small>
             </strong>
           </div>
         </div>
         <div className="card-foot">
-          <span className="status-dot" />
-          Состояние транспортной сети
+          <span className={`status-dot ${current ? "" : "degraded"}`} />
+          {config.officialMode ? `Оценено ${summary.vehiclesAssessed ?? 0} ТС · ${summary.vehiclesStale ?? 0} устаревших GPS` : "Состояние транспортной сети"}
         </div>
       </Panel>
       <Panel
@@ -206,7 +208,7 @@ export function NetworkStatus({
         title="Требуют внимания"
         action={
           <span className="count">
-            {routes.filter((r) => r.riskLevel !== "normal").length}
+            {routes.filter((r) => r.riskLevel !== "normal" && r.riskLevel !== "unknown").length}
           </span>
         }
       >

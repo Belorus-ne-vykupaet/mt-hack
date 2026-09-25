@@ -4,6 +4,7 @@
  * Transit Control — proposed frontend contract
  * OpenAPI spec version: 0.1.0
  */
+import type { AlertDtoModelStatus } from './alertDtoModelStatus';
 import type { AlertDtoSeverity } from './alertDtoSeverity';
 
 export interface AlertDto {
@@ -17,4 +18,13 @@ export interface AlertDto {
   risk_probability: number;
   predicted_delay_sec: number;
   created_at: string;
+  /** Planned target-stop arrival; same clock as the source CSV. */
+  target_time?: string;
+  /** Planned arrival plus signed predicted delay. */
+  expected_arrival_at?: string;
+  /** Seconds from the first alert publication to the planned target. */
+  lead_time_sec?: number;
+  /** Observed signal, not a causal explanation of the model. */
+  observed_factor?: string;
+  model_status?: AlertDtoModelStatus;
 }

@@ -33,7 +33,7 @@ export default function Analytics({
     {
       label: "Пунктуальность",
       value: `${Math.round(summary.onTimePercent)}%`,
-      sub: "Транспорт по графику",
+      sub: config.officialMode ? `Среди ${summary.vehiclesAssessed ?? 0} оценённых ТС` : "Транспорт по графику",
       icon: CheckCircle2,
       color: "#257b54",
     },
@@ -56,22 +56,22 @@ export default function Analytics({
       color: "#a88219",
     },
     {
-      label: "Транспорт на линии",
-      value: summary.vehiclesActive,
+      label: config.officialMode ? "Автобусы на карте" : "Транспорт на линии",
+      value: summary.vehiclesLocated ?? summary.vehiclesActive,
       sub: `Из ${summary.vehiclesTotal} транспортных средств`,
       icon: BusFront,
       color: "#547236",
     },
     {
-      label: config.officialMode ? "Планы ТС в прогнозе" : "Активные маршруты",
-      value: summary.routesActive,
+      label: config.officialMode ? "Автобусы с прогнозом" : "Активные маршруты",
+      value: summary.vehiclesPredicted ?? summary.routesActive,
       sub: "В транспортной сети",
       icon: RouteIcon,
       color: "#20231e",
     },
   ];
   const distribution = (
-    ["normal", "elevated", "high", "critical"] as const
+    ["normal", "elevated", "high", "critical", "unknown"] as const
   ).map((level) => ({
     name: riskLabels[level],
     value: routes.filter((r) => r.riskLevel === level).length,
@@ -241,7 +241,7 @@ export default function Analytics({
           action={<span className="muted">Прогноз +15 мин</span>}
         >
           <div className="analytics-ranking">
-            {[...routes]
+            {routes.filter(r => r.hasForecast !== false)
               .sort((a, b) => b.predictedDelaySec - a.predictedDelaySec)
               .slice(0, 6)
               .map((r, i) => (

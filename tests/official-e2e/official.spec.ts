@@ -8,10 +8,22 @@ test("official CatBoost predictions, archive clock, map and themes", async ({
   const state = await (await request.get("/api/v1/ml/status")).json();
   expect(state.status).toBe("connected");
   expect(state.metrics.testRows).toBe(353);
-  const network = await (await request.get("/api/v1/vehicles")).json();
-  expect(network.items.length).toBeGreaterThan(0);
+  expect(state.totalVehicles).toBe(30);
+  expect(state.scheduledVehicles).toBe(13);
+  expect(state.contextVehicles).toBe(17);
   expect(
-    network.items.every(
+    state.predictedVehicles + state.scheduledWithoutTarget +
+      state.scheduledStale + state.scheduledWithoutPosition,
+  ).toBe(state.scheduledVehicles);
+  const network = await (await request.get("/api/v1/vehicles")).json();
+  expect(network.items.length).toBeGreaterThanOrEqual(20);
+  const predicted = network.items.filter((v: any) => v.forecast_status === "ready");
+  expect(predicted.length).toBeGreaterThan(0);
+  expect(predicted.length).toBeLessThan(network.items.length);
+  expect(network.items.some((v: any) => v.forecast_status === "no_schedule")).toBeTruthy();
+  expect(network.items.some((v: any) => v.status === "stale")).toBeTruthy();
+  expect(
+    predicted.every(
       (v: any) =>
         v.forecast_horizon_sec > 600 &&
         v.forecast_horizon_sec <= 900 &&
@@ -53,13 +65,55 @@ test("official CatBoost predictions, archive clock, map and themes", async ({
   await page.getByRole("link", { name: "Диспетчер", exact: true }).click();
   await expect(
     page.getByText("Сохранить план по API", { exact: true }),
-  ).toBeVisible();
+  ).toBeVisible({timeout: 20000});
   await expect(page.getByText("Применить в демо", { exact: true })).toHaveCount(
     0,
   );
   await page.getByRole("link", { name: "Интеграции", exact: true }).click();
   await expect(
     page.getByText("catboost-official-v1", { exact: false }),
-  ).toBeVisible();
+  ).toBeVisible({timeout: 20000});
   expect(errors).toEqual([]);
+});
+
+
+test("all GPS buses remain available in 2D, 3D and cards without a forecast", async ({page, request}) => {
+  const errors: string[] = [];
+  page.on("pageerror", e => errors.push(e.message));
+  const response = await request.get("/api/v1/vehicles");
+  const {items} = await response.json();
+  const noPlan = items.find((v: any) => v.forecast_status === "no_schedule");
+  const stale = items.find((v: any) => v.status === "stale");
+  expect(noPlan).toBeTruthy();
+  expect(stale).toBeTruthy();
+  const geometry = await (await request.get("/api/v1/routes/geometry")).json();
+  expect(geometry.items.length).toBeGreaterThanOrEqual(20);
+  expect(geometry.items.flatMap((g: any) => g.properties.observed_paths || []).length).toBeGreaterThan(20);
+  const roadReference = await (await request.get("/data/official-road-routes.json")).json();
+  expect(roadReference.routes.length).toBeGreaterThanOrEqual(12);
+  expect(roadReference.routes.flatMap((route: any) => route.paths).length).toBeGreaterThan(20);
+  const emptyForecast = await (await request.get(`/api/v1/forecast/vehicles/${noPlan.id}`)).json();
+  expect(emptyForecast.points).toEqual([]);
+  await page.goto("/overview?source=official");
+  await expect(page.getByLabel("Полнота транспортных данных")).toContainText("30 ТС");
+  await expect(page.getByLabel("Полнота транспортных данных")).toContainText("17 контекстных");
+  await expect(page.locator("[data-visible-vehicles]")).toHaveAttribute("data-visible-vehicles", /2[0-3]/);
+  await expect(page.locator("[data-road-paths]")).toHaveAttribute("data-road-paths", /[1-9][0-9]/);
+  for (const mode of ["3D", "2D", "3D"]) {
+    await page.getByRole("button", {name: `Переключить карту в ${mode}`, exact: true}).click();
+    await expect(page.locator("[data-visible-vehicles]")).toHaveAttribute("data-visible-vehicles", /2[0-3]/);
+  }
+  await expect.poll(async () => Number(await page.locator(".map-shell").getAttribute("data-bus-models"))).toBeGreaterThan(0);
+  expect(Number(await page.locator(".map-shell").getAttribute("data-bus-models")))
+    .toBeLessThan(Number(await page.locator(".map-shell").getAttribute("data-visible-vehicles")));
+  for (const vehicle of [noPlan, stale]) {
+    await page.getByRole("button", {name:"Посмотреть транспорт на линии", exact: true}).click();
+    await page.getByRole("button", {name: `Открыть ТС ${vehicle.id.replace("vehicle-", "")}`, exact: true}).click();
+    await expect(page.getByRole("heading", {name:`ТС ${vehicle.id.replace("vehicle-", "")}`, exact:true})).toBeVisible();
+    await expect(page.locator(".detail-panel")).toContainText(vehicle === noPlan ? "Нет расписания" : "GPS устарел");
+    await expect(page.locator(".detail-panel")).toContainText("Нет данных");
+  }
+  await page.waitForTimeout(2500); // include a live WS update with nullable values
+  expect(errors).toEqual([]);
+  await page.screenshot({path:"/private/tmp/transit-fleet-card.png", fullPage:true});
 });

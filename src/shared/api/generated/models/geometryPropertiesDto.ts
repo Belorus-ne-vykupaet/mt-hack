@@ -7,4 +7,6 @@
 
 export interface GeometryPropertiesDto {
   route_id: string;
+  /** Observed GPS path sections up to archive time; gaps and jumps are not connected. */
+  observed_paths?: number[][][];
 }

@@ -652,6 +652,24 @@
           }
         }
       }
+    },
+    "/api/v1/routes/geometry": {
+      "get": {
+        "operationId": "getRoutesGeometry",
+        "description": "Batch route geometry including observed GPS sections in official replay.",
+        "responses": {
+          "200": {
+            "description": "Route geometries",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouteGeometriesDto"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -716,13 +734,16 @@
             ]
           },
           "current_delay_sec": {
-            "type": "number"
+            "type": "number",
+            "nullable": true
           },
           "predicted_delay_sec": {
-            "type": "number"
+            "type": "number",
+            "nullable": true
           },
           "risk_probability": {
-            "type": "number"
+            "type": "number",
+            "nullable": true
           },
           "risk_level": {
             "type": "string",
@@ -730,7 +751,8 @@
               "normal",
               "elevated",
               "high",
-              "critical"
+              "critical",
+              "unknown"
             ]
           },
           "vehicle_count": {
@@ -741,6 +763,18 @@
             "items": {
               "$ref": "#/components/schemas/StopDto"
             }
+          },
+          "forecast_status": {
+            "type": "string",
+            "enum": [
+              "ready",
+              "fallback",
+              "no_schedule",
+              "no_target",
+              "stale_gps",
+              "unavailable"
+            ],
+            "description": "Absent for legacy/demo data. Missing forecasts remain visible on the map."
           }
         },
         "required": [
@@ -775,13 +809,16 @@
             "type": "number"
           },
           "current_delay_sec": {
-            "type": "number"
+            "type": "number",
+            "nullable": true
           },
           "predicted_delay_sec": {
-            "type": "number"
+            "type": "number",
+            "nullable": true
           },
           "risk_probability": {
-            "type": "number"
+            "type": "number",
+            "nullable": true
           },
           "risk_level": {
             "type": "string",
@@ -789,7 +826,8 @@
               "normal",
               "elevated",
               "high",
-              "critical"
+              "critical",
+              "unknown"
             ]
           },
           "status": {
@@ -798,25 +836,50 @@
               "active",
               "stopped",
               "inactive",
-              "unknown"
+              "unknown",
+              "stale"
             ]
           },
           "next_stop": {
-            "$ref": "#/components/schemas/StopDto"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StopDto"
+              }
+            ],
+            "nullable": true
           },
           "updated_at": {
             "type": "string"
           },
           "forecast_horizon_sec": {
             "type": "number",
-            "description": "Exact target-stop horizon in (600,900] seconds for official model."
+            "description": "Exact target-stop horizon in (600,900] seconds for official model.",
+            "nullable": true
           },
           "forecast_target_time": {
             "type": "string",
-            "format": "date-time"
+            "format": "date-time",
+            "nullable": true
           },
           "forecast_model": {
-            "type": "string"
+            "type": "string",
+            "nullable": true
+          },
+          "forecast_status": {
+            "type": "string",
+            "enum": [
+              "ready",
+              "fallback",
+              "no_schedule",
+              "no_target",
+              "stale_gps",
+              "unavailable"
+            ],
+            "description": "Absent for legacy/demo data. Missing forecasts remain visible on the map."
+          },
+          "telemetry_age_sec": {
+            "type": "number",
+            "minimum": 0
           }
         },
         "required": [
@@ -872,6 +935,26 @@
           },
           "created_at": {
             "type": "string"
+          },
+          "target_time": {
+            "type": "string",
+            "description": "Planned target-stop arrival; same clock as the source CSV."
+          },
+          "expected_arrival_at": {
+            "type": "string",
+            "description": "Planned arrival plus signed predicted delay."
+          },
+          "lead_time_sec": {
+            "type": "number",
+            "description": "Seconds from the first alert publication to the planned target."
+          },
+          "observed_factor": {
+            "type": "string",
+            "description": "Observed signal, not a causal explanation of the model."
+          },
+          "model_status": {
+            "type": "string",
+            "enum": ["ready", "fallback"]
           }
         },
         "required": [
@@ -916,6 +999,26 @@
           },
           "timestamp": {
             "type": "string"
+          },
+          "vehicles_located": {
+            "type": "number",
+            "minimum": 0
+          },
+          "vehicles_stale": {
+            "type": "number",
+            "minimum": 0
+          },
+          "vehicles_predicted": {
+            "type": "number",
+            "minimum": 0
+          },
+          "vehicles_assessed": {
+            "type": "number",
+            "minimum": 0
+          },
+          "vehicles_without_position": {
+            "type": "number",
+            "minimum": 0
           }
         },
         "required": [
@@ -959,6 +1062,19 @@
         "properties": {
           "route_id": {
             "type": "string"
+          },
+          "observed_paths": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "number"
+                }
+              }
+            },
+            "description": "Observed GPS path sections up to archive time; gaps and jumps are not connected."
           }
         },
         "required": [
@@ -1261,6 +1377,20 @@
         "required": [
           "vehicle_id",
           "points"
+        ]
+      },
+      "RouteGeometriesDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RouteGeometryDto"
+            }
+          }
+        },
+        "required": [
+          "items"
         ]
       }
     }

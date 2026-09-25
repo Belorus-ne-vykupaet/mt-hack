@@ -12,26 +12,22 @@ export interface RoutePath {
 }
 export function prepareRoutePaths(
   geometries: Geometry[],
-): Map<string, RoutePath> {
-  return new Map(
-    geometries
-      .filter(
-        (g) =>
-          g.coordinates.length >= 2 &&
-          g.coordinates.every((p) => p.length >= 2 && p.every(Number.isFinite)),
-      )
-      .map((g) => {
-        const distances = [0];
-        for (let i = 1; i < g.coordinates.length; i++)
-          distances.push(
-            distances[i - 1] + distance(g.coordinates[i - 1], g.coordinates[i]),
-          );
-        return [
-          g.routeId,
-          { coordinates: g.coordinates, distances, length: distances.at(-1)! },
-        ];
-      }),
-  );
+): Map<string, RoutePath[]> {
+  const paths = new Map<string, RoutePath[]>();
+  for (const geometry of geometries) {
+    const coordinates = geometry.coordinates;
+    if (
+      coordinates.length < 2 ||
+      !coordinates.every((p) => p.length >= 2 && p.every(Number.isFinite))
+    ) continue;
+    const distances = [0];
+    for (let i = 1; i < coordinates.length; i++)
+      distances.push(distances[i - 1] + distance(coordinates[i - 1], coordinates[i]));
+    const sections = paths.get(geometry.routeId) || [];
+    sections.push({coordinates, distances, length: distances.at(-1)!});
+    paths.set(geometry.routeId, sections);
+  }
+  return paths;
 }
 export interface VehicleAnchor {
   vehicle: Vehicle;
@@ -41,19 +37,21 @@ export interface VehicleAnchor {
 }
 export function anchorVehicles(
   vehicles: Vehicle[],
-  paths: Map<string, RoutePath>,
+  paths: Map<string, RoutePath[] | RoutePath>,
 ): VehicleAnchor[] {
   return vehicles.map((vehicle) => {
-    const path = paths.get(vehicle.routeId);
-    if (!path) return { vehicle, distance: 0 };
+    const candidates = paths.get(vehicle.routeId);
+    if (!candidates) return { vehicle, distance: 0 };
     const point = [vehicle.position.lon, vehicle.position.lat],
       scale = Math.cos((point[1] * Math.PI) / 180);
     let closest = Infinity,
       along = 0,
-      headingDeg = 0;
-    for (let i = 1; i < path.coordinates.length; i++) {
-      const a = path.coordinates[i - 1],
-        b = path.coordinates[i],
+      headingDeg = 0,
+      best: RoutePath | undefined;
+    for (const path of Array.isArray(candidates) ? candidates : [candidates])
+      for (let i = 1; i < path.coordinates.length; i++) {
+        const a = path.coordinates[i - 1],
+          b = path.coordinates[i],
         dx = (b[0] - a[0]) * scale,
         dy = b[1] - a[1];
       const t = Math.max(
@@ -70,16 +68,17 @@ export function anchorVehicles(
       ]);
       if (separation < closest) {
         closest = separation;
+        best = path;
         headingDeg = trackHeading(a, b);
         along =
           path.distances[i - 1] +
           (path.distances[i] - path.distances[i - 1]) * t;
       }
-    }
+      }
     // Missing/incompatible geometry must not move a vehicle onto an unrelated track.
     return {
       vehicle,
-      path: closest <= 150 ? path : undefined,
+      path: closest <= 150 ? best : undefined,
       distance: along,
       headingDeg,
     };
@@ -101,12 +100,18 @@ export function projectVehicle(
     : 0;
   const base = {
     ...vehicle,
-    headingDeg: anchor.headingDeg || 0,
+    // Archived road geometry is reference context, not a causal movement
+    // forecast: a bus may be parked or on a nearby parallel road.
+    headingDeg:
+      vehicle.hasForecast === false || vehicle.forecastHorizonSec !== undefined
+        ? vehicle.bearingDeg ?? anchor.headingDeg ?? 0
+        : anchor.headingDeg ?? vehicle.bearingDeg ?? 0,
     forecastMinutes: minutes,
     forecastDistanceM: 0,
     positionEstimated: false,
   };
   if (
+    vehicle.hasForecast === false ||
     vehicle.forecastHorizonSec !== undefined ||
     !path ||
     !minutes ||

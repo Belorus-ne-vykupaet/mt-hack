@@ -93,3 +93,14 @@ it("anchors all 120 demo buses to their own roads and projects fractional horizo
     );
   }
 });
+
+it("anchors a bus to its nearest observed GPS section", () => {
+  const near = {routeId: vehicle.routeId, coordinates: [[vehicle.position.lon, vehicle.position.lat], [vehicle.position.lon + 0.001, vehicle.position.lat]]};
+  const far = {routeId: vehicle.routeId, coordinates: [[39, 56], [39.001, 56]]};
+  const anchored = anchorVehicles([vehicle], prepareRoutePaths([near, far]))[0];
+  expect(anchored.path?.coordinates).toEqual(near.coordinates);
+  const withoutPrediction = projectVehicle({...anchored, vehicle: {...vehicle, hasForecast: false}}, 15);
+  expect(withoutPrediction.position).toEqual(vehicle.position);
+  expect(withoutPrediction.positionEstimated).toBe(false);
+  expect(projectVehicle({...anchored, vehicle: {...vehicle, hasForecast: false, bearingDeg: 87}}, 15).headingDeg).toBe(87);
+});

@@ -13,4 +13,5 @@ export const VehicleDtoStatus = {
   stopped: 'stopped',
   inactive: 'inactive',
   unknown: 'unknown',
+  stale: 'stale',
 } as const;

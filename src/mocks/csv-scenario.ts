@@ -1,8 +1,7 @@
+import type { DemoRouteDto as RouteDto, DemoVehicleDto as VehicleDto } from "./types";
 import { riskFromDelay as csvRisk } from "../entities/forecast";
 import imported from "../data/imported-feed.json";
 import type {
-  RouteDto,
-  VehicleDto,
   NetworkSummaryDto,
   DelayPointDto,
   AlertDto,

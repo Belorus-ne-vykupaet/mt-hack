@@ -78,6 +78,22 @@ class Dataset:
         self.groups = {
             int(k): v.reset_index(drop=True) for k, v in self.traffic.groupby("tr_id")
         }
+        self.gps_groups = {
+            tr: group[
+                group.location_valid.eq(True)
+                & group.lat.between(-90, 90)
+                & group.lon.between(-180, 180)
+            ]
+            for tr, group in self.groups.items()
+        }
+
+    def last_position(self, tr_id: int, cutoff: float):
+        """Last valid observation at or before T, even after a telemetry outage."""
+        gps = self.gps_groups.get(tr_id)
+        if gps is None or gps.empty:
+            return None
+        end = np.searchsorted(gps.ts.to_numpy(), cutoff, side="right")
+        return gps.iloc[end - 1] if end else None
 
     def history(self, tr_id: int, cutoff: float):
         group = self.groups.get(int(tr_id))

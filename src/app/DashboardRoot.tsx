@@ -3,6 +3,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "../entities/queries";
 import { config } from "../shared/config/env";
 import { RealtimeProvider } from "./realtime/RealtimeProvider";
+import { useDocumentVisible } from "../shared/lib/document-visibility";
 import App from "./App";
 let bootstrap: Promise<unknown> | undefined;
 function start() {
@@ -21,6 +22,7 @@ function start() {
   return bootstrap;
 }
 export default function DashboardRoot() {
+  const documentVisible = useDocumentVisible();
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   useEffect(() => {
     let mounted = true;
@@ -37,7 +39,7 @@ export default function DashboardRoot() {
   }, []);
   return state === "ready" ? (
     <QueryClientProvider client={queryClient}>
-      <RealtimeProvider />
+      {documentVisible && <RealtimeProvider />}
       <App />
     </QueryClientProvider>
   ) : (

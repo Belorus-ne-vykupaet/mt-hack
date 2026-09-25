@@ -957,6 +957,12 @@ h1 {
   background: var(--green);
   border-radius: 50%;
 }
+.live-small.degraded {
+  color: var(--risk-elevated);
+}
+.live-small.degraded i {
+  background: var(--risk-elevated);
+}
 .rings {
   display: flex;
   gap: 7px;
@@ -1031,6 +1037,9 @@ h1 {
 .card-foot .status-dot {
   width: 4px;
   height: 4px;
+}
+.card-foot .status-dot.degraded {
+  background: var(--risk-elevated);
 }
 .chart-key {
   display: flex;

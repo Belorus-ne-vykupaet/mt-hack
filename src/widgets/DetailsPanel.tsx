@@ -1,3 +1,4 @@
+import { forecastAvailability, telemetryAge } from "../entities/availability";
 import { matchesSearch } from "../shared/lib/search";
 import { Timeline } from "./Timeline";
 import { useState } from "react";
@@ -75,7 +76,7 @@ export function DetailsPanel({
         <small>Маршрут {v.routeId}</small>
       </div>
       <span style={{ color: riskInk[v.riskLevel] }}>
-        {minutes(v.predictedDelaySec)} мин
+        {v.hasForecast === false ? forecastAvailability(v) : `${minutes(v.predictedDelaySec)} мин`}
       </span>
       <ChevronRight size={14} />
     </button>
@@ -161,7 +162,12 @@ export function DetailsPanel({
                 </div>
               )}
               {forecastControl && <Timeline compact />}
-              <div className="detail-forecast">
+              {entity.hasForecast === false ? (
+                <div className="official-detail-note" role="status">
+                  <strong>{forecastAvailability(entity)}</strong>
+                  <p>Автобус остаётся на карте по последней известной позиции. Отсутствие прогноза не означает движение по расписанию.</p>
+                </div>
+              ) : <div className="detail-forecast">
                 <span>
                   {config.officialMode
                     ? `К остановке через ${((vehicle?.forecastHorizonSec || localVehicles[0]?.forecastHorizonSec || 900) / 60).toFixed(1)} мин`
@@ -185,20 +191,20 @@ export function DetailsPanel({
                       ? "Демонстрационный прогноз"
                       : "Прогноз подключённого сервиса"}
                 </small>
-              </div>
+              </div>}
               <div className="detail-data">
                 <span>
                   <Clock3 size={13} />
                   Текущая задержка
                 </span>
-                <strong>{minutes(entity.currentDelaySec)} мин</strong>
+                <strong>{entity.currentDelayKnown === false ? "Нет данных" : `${minutes(entity.currentDelaySec)} мин`}</strong>
               </div>
               {vehicle && isVehicle ? (
                 <>
                   <div className="detail-data">
                     <span>
                       <Gauge size={13} />
-                      Текущая скорость
+                      {vehicle.telemetryStale ? "Скорость при последнем GPS" : "Текущая скорость"}
                     </span>
                     <strong>{Math.round(vehicle.speedKmh)} км/ч</strong>
                   </div>
@@ -208,7 +214,11 @@ export function DetailsPanel({
                         ? "Целевая остановка прогноза"
                         : "Следующая остановка"}
                     </span>
-                    <strong>{vehicle.nextStop.name}</strong>
+                    <strong>{vehicle.nextStop?.name || "Не определена"}</strong>
+                  </div>
+                  <div className="detail-data">
+                    <span>{telemetryAge(vehicle)}</span>
+                    <strong>{vehicle.updatedAt.replace("T", " ").slice(11, 19)} · часы CSV</strong>
                   </div>
                 </>
               ) : (
@@ -227,7 +237,7 @@ export function DetailsPanel({
                 Управление маршрутом
                 <ArrowUpRight size={15} />
               </button>
-              {config.officialMode && (
+              {config.officialMode && entity.hasForecast !== false && (
                 <p className="official-detail-note">
                   План:{" "}
                   {(

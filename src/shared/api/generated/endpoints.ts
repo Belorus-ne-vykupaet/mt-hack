@@ -32,6 +32,7 @@ import type {
   NetworkSummaryDto,
   RiskDistributionDto,
   RouteDto,
+  RouteGeometriesDto,
   RouteGeometryDto,
   RoutesDto,
   SegmentsDto,
@@ -1631,6 +1632,116 @@ export function useGetVehicleForecast<TData = Awaited<ReturnType<typeof getVehic
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetVehicleForecastQueryOptions(vehicleId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export type getRoutesGeometryResponse200 = {
+  data: RouteGeometriesDto
+  status: 200
+}
+
+export type getRoutesGeometryResponseSuccess = (getRoutesGeometryResponse200) & {
+  headers: Headers;
+};
+;
+
+export type getRoutesGeometryResponse = (getRoutesGeometryResponseSuccess)
+
+export const getGetRoutesGeometryUrl = () => {
+
+
+
+
+  return `/api/v1/routes/geometry`
+}
+
+/**
+ * Batch route geometry including observed GPS sections in official replay.
+ */
+export const getRoutesGeometry = async ( options?: Parameters<typeof request>[1]): Promise<getRoutesGeometryResponse> => {
+
+  return request<getRoutesGeometryResponse>(getGetRoutesGeometryUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetRoutesGeometryQueryKey = () => {
+    return [
+    `/api/v1/routes/geometry`
+    ] as const;
+    }
+
+
+export const getGetRoutesGeometryQueryOptions = <TData = Awaited<ReturnType<typeof getRoutesGeometry>>, TError = unknown>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoutesGeometry>>, TError, TData>>, request?: SecondParameter<typeof request>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetRoutesGeometryQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getRoutesGeometry>>> = ({ signal }) => getRoutesGeometry({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getRoutesGeometry>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetRoutesGeometryQueryResult = NonNullable<Awaited<ReturnType<typeof getRoutesGeometry>>>
+export type GetRoutesGeometryQueryError = unknown
+
+
+export function useGetRoutesGeometry<TData = Awaited<ReturnType<typeof getRoutesGeometry>>, TError = unknown>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoutesGeometry>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getRoutesGeometry>>,
+          TError,
+          Awaited<ReturnType<typeof getRoutesGeometry>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof request>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetRoutesGeometry<TData = Awaited<ReturnType<typeof getRoutesGeometry>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoutesGeometry>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getRoutesGeometry>>,
+          TError,
+          Awaited<ReturnType<typeof getRoutesGeometry>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof request>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetRoutesGeometry<TData = Awaited<ReturnType<typeof getRoutesGeometry>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoutesGeometry>>, TError, TData>>, request?: SecondParameter<typeof request>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+
+export function useGetRoutesGeometry<TData = Awaited<ReturnType<typeof getRoutesGeometry>>, TError = unknown>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getRoutesGeometry>>, TError, TData>>, request?: SecondParameter<typeof request>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetRoutesGeometryQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

@@ -4,6 +4,7 @@
  * Transit Control — proposed frontend contract
  * OpenAPI spec version: 0.1.0
  */
+import type { RouteDtoForecastStatus } from './routeDtoForecastStatus';
 import type { RouteDtoRiskLevel } from './routeDtoRiskLevel';
 import type { RouteDtoTransportType } from './routeDtoTransportType';
 import type { StopDto } from './stopDto';
@@ -13,10 +14,15 @@ export interface RouteDto {
   number: string;
   name: string;
   transport_type: RouteDtoTransportType;
-  current_delay_sec: number;
-  predicted_delay_sec: number;
-  risk_probability: number;
+  /** @nullable */
+  current_delay_sec: number | null;
+  /** @nullable */
+  predicted_delay_sec: number | null;
+  /** @nullable */
+  risk_probability: number | null;
   risk_level: RouteDtoRiskLevel;
   vehicle_count: number;
   stops: StopDto[];
+  /** Absent for legacy/demo data. Missing forecasts remain visible on the map. */
+  forecast_status?: RouteDtoForecastStatus;
 }

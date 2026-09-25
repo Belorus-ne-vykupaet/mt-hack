@@ -16,6 +16,7 @@ import { riskFromDelay } from "../src/entities/forecast";
 import { DispatchService, ApiError } from "./dispatch-service";
 import { Providers } from "./providers";
 import { ModelProvider } from "./model";
+import { sendStreamEvent } from "./stream";
 export interface ServerOptions {
   official?: OfficialSource;
   journal?: string;
@@ -405,8 +406,8 @@ export function createApi(options: ServerOptions = {}) {
           method: "rules-v1",
           reserve: dispatch.publicState().reserve,
           items: recommendDispatch({
-            routes: s.routes.map(mapRoute),
-            vehicles: s.vehicles.map(mapVehicle),
+            routes: s.routes.filter((r) => r.predicted_delay_sec !== null && r.stops.length).map(mapRoute),
+            vehicles: s.vehicles.filter((v) => v.predicted_delay_sec !== null).map(mapVehicle),
             plans: dispatch.plans,
             asOf: s.summary.timestamp,
             demo: true,
@@ -428,7 +429,7 @@ export function createApi(options: ServerOptions = {}) {
       if (path === "/analytics/top-routes")
         return json(res, 200, {
           items: [...s.routes].sort(
-            (a, b) => b.predicted_delay_sec - a.predicted_delay_sec,
+            (a, b) => (b.predicted_delay_sec ?? -Infinity) - (a.predicted_delay_sec ?? -Infinity),
           ),
         });
       if (path === "/analytics/risk-distribution")
@@ -442,6 +443,12 @@ export function createApi(options: ServerOptions = {}) {
             ]),
           ),
         );
+      if (path === "/routes/geometry") {
+        const geometries = options.official
+          ? (await options.official.snapshot()).geometries
+          : csvGeometries;
+        return json(res, 200, { items: geometries });
+      }
       if (path === "/forecast")
         return json(res, 200, {
           generated_at: s.summary.timestamp,
@@ -477,13 +484,13 @@ export function createApi(options: ServerOptions = {}) {
         if (v && options.official)
           return json(res, 200, {
             vehicle_id: v.id,
-            points: [
+            points: v.predicted_delay_sec !== null && v.forecast_horizon_sec ? [
               {
-                offset_sec: v.forecast_horizon_sec || 900,
+                offset_sec: v.forecast_horizon_sec,
                 predicted_delay_sec: v.predicted_delay_sec,
                 risk_probability: v.risk_probability,
               },
-            ],
+            ] : [],
           });
         if (v)
           return json(res, 200, {
@@ -491,8 +498,8 @@ export function createApi(options: ServerOptions = {}) {
             points: Array.from({ length: 901 }, (_, i) => ({
               offset_sec: i,
               predicted_delay_sec:
-                v.current_delay_sec +
-                ((v.predicted_delay_sec - v.current_delay_sec) * i) / 900,
+                (v.current_delay_sec ?? 0) +
+                (((v.predicted_delay_sec ?? 0) - (v.current_delay_sec ?? 0)) * i) / 900,
               risk_probability: v.risk_probability,
             })),
           });
@@ -529,18 +536,7 @@ export function createApi(options: ServerOptions = {}) {
   });
   const sequences = new WeakMap<WebSocket, number>();
   const send = (ws: WebSocket, type: string, payload: unknown) => {
-    const sequence = (sequences.get(ws) || 0) + 1;
-    sequences.set(ws, sequence);
-    if (ws.readyState === WebSocket.OPEN)
-      ws.send(
-        JSON.stringify({
-          type,
-          payload,
-          version: 1,
-          sequence,
-          timestamp: new Date().toISOString(),
-        }),
-      );
+    sequences.set(ws, sendStreamEvent(ws, sequences.get(ws) || 0, type, payload));
   };
   // Each client has its own consecutive sequence; broadcasts share the same events below.
   wss.on("connection", (ws) =>
@@ -548,29 +544,72 @@ export function createApi(options: ServerOptions = {}) {
   );
   let busy = false,
     previous = new Set<string>(),
-    previousRoutes = new Set<string>();
+    previousRoutes = new Set<string>(),
+    routeVersions = new Map<string, string>(),
+    vehicleVersions = new Map<string, string>(),
+    segmentVersion = "",
+    lastDataBroadcast = 0;
   const timer = setInterval(async () => {
-    if (busy || !wss.clients.size) return;
+    if (!wss.clients.size) return;
+    // The 10–15 minute forecast is still recomputed by the Python service.
+    // Broadcasting each full UI tick every second needlessly rebuilds the 3D map.
+    if (options.official && Date.now() - lastDataBroadcast < 5000) {
+      for (const ws of wss.clients)
+        send(ws, "system.heartbeat", { stale: options.official.stale });
+      return;
+    }
+    if (busy) return;
     busy = true;
     try {
       const s = await snapshot();
-      const events: [string, unknown][] = [["system.heartbeat", {}]];
+      lastDataBroadcast = Date.now();
+      const events: [string, unknown][] = [[
+        "system.heartbeat",
+        { stale: options.official?.stale ?? false },
+      ]];
       const ids = new Set(s.vehicles.map((v) => v.id));
       for (const id of previous)
-        if (!ids.has(id)) events.push(["vehicle.removed", { id }]);
+        if (!ids.has(id)) {
+          events.push(["vehicle.removed", { id }]);
+          vehicleVersions.delete(id);
+        }
       previous = ids;
       const routeIds = new Set(s.routes.map((r) => r.id));
+      const knownRoutes = previousRoutes;
       for (const id of previousRoutes)
-        if (!routeIds.has(id)) events.push(["route.removed", { id }]);
+        if (!routeIds.has(id)) {
+          events.push(["route.removed", { id }]);
+          routeVersions.delete(id);
+        }
       previousRoutes = routeIds;
-      s.routes.forEach((r) => events.push(["route.updated", r]));
-      s.vehicles.forEach((v) => events.push(["vehicle.updated", v]));
+      s.routes.forEach((r) => {
+        const patch = {
+          id: r.id,
+          vehicle_count: r.vehicle_count,
+          current_delay_sec: r.current_delay_sec,
+          predicted_delay_sec: r.predicted_delay_sec,
+          risk_probability: r.risk_probability,
+          risk_level: r.risk_level,
+          forecast_status: r.forecast_status,
+        };
+        const version = JSON.stringify(patch);
+        if (!knownRoutes.has(r.id) || routeVersions.get(r.id) !== version)
+          events.push(["route.updated", knownRoutes.has(r.id) ? patch : r]);
+        routeVersions.set(r.id, version);
+      });
+      s.vehicles.forEach((v) => {
+        const version = JSON.stringify(v);
+        if (vehicleVersions.get(v.id) !== version)
+          events.push(["vehicle.updated", v]);
+        vehicleVersions.set(v.id, version);
+      });
+      const nextSegmentVersion = JSON.stringify(s.segments);
+      if (nextSegmentVersion !== segmentVersion) {
+        events.push(["forecast.updated", { segments: s.segments }]);
+        segmentVersion = nextSegmentVersion;
+      }
       events.push(
         ["network.updated", s.summary],
-        [
-          "forecast.updated",
-          { routes: s.routes, vehicles: s.vehicles, segments: s.segments },
-        ],
         ["alerts.snapshot", { items: s.alerts }],
         ["analytics.snapshot", { points: s.points }],
       );

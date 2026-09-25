@@ -81,15 +81,30 @@ export function useNetwork() {
 export function useGeometries(ids: string[]) {
   return useQuery({
     queryKey: [...keys.geometry, ids.join(",")],
-    refetchInterval: config.officialMode ? 10000 : false,
-    queryFn: async () =>
-      Promise.all(
+    queryFn: async () => {
+      if (config.officialMode) {
+        // Road-aligned archive reference is a separate, immutable map layer.
+        // It is fetched once; live vehicle positions and predictions still poll.
+        const response = await fetch("/data/official-road-routes.json");
+        if (!response.ok) throw new Error("Дорожная схема недоступна");
+        const reference = (await response.json()) as {
+          routes: { routeId: string; paths: number[][][] }[];
+        };
+        const wanted = new Set(ids);
+        return reference.routes
+          .filter((item) => wanted.has(item.routeId))
+          .flatMap((item) =>
+            item.paths.map((coordinates) => ({ routeId: item.routeId, coordinates })),
+          );
+      }
+      return Promise.all(
         ids.map(async (id) => {
           const r = await getRouteGeometry(id);
           if (r.status !== 200) throw new Error("Геометрия недоступна");
           return mapGeometry(r.data);
         }),
-      ),
+      );
+    },
     enabled: ids.length > 0,
     staleTime: Infinity,
   });

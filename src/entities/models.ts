@@ -1,11 +1,16 @@
-export type RiskLevel = "normal" | "elevated" | "high" | "critical";
+export type RiskLevel = "normal" | "elevated" | "high" | "critical" | "unknown";
+export interface PredictionAvailability {
+  hasForecast?: boolean;
+  currentDelayKnown?: boolean;
+  forecastStatus?: "ready" | "fallback" | "no_schedule" | "no_target" | "stale_gps" | "unavailable";
+}
 export interface Stop {
   id: string;
   name: string;
   sequence: number;
   position: { lat: number; lon: number };
 }
-export interface Route {
+export interface Route extends PredictionAvailability {
   id: string;
   number: string;
   name: string;
@@ -17,7 +22,10 @@ export interface Route {
   activeVehicleCount: number;
   stops: Stop[];
 }
-export interface Vehicle {
+export interface Vehicle extends PredictionAvailability {
+  bearingDeg?: number;
+  telemetryAgeSec?: number;
+  telemetryStale?: boolean;
   forecastHorizonSec?: number;
   forecastTargetTime?: string;
   forecastModel?: string;
@@ -29,7 +37,7 @@ export interface Vehicle {
   predictedDelaySec: number;
   riskProbability: number;
   riskLevel: RiskLevel;
-  nextStop: Stop;
+  nextStop: Stop | null;
   updatedAt: string;
 }
 export interface Alert {
@@ -42,8 +50,18 @@ export interface Alert {
   riskProbability: number;
   predictedDelaySec: number;
   createdAt: string;
+  targetTime?: string;
+  expectedArrivalAt?: string;
+  leadTimeSec?: number;
+  observedFactor?: string;
+  modelStatus?: "ready" | "fallback";
 }
 export interface Summary {
+  vehiclesLocated?: number;
+  vehiclesStale?: number;
+  vehiclesPredicted?: number;
+  vehiclesAssessed?: number;
+  vehiclesWithoutPosition?: number;
   vehiclesTotal: number;
   vehiclesActive: number;
   routesActive: number;

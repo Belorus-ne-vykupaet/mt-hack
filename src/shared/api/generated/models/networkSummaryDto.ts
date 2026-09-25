@@ -15,4 +15,14 @@ export interface NetworkSummaryDto {
   average_delay_sec: number;
   average_predicted_delay_sec: number;
   timestamp: string;
+  /** @minimum 0 */
+  vehicles_located?: number;
+  /** @minimum 0 */
+  vehicles_stale?: number;
+  /** @minimum 0 */
+  vehicles_predicted?: number;
+  /** @minimum 0 */
+  vehicles_assessed?: number;
+  /** @minimum 0 */
+  vehicles_without_position?: number;
 }

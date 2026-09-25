@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { TriangleAlert, ChevronRight, MapPin, CheckCheck } from "lucide-react";
 import type { Alert } from "../entities/models";
 import { Panel, Empty } from "../shared/ui/primitives";
-import { minutes, percent } from "../shared/ui/format";
+import { minutes, percent, time } from "../shared/ui/format";
 import { useUi } from "../app/store";
 export function AlertsPanel({ alerts }: { alerts: Alert[] }) {
   const [filter, setFilter] = useState("all");
@@ -79,16 +79,22 @@ export function AlertsPanel({ alerts }: { alerts: Alert[] }) {
               </div>
               <div className="alert-location">
                 <MapPin size={12} />
-                {a.description}
+                {config.officialMode && a.targetTime && a.expectedArrivalAt
+                  ? `План ${time(a.targetTime)} → ожидается ${time(a.expectedArrivalAt)}. Наблюдаемый фактор: ${a.observedFactor ?? "данные телеметрии"}. ${a.modelStatus === "fallback" ? "ML недоступен; резервная оценка." : "Прогноз CatBoost."}`
+                  : a.description}
               </div>
               <div className="alert-bottom">
                 <span>
-                  {config.officialMode
+                  {config.officialMode && a.leadTimeSec
+                    ? `Сигнал за ${(a.leadTimeSec / 60).toFixed(1)} мин до цели`
+                    : config.officialMode
                     ? "К целевой остановке"
                     : "Прогноз через 15 мин"}
                 </span>
                 <span>
-                  {config.csvMode || config.officialMode ? (
+                  {config.officialMode && a.leadTimeSec ? (
+                    `Выдан ${time(a.createdAt)} · часы CSV`
+                  ) : config.csvMode || config.officialMode ? (
                     "Архив CSV"
                   ) : (
                     <>

@@ -1,3 +1,4 @@
+import { forecastAvailability, telemetryAge } from "../entities/availability";
 import { matchesSearch } from "../shared/lib/search";
 import { useNavigate } from "react-router-dom";
 import { config } from "../shared/config/env";
@@ -16,6 +17,7 @@ import { Empty, RouteBadge, RiskBadge } from "../shared/ui/primitives";
 import { minutes, percent } from "../shared/ui/format";
 
 export type NetworkListKind =
+  | "forecasts"
   | "vehicles"
   | "routes"
   | "on-time"
@@ -23,9 +25,10 @@ export type NetworkListKind =
   | "events"
   | "stops";
 const isOnTime = (v: Vehicle) =>
-  v.currentDelaySec < 120 && v.riskLevel === "normal";
+  v.currentDelayKnown !== false && !v.telemetryStale && v.currentDelaySec >= -60 && v.currentDelaySec <= 120 && v.riskLevel === "normal";
 const titles: Record<NetworkListKind, string> = {
-  vehicles: "Транспорт на линии",
+  forecasts: "Автобусы с прогнозом",
+  vehicles: config.officialMode ? "Автобусы на карте" : "Транспорт на линии",
   routes: "Активные маршруты",
   stops: "Остановки сети",
   "on-time": "Транспорт по расписанию",
@@ -71,7 +74,7 @@ export function NetworkList({
             number: r.number,
             title: stop.name,
             description: r.name,
-            delay: r.predictedDelaySec,
+            delay: r.hasForecast === false ? null : r.predictedDelaySec,
             risk: r.riskLevel,
             probability: r.riskProbability,
             info: `Маршрут ${r.number}`,
@@ -83,9 +86,9 @@ export function NetworkList({
             key: r.id,
             routeId: r.id,
             number: r.number,
-            title: `Маршрут ${r.number}`,
+            title: `${config.officialMode ? "ТС" : "Маршрут"} ${r.number}`,
             description: r.name,
-            delay: r.predictedDelaySec,
+            delay: r.hasForecast === false ? null : r.predictedDelaySec,
             risk: r.riskLevel,
             probability: r.riskProbability,
             info: `${r.activeVehicleCount} ТС`,
@@ -121,7 +124,8 @@ export function NetworkList({
                 select: () => useUi.getState().selectRoute(a.routeId),
               }))
           : vehicles
-              .filter((v) => kind !== "on-time" || isOnTime(v))
+               .filter((v) => kind !== "on-time" || isOnTime(v))
+              .filter((v) => kind !== "forecasts" || v.hasForecast !== false)
               .map((v) => ({
                 key: v.id,
                 routeId: v.routeId,
@@ -129,10 +133,10 @@ export function NetworkList({
                 title: `ТС ${v.id.replace("vehicle-", "")}`,
                 description: routeName(v.routeId),
                 delay:
-                  kind === "on-time" ? v.currentDelaySec : v.predictedDelaySec,
+                  kind === "on-time" ? v.currentDelaySec : v.hasForecast === false ? null : v.predictedDelaySec,
                 risk: v.riskLevel,
                 probability: v.riskProbability,
-                info: `${Math.round(v.speedKmh)} км/ч`,
+                info: config.officialMode ? `${telemetryAge(v)} · ${forecastAvailability(v)}` : `${Math.round(v.speedKmh)} км/ч`,
                 select: () => useUi.getState().selectVehicle(v.id, v.routeId),
               }));
   const filtered = rows.filter((r) =>
@@ -224,7 +228,7 @@ export function NetworkList({
                 <th>Маршрут / объект</th>
                 <th>Направление</th>
                 <th>
-                  {kind === "on-time" ? "Задержка сейчас" : "Прогноз +15 мин"}
+                  {kind === "on-time" ? "Задержка сейчас" : config.officialMode ? "Прогноз к остановке" : "Прогноз +15 мин"}
                 </th>
                 <th>Риск</th>
                 <th>
@@ -253,7 +257,7 @@ export function NetworkList({
                     </button>
                   </td>
                   <td>{r.description}</td>
-                  <td>{minutes(r.delay)} мин</td>
+                  <td>{r.delay === null ? "—" : `${minutes(r.delay)} мин`}</td>
                   <td>
                     <RiskBadge risk={r.risk} />
                   </td>

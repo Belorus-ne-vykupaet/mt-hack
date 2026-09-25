@@ -1,24 +1,28 @@
 import { config } from "../config/env";
 import type { RiskLevel } from "../../entities/models";
 export const riskLabels: Record<RiskLevel, string> = {
+  unknown: "Нет прогноза",
   normal: "Норма",
   elevated: "Внимание",
   high: "Высокий",
   critical: "Критический",
 };
 export const riskHex: Record<RiskLevel, string> = {
+  unknown: "#8b9ba8",
   normal: "#21ba96",
   elevated: "#e8b449",
   high: "#ef8b4a",
   critical: "#f06479",
 };
 export const riskInk: Record<RiskLevel, string> = {
+  unknown: "var(--muted)",
   normal: "var(--risk-normal)",
   elevated: "var(--risk-elevated)",
   high: "var(--risk-high)",
   critical: "var(--risk-critical)",
 };
 export const riskRgb: Record<RiskLevel, [number, number, number]> = {
+  unknown: [139, 155, 168],
   normal: [33, 186, 150],
   elevated: [232, 180, 73],
   high: [239, 139, 74],

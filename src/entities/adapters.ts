@@ -15,28 +15,37 @@ import type {
   Geometry,
 } from "./models";
 export const mapRoute = (d: RouteDto): Route => ({
+  hasForecast: d.predicted_delay_sec !== null,
+  currentDelayKnown: d.current_delay_sec !== null,
+  forecastStatus: d.forecast_status,
   id: d.id,
   number: d.number,
   name: d.name,
   transportType: d.transport_type,
-  currentDelaySec: d.current_delay_sec,
-  predictedDelaySec: d.predicted_delay_sec,
-  riskProbability: d.risk_probability,
+  currentDelaySec: d.current_delay_sec ?? 0,
+  predictedDelaySec: d.predicted_delay_sec ?? 0,
+  riskProbability: d.risk_probability ?? 0,
   riskLevel: d.risk_level,
   activeVehicleCount: d.vehicle_count,
   stops: d.stops,
 });
 export const mapVehicle = (d: VehicleDto): Vehicle => ({
-  forecastHorizonSec: d.forecast_horizon_sec,
-  forecastTargetTime: d.forecast_target_time,
-  forecastModel: d.forecast_model,
+  bearingDeg: d.bearing_deg,
+  forecastHorizonSec: d.forecast_horizon_sec ?? undefined,
+  forecastTargetTime: d.forecast_target_time ?? undefined,
+  forecastModel: d.forecast_model ?? undefined,
+  hasForecast: d.predicted_delay_sec !== null,
+  currentDelayKnown: d.current_delay_sec !== null,
+  forecastStatus: d.forecast_status,
+  telemetryAgeSec: d.telemetry_age_sec,
+  telemetryStale: d.status === "stale",
   id: d.id,
   routeId: d.route_id,
   position: d.position,
   speedKmh: d.speed_kmh,
-  currentDelaySec: d.current_delay_sec,
-  predictedDelaySec: d.predicted_delay_sec,
-  riskProbability: d.risk_probability,
+  currentDelaySec: d.current_delay_sec ?? 0,
+  predictedDelaySec: d.predicted_delay_sec ?? 0,
+  riskProbability: d.risk_probability ?? 0,
   riskLevel: d.risk_level,
   nextStop: d.next_stop,
   updatedAt: d.updated_at,
@@ -51,8 +60,18 @@ export const mapAlert = (d: AlertDto): Alert => ({
   riskProbability: d.risk_probability,
   predictedDelaySec: d.predicted_delay_sec,
   createdAt: d.created_at,
+  targetTime: d.target_time,
+  expectedArrivalAt: d.expected_arrival_at,
+  leadTimeSec: d.lead_time_sec,
+  observedFactor: d.observed_factor,
+  modelStatus: d.model_status,
 });
 export const mapSummary = (d: NetworkSummaryDto): Summary => ({
+  vehiclesLocated: d.vehicles_located,
+  vehiclesStale: d.vehicles_stale,
+  vehiclesPredicted: d.vehicles_predicted,
+  vehiclesAssessed: d.vehicles_assessed,
+  vehiclesWithoutPosition: d.vehicles_without_position,
   vehiclesTotal: d.vehicles_total,
   vehiclesActive: d.vehicles_active,
   routesActive: d.routes_active,
@@ -72,6 +91,16 @@ export const mapGeometry = (d: RouteGeometryDto): Geometry => ({
   routeId: d.properties.route_id,
   coordinates: d.geometry.coordinates,
 });
+
+export const expandGeometry = (d: RouteGeometryDto): Geometry[] =>
+  d.properties.observed_paths?.length
+    ? d.properties.observed_paths.map((coordinates) => ({
+        routeId: d.properties.route_id,
+        coordinates,
+      }))
+    : d.geometry.coordinates.length > 1
+      ? [mapGeometry(d)]
+      : [];
 
 export const mapSegment = (
   d: import("../shared/api/generated/models").SegmentDto,

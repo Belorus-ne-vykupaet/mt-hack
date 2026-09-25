@@ -47,7 +47,7 @@ export function simulateDispatch(
           v.position.lat - targetStop.position.lat,
         ) * 111195;
       if (
-        v.next_stop.id === plan.stopId &&
+        v.next_stop?.id === plan.stopId &&
         (distanceM < 100 ||
           (v.speed_kmh > 0 && distanceM / (v.speed_kmh / 3.6) < 900)) &&
         !v.id.startsWith("reserve-")

@@ -12,7 +12,7 @@ import { backoff } from "../src/app/realtime/client";
 import { MockRealtimeClient } from "../src/mocks/realtime";
 import type { StreamEvent } from "../src/app/realtime/client";
 import type { Vehicle, Route } from "../src/entities/models";
-import { useUi } from "../src/app/store";
+import { useConnection, useUi } from "../src/app/store";
 const event = (
   type: string,
   payload: Record<string, unknown>,
@@ -128,6 +128,24 @@ describe("query cache realtime bridge", () => {
       { id: "x", value: 2 },
     ]);
   });
+  it("applies a busy stream tick with one route and one vehicle cache write", () => {
+    const data = scenarioSnapshot(30);
+    queryClient.setQueryData(keys.routes, data.routes.map(mapRoute));
+    queryClient.setQueryData(keys.vehicles, data.vehicles.map(mapVehicle));
+    const writes = vi.spyOn(queryClient, "setQueryData");
+    applyEvents([
+      ...data.routes.flatMap((route) => [
+        event("route.updated", { id: route.id, current_delay_sec: 121 }),
+        event("route.updated", { id: route.id, current_delay_sec: 122 }),
+      ]),
+      ...data.vehicles.map((vehicle) =>
+        event("vehicle.updated", { id: vehicle.id, speed_kmh: 9 })),
+    ]);
+    expect(writes).toHaveBeenCalledTimes(2);
+    expect(queryClient.getQueryData<Route[]>(keys.routes)![0].currentDelaySec).toBe(122);
+    expect(queryClient.getQueryData<Vehicle[]>(keys.vehicles)![0].speedKmh).toBe(9);
+    writes.mockRestore();
+  });
   it("sequence gaps and new stream greetings request a REST resync", async () => {
     const reload = vi.fn().mockResolvedValue(undefined);
     const b = new StreamBridge(reload);
@@ -147,6 +165,15 @@ describe("query cache realtime bridge", () => {
     expect(reload).not.toHaveBeenCalled();
     b.consume({ ...event("vehicle.updated", {}, 6), version: 2 });
     await vi.waitFor(() => expect(reload).toHaveBeenCalledOnce());
+    b.close();
+  });
+  it("keeps the stream marked stale while cached official events continue", () => {
+    const b = new StreamBridge();
+    b.consume(event("system.heartbeat", { stale: true }, 1));
+    b.consume(event("vehicle.updated", { id: "vehicle-1", speed_kmh: 2 }, 2));
+    expect(useConnection.getState().status).toBe("stale");
+    b.consume(event("system.heartbeat", { stale: false }, 3));
+    expect(useConnection.getState().status).toBe("connected");
     b.close();
   });
   it("caps reconnect backoff at 15 seconds", () =>

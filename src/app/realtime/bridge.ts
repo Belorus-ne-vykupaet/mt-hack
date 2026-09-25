@@ -24,6 +24,8 @@ const fields: Record<string, string> = {
   forecast_horizon_sec: "forecastHorizonSec",
   forecast_target_time: "forecastTargetTime",
   forecast_model: "forecastModel",
+  forecast_status: "forecastStatus",
+  telemetry_age_sec: "telemetryAgeSec",
   route_id: "routeId",
   vehicle_id: "vehicleId",
   current_delay_sec: "currentDelaySec",
@@ -37,10 +39,19 @@ const fields: Record<string, string> = {
   vehicle_count: "activeVehicleCount",
   transport_type: "transportType",
 };
-export const domainPatch = (payload: Record<string, unknown>) =>
-  Object.fromEntries(
-    Object.entries(payload).map(([k, v]) => [fields[k] || k, v]),
+export function domainPatch(payload: Record<string, unknown>) {
+  const result = Object.fromEntries(
+    Object.entries(payload).map(([k, v]) => [fields[k] || k,
+      ["current_delay_sec", "predicted_delay_sec", "risk_probability"].includes(k) ? v ?? 0 : v]),
   );
+  if ("predicted_delay_sec" in payload) result.hasForecast = payload.predicted_delay_sec !== null;
+  if ("current_delay_sec" in payload) result.currentDelayKnown = payload.current_delay_sec !== null;
+  if ("status" in payload) result.telemetryStale = payload.status === "stale";
+  for (const field of ["forecastHorizonSec", "forecastTargetTime", "forecastModel"]) {
+    if (result[field] === null) result[field] = undefined;
+  }
+  return result;
+}
 export function patchItems<T extends { id: string }>(
   old: T[] | undefined,
   patch: Partial<T> & { id: string },
@@ -54,12 +65,14 @@ export function patchItems<T extends { id: string }>(
       : old;
 }
 export function applyEvents(events: StreamEvent[]) {
-  notifyManager.batch(() =>
+  const routeChanges: Array<(old: Route[] | undefined) => Route[] | undefined> = [];
+  const vehicleChanges: Array<(old: Vehicle[] | undefined) => Vehicle[] | undefined> = [];
+  notifyManager.batch(() => {
     events.forEach((e) => {
       const p = e.payload;
       switch (e.type) {
         case "route.updated":
-          queryClient.setQueryData<Route[]>(keys.routes, (old) =>
+          routeChanges.push((old) =>
             patchItems(
               old,
               domainPatch(p) as Partial<Route> & { id: string },
@@ -70,12 +83,10 @@ export function applyEvents(events: StreamEvent[]) {
           );
           break;
         case "route.removed":
-          queryClient.setQueryData<Route[]>(keys.routes, (old) =>
-            old?.filter((r) => r.id !== p.id),
-          );
+          routeChanges.push((old) => old?.filter((r) => r.id !== p.id));
           break;
         case "vehicle.updated":
-          queryClient.setQueryData<Vehicle[]>(keys.vehicles, (old) =>
+          vehicleChanges.push((old) =>
             patchItems(
               old,
               domainPatch(p) as Partial<Vehicle> & { id: string },
@@ -86,9 +97,7 @@ export function applyEvents(events: StreamEvent[]) {
           );
           break;
         case "vehicle.removed":
-          queryClient.setQueryData<Vehicle[]>(keys.vehicles, (old) =>
-            old?.filter((v) => v.id !== p.id),
-          );
+          vehicleChanges.push((old) => old?.filter((v) => v.id !== p.id));
           break;
         case "alert.created":
         case "alert.updated":
@@ -118,7 +127,7 @@ export function applyEvents(events: StreamEvent[]) {
           if (f.segments)
             queryClient.setQueryData(keys.segments, f.segments.map(mapSegment));
           f.routes?.forEach((r) =>
-            queryClient.setQueryData<Route[]>(keys.routes, (old) =>
+            routeChanges.push((old) =>
               patchItems(
                 old,
                 domainPatch(
@@ -128,7 +137,7 @@ export function applyEvents(events: StreamEvent[]) {
             ),
           );
           f.vehicles?.forEach((v) =>
-            queryClient.setQueryData<Vehicle[]>(keys.vehicles, (old) =>
+            vehicleChanges.push((old) =>
               patchItems(
                 old,
                 domainPatch(
@@ -168,8 +177,16 @@ export function applyEvents(events: StreamEvent[]) {
         default:
           break;
       }
-    }),
-  );
+    });
+    if (routeChanges.length)
+      queryClient.setQueryData<Route[]>(keys.routes, (old) =>
+        routeChanges.reduce((current, change) => change(current), old),
+      );
+    if (vehicleChanges.length)
+      queryClient.setQueryData<Vehicle[]>(keys.vehicles, (old) =>
+        vehicleChanges.reduce((current, change) => change(current), old),
+      );
+  });
 }
 export class StreamBridge {
   lastSequence: number | null = null;
@@ -178,6 +195,7 @@ export class StreamBridge {
   private timer?: ReturnType<typeof setTimeout>;
   private syncing = false;
   private closed = false;
+  private upstreamStale = false;
   private reload: () => Promise<unknown>;
   constructor(reload: () => Promise<unknown> = resync) {
     this.reload = reload;
@@ -202,7 +220,9 @@ export class StreamBridge {
     }
     this.lastSequence = e.sequence;
     if (this.syncing) return;
-    useConnection.getState().set("connected");
+    if (e.type === "system.heartbeat")
+      this.upstreamStale = e.payload.stale === true;
+    useConnection.getState().set(this.upstreamStale ? "stale" : "connected");
     this.queue.push(e);
     if (!this.timer)
       this.timer = setTimeout(() => {
@@ -219,7 +239,8 @@ export class StreamBridge {
     useConnection.getState().set("stale");
     try {
       await this.reload();
-      if (!this.closed) useConnection.getState().set("connected");
+      if (!this.closed)
+        useConnection.getState().set(this.upstreamStale ? "stale" : "connected");
     } catch {
       if (!this.closed) useConnection.getState().set("reconnecting");
     } finally {

@@ -52,7 +52,7 @@ export function buildStopColumns(
     });
   }
   for (const vehicle of vehicles) {
-    if (vehicle.forecastHorizonSec === undefined) continue;
+    if (vehicle.forecastHorizonSec === undefined || !vehicle.nextStop || vehicle.hasForecast === false) continue;
     const route = byRoute.get(vehicle.routeId);
     if (!route) continue;
     const stop = vehicle.nextStop;

@@ -6,6 +6,7 @@
  */
 import type { PositionDto } from './positionDto';
 import type { StopDto } from './stopDto';
+import type { VehicleDtoForecastStatus } from './vehicleDtoForecastStatus';
 import type { VehicleDtoRiskLevel } from './vehicleDtoRiskLevel';
 import type { VehicleDtoStatus } from './vehicleDtoStatus';
 
@@ -15,15 +16,27 @@ export interface VehicleDto {
   position: PositionDto;
   bearing_deg: number;
   speed_kmh: number;
-  current_delay_sec: number;
-  predicted_delay_sec: number;
-  risk_probability: number;
+  /** @nullable */
+  current_delay_sec: number | null;
+  /** @nullable */
+  predicted_delay_sec: number | null;
+  /** @nullable */
+  risk_probability: number | null;
   risk_level: VehicleDtoRiskLevel;
   status: VehicleDtoStatus;
-  next_stop: StopDto;
+  next_stop: StopDto | null;
   updated_at: string;
-  /** Exact target-stop horizon in (600,900] seconds for official model. */
-  forecast_horizon_sec?: number;
-  forecast_target_time?: string;
-  forecast_model?: string;
+  /**
+     * Exact target-stop horizon in (600,900] seconds for official model.
+     * @nullable
+     */
+  forecast_horizon_sec?: number | null;
+  /** @nullable */
+  forecast_target_time?: string | null;
+  /** @nullable */
+  forecast_model?: string | null;
+  /** Absent for legacy/demo data. Missing forecasts remain visible on the map. */
+  forecast_status?: VehicleDtoForecastStatus;
+  /** @minimum 0 */
+  telemetry_age_sec?: number;
 }

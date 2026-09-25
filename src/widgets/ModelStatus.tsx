@@ -12,6 +12,15 @@ interface Status {
   pipelineMs?: number;
   inferenceMs?: number;
   predictedVehicles?: number;
+  locatedVehicles?: number;
+  freshVehicles?: number;
+  staleVehicles?: number;
+  totalVehicles?: number;
+  scheduledVehicles?: number;
+  contextVehicles?: number;
+  scheduledWithoutPosition?: number;
+  scheduledStale?: number;
+  scheduledWithoutTarget?: number;
   metrics?: {
     maeSec: number;
     persistenceMaeSec: number;
@@ -71,6 +80,15 @@ export function ModelStatus() {
           </span>
         </div>
       )}
+      <p className="fleet-coverage" aria-label="Полнота транспортных данных">
+        <strong>{s?.locatedVehicles ?? "—"} GPS-точек на карте</strong> · {s?.freshVehicles ?? "—"} свежих · {s?.staleVehicles ?? "—"} последних известных · {s?.predictedVehicles ?? "—"} с прогнозом
+        <span>
+          В архиве {s?.totalVehicles ?? "—"} ТС: {s?.scheduledVehicles ?? "—"} с расписанием и {s?.contextVehicles ?? "—"} контекстных без него. По контекстным ТС прогноз не требуется.
+        </span>
+        <span>
+          Среди ТС с расписанием: {s?.predictedVehicles ?? "—"} с прогнозом сейчас · {s?.scheduledWithoutTarget ?? "—"} без остановки через 10–15 минут · {s?.scheduledStale ?? "—"} с устаревшим GPS · {s?.scheduledWithoutPosition ?? "—"} без позиции.
+        </span>
+      </p>
       <details>
         <summary>Что предсказывает модель</summary>
         <p>
@@ -87,8 +105,12 @@ export function ModelStatus() {
           причинность.
         </p>
         <p>
-          Без подходящей остановки или свежего GPS автобус не включается в
-          прогноз. При отказе ML используется текущая задержка, при потере связи
+          Нагрузочный тест с 125 автобусами использует искусственные записи и не
+          меняет этот архив. Линии на карте — справочные участки по дорогам OSM,
+          построенные из выданного расписания или GPS; пробелы между несвязанными
+          участками не соединяются. Старая GPS-точка отмечена серым маркером,
+          а не автобусом: место ТС сейчас неизвестно. Без подходящей остановки или свежего GPS запись остаётся доступной, но не включается в
+          прогноз. Серый цвет означает отсутствие прогноза, а не отсутствие задержки. При отказе ML используется текущая задержка, при потере связи
           сохраняется последнее состояние. Погода и учебные диспетчерские меры
           не меняют официальный прогноз.
         </p>

@@ -1,6 +1,5 @@
+import type { DemoRouteDto as RouteDto, DemoVehicleDto as VehicleDto } from "./types";
 import type {
-  RouteDto,
-  VehicleDto,
   AlertDto,
   NetworkSummaryDto,
   RouteGeometryDto,

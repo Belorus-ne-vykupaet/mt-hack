@@ -1,3 +1,4 @@
+import { forecastAvailability, telemetryAge } from "../entities/availability";
 /* eslint-disable react/set-state-in-effect -- Synchronizes state with the external MapLibre lifecycle, including initialization failures. */
 import { WeatherControl } from "./weather/WeatherControl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -14,6 +15,7 @@ import {
 import { ScenegraphLayer } from "@deck.gl/mesh-layers";
 import { AmbientLight, DirectionalLight, LightingEffect } from "@deck.gl/core";
 import { buildStopColumns, columnTooltip } from "../entities/map-columns";
+import { uniquePhysicalStops } from "../entities/map-stops";
 import type { RiskColumn } from "../entities/map-columns";
 import {
   prepareRoutePaths,
@@ -22,6 +24,7 @@ import {
 } from "../entities/vehicle-motion";
 import type { ProjectedVehicle } from "../entities/vehicle-motion";
 import { useAnimatedHorizon } from "./useAnimatedHorizon";
+import { useDocumentVisible } from "../shared/lib/document-visibility";
 import { delayAt, riskAt } from "../entities/forecast";
 import {
   Layers,
@@ -33,7 +36,7 @@ import {
   RotateCcw,
   Box,
 } from "lucide-react";
-import type { Route, Vehicle, Geometry, Segment } from "../entities/models";
+import type { Route, Vehicle, Geometry, Segment, Stop } from "../entities/models";
 import { useUi } from "../app/store";
 import { useTheme } from "../app/theme";
 import { config } from "../shared/config/env";
@@ -42,6 +45,14 @@ import { riskRgb, minutes, horizonLabel } from "../shared/ui/format";
 import "maplibre-gl/dist/maplibre-gl.css";
 
 const MOSCOW: [number, number] = [37.68, 55.76];
+const EMPTY_STOPS: Stop[] = [];
+// The pitched map and road paths share the ground plane. At city scale their
+// depth values become indistinguishable and the GPU draws the route as dots.
+// Keep route paint above the basemap without writing depth over buses/buildings.
+const PITCHED_ROUTE_DEPTH = {
+  depthCompare: "always" as const,
+  depthWriteEnabled: false,
+};
 export default function NetworkMap({
   mode,
   routes,
@@ -56,6 +67,7 @@ export default function NetworkMap({
   segments: Segment[];
 }) {
   const host = useRef<HTMLDivElement>(null);
+  const documentVisible = useDocumentVisible();
   const map = useRef<LibreMap | undefined>(undefined);
   const overlay = useRef<MapLibreOverlay | undefined>(undefined);
   const [ready, setReady] = useState(false);
@@ -87,20 +99,52 @@ export default function NetworkMap({
     ui.forecastOffsetMin,
     !!reducedMotion || config.visualTest,
   );
-  const paths = useMemo(() => prepareRoutePaths(geometries), [geometries]);
+  // In official replay the model predicts delay, not coordinates. Searching
+  // every static road vertex for every GPS refresh is both misleading and costly.
+  const paths = useMemo(
+    () => prepareRoutePaths(config.officialMode ? [] : geometries),
+    [geometries],
+  );
   const anchors = useMemo(
-    () => anchorVehicles(vehicles, paths),
+    () => config.officialMode
+      ? vehicles.map((vehicle) => ({vehicle, distance: 0}))
+      : anchorVehicles(vehicles, paths),
     [vehicles, paths],
   );
   const displayedVehicles = useMemo(
     () => anchors.map((a) => projectVehicle(a, animatedHorizon)),
     [anchors, animatedHorizon],
   );
+  // A last-known GPS fix is not evidence that the bus is still parked there.
+  // Keep it inspectable as a muted point, never as a current bus icon/model.
+  const currentVehicles = useMemo(
+    () => displayedVehicles.filter((vehicle) => !vehicle.telemetryStale),
+    [displayedVehicles],
+  );
+  // Telemetry age changes every second, while a GPS fix arrives much less
+  // often. Keep the heavy glTF instances stable until visual bus data changes.
+  const busVisualKey = JSON.stringify(currentVehicles.map((vehicle) => ({
+    id: vehicle.id,
+    routeId: vehicle.routeId,
+    position: vehicle.position,
+    headingDeg: vehicle.headingDeg,
+    telemetryStale: vehicle.telemetryStale,
+  })));
+  const busVisualData = useMemo(
+    () => JSON.parse(busVisualKey) as Pick<ProjectedVehicle,
+      "id" | "routeId" | "position" | "headingDeg" | "telemetryStale">[],
+    [busVisualKey],
+  );
   const selectedDisplayVehicle = displayedVehicles.find(
     (v) => v.id === ui.selectedVehicleId,
   );
 
   useEffect(() => {
+    if (!documentVisible) {
+      setReady(false);
+      setWeatherMap(null);
+      return;
+    }
     if (!host.current) return;
     // The external WebGL instance is being replaced; invalidate its readiness.
     // eslint-disable-next-line react/set-state-in-effect
@@ -136,7 +180,6 @@ export default function NetworkMap({
     map.current = m;
     m.addControl(new AttributionControl({ compact: true }), "bottom-right");
     m.on("style.load", () => {
-      setLoading(false);
       setFailed(false);
       // Retain the provider's geometry and attribution, with readable Russian labels.
       for (const layer of m.getStyle().layers) {
@@ -237,7 +280,9 @@ export default function NetworkMap({
             let text = "";
             if ("speedKmh" in object) {
               const v = object as ProjectedVehicle;
-              text = `ТС ${v.id.replace("vehicle-", "")} · маршрут ${v.routeId}\nСкорость ${Math.round(v.speedKmh)} км/ч\nСейчас ${minutes(v.currentDelaySec)} мин\nЧерез 15 мин ${minutes(v.predictedDelaySec)} мин${v.forecastMinutes > 0 ? `\n${horizonLabel(v.forecastMinutes)} · расчётное положение по скорости и задержке` : ""}`;
+              text = config.officialMode
+                ? `${v.telemetryStale ? "Последняя GPS-точка ТС" : "ТС"} ${v.id.replace("vehicle-", "")}\n${telemetryAge(v)}\n${forecastAvailability(v)}${v.hasForecast === false ? "" : `: ${minutes(v.predictedDelaySec)} мин`}\nСейчас: ${v.currentDelayKnown === false ? "нет данных" : `${minutes(v.currentDelaySec)} мин`}`
+                : `ТС ${v.id.replace("vehicle-", "")} · маршрут ${v.routeId}\nСкорость ${Math.round(v.speedKmh)} км/ч\nСейчас ${minutes(v.currentDelaySec)} мин\nЧерез 15 мин ${minutes(v.predictedDelaySec)} мин`;
             } else if ("delay" in object) {
               const c = object as RiskColumn;
               const horizon = useUi.getState().forecastOffsetMin;
@@ -279,7 +324,10 @@ export default function NetworkMap({
       setLoading(false);
     });
     m.on("idle", () => {
-      if (m.isStyleLoaded() && m.areTilesLoaded()) setFailed(false);
+      if (m.isStyleLoaded() && m.areTilesLoaded()) {
+        setFailed(false);
+        setLoading(false);
+      }
     });
     const timeout = setTimeout(() => {
       if (!m.isStyleLoaded()) {
@@ -308,7 +356,7 @@ export default function NetworkMap({
       map.current = undefined;
       overlay.current = undefined;
     };
-  }, [styleUrl, dark, generation]);
+  }, [styleUrl, dark, generation, documentVisible]);
 
   useEffect(() => {
     if (!ready || !map.current) return;
@@ -339,7 +387,9 @@ export default function NetworkMap({
   useEffect(() => {
     if (!ready || !ui.selectedRouteId || lastFocus.current === ui.focusVersion)
       return;
-    const geometry = geometries.find((g) => g.routeId === ui.selectedRouteId);
+    const selectedCoordinates = geometries
+      .filter((geometry) => geometry.routeId === ui.selectedRouteId)
+      .flatMap((geometry) => geometry.coordinates);
     const v = displayedVehicles.find((v) => v.id === ui.selectedVehicleId);
     const stop = routes
       .find((r) => r.id === ui.selectedRouteId)
@@ -353,9 +403,9 @@ export default function NetworkMap({
         pitch: mode === "flow" ? 52 : 0,
         duration,
       });
-    } else if (geometry?.coordinates.length) {
+    } else if (selectedCoordinates.length) {
       lastFocus.current = ui.focusVersion;
-      const p = geometry.coordinates;
+      const p = selectedCoordinates;
       map.current?.fitBounds(
         [
           [Math.min(...p.map((c) => c[0])), Math.min(...p.map((c) => c[1]))],
@@ -377,16 +427,13 @@ export default function NetworkMap({
     duration,
   ]);
 
-  const data = useMemo(
-    () =>
-      geometries
-        .map((g) => ({ ...g, route: routes.find((r) => r.id === g.routeId) }))
-        .filter(
-          (g): g is Geometry & { route: Route } =>
-            !!g.route && g.coordinates.length > 1,
-        ),
-    [geometries, routes],
-  );
+  const routeIds = routes.map((route) => route.id).join("|");
+  const data = useMemo(() => {
+    const wanted = new Set(routeIds.split("|"));
+    return geometries.filter(
+      (geometry) => wanted.has(geometry.routeId) && geometry.coordinates.length > 1,
+    );
+  }, [geometries, routeIds]);
   const initialFit = useRef(false);
   const fitNetwork = useCallback(() => {
     const points = [
@@ -419,6 +466,101 @@ export default function NetworkMap({
     () => buildStopColumns(segments, routes, ui.forecastOffsetMin, vehicles),
     [segments, routes, vehicles, ui.forecastOffsetMin],
   );
+  const routeLayers = useMemo<Layer[]>(() => {
+    const selected = ui.selectedRouteId;
+    return [
+      ...(config.officialMode ? [new PathLayer({
+        id: "road-reference-casing",
+        data: ui.routesVisible ? data : [],
+        parameters: mode === "flow" ? PITCHED_ROUTE_DEPTH : undefined,
+        getPath: (d) => d.coordinates,
+        getColor: dark ? [9, 23, 37, 185] : [255, 255, 255, 210],
+        getWidth: (d) => d.routeId === selected ? 9 : 7,
+        widthUnits: "pixels",
+      })] : []),
+      new PathLayer({
+        id: "route-selection",
+        data: ui.routesVisible
+          ? data.filter((d) => d.routeId === selected)
+          : [],
+        parameters: mode === "flow" ? PITCHED_ROUTE_DEPTH : undefined,
+        getPath: (d) => d.coordinates,
+        getColor: [60, 170, 235, 95],
+        getWidth: 13,
+        widthUnits: "pixels",
+      }),
+      new PathLayer({
+        id: "routes",
+        data: ui.routesVisible ? data : [],
+        parameters: mode === "flow" ? PITCHED_ROUTE_DEPTH : undefined,
+        getPath: (d) => d.coordinates,
+        getColor: (d) => [
+          ...(config.officialMode ? routeRgb(d.routeId) : [122, 142, 165]),
+          selected && d.routeId !== selected ? 38 : config.officialMode ? 225 : 65,
+        ] as [number, number, number, number],
+        getWidth: (d) =>
+          d.routeId === selected ? 7 : config.officialMode ? 4.2 : 1.7,
+        widthUnits: "pixels",
+        pickable: true,
+        onClick: ({ object }) => {
+          if (object) useUi.getState().selectRoute(object.routeId);
+        },
+      }),
+    ];
+  }, [data, ui.selectedRouteId, ui.routesVisible, dark, mode]);
+  const selectedRouteStops = routes.find((route) => route.id === ui.selectedRouteId)?.stops || EMPTY_STOPS;
+  const physicalStops = useMemo(
+    () => config.officialMode
+      ? uniquePhysicalStops(selectedRouteStops, ui.selectedStopId)
+      : selectedRouteStops,
+    [selectedRouteStops, ui.selectedStopId],
+  );
+  const visibleStops = useMemo(
+    () => physicalStops.filter((stop, index, all) =>
+      zoom >= 13 ||
+      stop.id === ui.selectedStopId ||
+      index === 0 ||
+      index === all.length - 1 ||
+      index % 5 === 0,
+    ),
+    [physicalStops, ui.selectedStopId, zoom],
+  );
+  const busSceneLayer = useMemo(() => new ScenegraphLayer({
+    id: "bus-models",
+    data: ui.vehiclesVisible ? busVisualData : [],
+    scenegraph: "/models/bus.glb",
+    getPosition: (vehicle) => [vehicle.position.lon, vehicle.position.lat, 1],
+    getOrientation: (vehicle) => [0, 180 - vehicle.headingDeg, 90],
+    getScale: (vehicle) => vehicle.id === ui.selectedVehicleId
+      ? [0.75, 0.5625, 1.25] : [0.6, 0.45, 1],
+    sizeScale: 7.8 * 2.7,
+    sizeMinPixels: (zoom < 11 ? 15 : 21) * 2.7,
+    sizeMaxPixels: 54 * 2.7,
+    getColor: (vehicle) => [
+      ...(vehicle.telemetryStale ? [155, 165, 175] as const : [255, 255, 255] as const),
+      ui.selectedRouteId && vehicle.routeId !== ui.selectedRouteId ? 170 : 255,
+    ],
+    updateTriggers: {
+      getColor: [ui.selectedRouteId],
+      getScale: [ui.selectedVehicleId],
+    },
+    _lighting: "pbr",
+    getScene: (gltf) => {
+      if (gltf?.scenes?.[0]) {
+        queueMicrotask(() => setBusReady(true));
+        return gltf.scenes[0];
+      }
+      return null;
+    },
+    onError: () => {
+      setBusFailed(true);
+      return true;
+    },
+    pickable: true,
+    onClick: ({ object }) => {
+      if (object) useUi.getState().selectVehicle(object.id, object.routeId);
+    },
+  }), [busVisualData, ui.vehiclesVisible, ui.selectedVehicleId, ui.selectedRouteId, zoom]);
   useEffect(() => {
     if (!ready || !overlay.current) return;
     const selected = ui.selectedRouteId;
@@ -430,36 +572,10 @@ export default function NetworkMap({
       selected && id !== selected ? 35 : 225,
     ];
     const layers: Layer[] = [
-      new PathLayer({
-        id: "route-selection",
-        data: ui.routesVisible
-          ? data.filter((d) => d.routeId === selected)
-          : [],
-        getPath: (d) => d.coordinates,
-        getColor: [60, 170, 235, 95],
-        getWidth: 13,
-        widthUnits: "pixels",
-      }),
-      new PathLayer({
-        id: "routes",
-        data: ui.routesVisible ? data : [],
-        getPath: (d) => d.coordinates,
-        getColor: (d) =>
-          [122, 142, 165, selected && d.routeId !== selected ? 25 : 65] as [
-            number,
-            number,
-            number,
-            number,
-          ],
-        getWidth: (d) => (d.routeId === selected ? 4 : 1.7),
-        widthUnits: "pixels",
-        pickable: true,
-        onClick: ({ object }) => {
-          if (object) ui.selectRoute(object.routeId);
-        },
-      }),
+      ...routeLayers,
       new PathLayer<Segment>({
         id: "risk-segments",
+        parameters: mode === "flow" ? PITCHED_ROUTE_DEPTH : undefined,
         data: ui.routesVisible
           ? [...segments].sort(
               (a, b) =>
@@ -495,13 +611,13 @@ export default function NetworkMap({
         getRadius: zoom < 11 ? 12 : 18,
         radiusUnits: "pixels",
         getFillColor: (d) => [
-          ...(mode === "flow"
+          ...(d.telemetryStale ? riskRgb.unknown : mode === "flow"
             ? routeRgb(d.routeId)
             : riskRgb[riskAt(d, ui.forecastOffsetMin)]),
           selected && d.routeId !== selected ? 30 : mode === "flow" ? 85 : 55,
         ],
         getLineColor: (d) => [
-          ...(mode === "flow"
+          ...(d.telemetryStale ? riskRgb.unknown : mode === "flow"
             ? routeRgb(d.routeId)
             : riskRgb[riskAt(d, ui.forecastOffsetMin)]),
           selected && d.routeId !== selected ? 130 : 255,
@@ -526,14 +642,14 @@ export default function NetworkMap({
             : [],
         getPosition: (d) => [d.position.lon, d.position.lat, 9],
         getFillColor: (d) => [
-          ...riskRgb[riskAt(d, ui.forecastOffsetMin)],
-          selected && d.routeId !== selected ? 155 : 255,
+          ...(d.telemetryStale ? riskRgb.unknown : riskRgb[riskAt(d, ui.forecastOffsetMin)]),
+          d.telemetryStale ? 60 : selected && d.routeId !== selected ? 155 : 255,
         ],
         getLineColor: dark ? [10, 16, 27, 255] : [255, 255, 255, 255],
         lineWidthMinPixels: 2,
         stroked: true,
         getRadius: (d) =>
-          d.id === ui.selectedVehicleId ? 16 : zoom < 11 ? 8 : 12,
+          d.id === ui.selectedVehicleId ? 16 : d.telemetryStale ? 6 : zoom < 11 ? 8 : 12,
         radiusUnits: "pixels",
         updateTriggers: {
           getFillColor: [ui.forecastOffsetMin, selected],
@@ -549,7 +665,7 @@ export default function NetworkMap({
         parameters: { depthCompare: "always", depthWriteEnabled: false },
         data:
           ui.vehiclesVisible && (mode !== "flow" || busFailed)
-            ? displayedVehicles
+            ? currentVehicles
             : [],
         iconAtlas: "/bus-icon.svg",
         iconMapping: {
@@ -577,16 +693,7 @@ export default function NetworkMap({
       }),
       new ScatterplotLayer({
         id: "stops",
-        data: ui.routesVisible
-          ? (routes.find((r) => r.id === selected)?.stops || []).filter(
-              (s, i, all) =>
-                zoom >= 13 ||
-                s.id === ui.selectedStopId ||
-                i === 0 ||
-                i === all.length - 1 ||
-                i % 5 === 0,
-            )
-          : [],
+        data: ui.routesVisible ? visibleStops : [],
         getPosition: (d) => [d.position.lon, d.position.lat],
         getRadius: (d) => (d.id === ui.selectedStopId ? 6 : 3),
         radiusUnits: "pixels",
@@ -603,10 +710,18 @@ export default function NetworkMap({
         id: "route-labels",
         updateTriggers: { getText: [ui.forecastOffsetMin] },
         characterSet: "auto",
-        data: ui.routesVisible && mode === "overview" ? data.slice(0, 5) : [],
+        data: ui.routesVisible && mode === "overview"
+          ? config.officialMode
+            ? selected ? data.filter((line) => line.routeId === selected).slice(0, 1) : []
+            : data.slice(0, 5)
+          : [],
         getPosition: (d) => d.coordinates[Math.floor(d.coordinates.length / 2)],
-        getText: (d) =>
-          `${config.officialMode ? `ТС ${d.route.number}` : d.routeId}  ${minutes(d.route.currentDelaySec + ((d.route.predictedDelaySec - d.route.currentDelaySec) * ui.forecastOffsetMin) / 15)} мин`,
+        getText: (d) => {
+          const route = routes.find((candidate) => candidate.id === d.routeId);
+          return route
+            ? `${config.officialMode ? `ТС ${route.number}` : d.routeId}  ${minutes(route.currentDelaySec + ((route.predictedDelaySec - route.currentDelaySec) * ui.forecastOffsetMin) / 15)} мин`
+            : d.routeId;
+        },
         getColor: dark ? [231, 237, 247] : [27, 44, 69],
         getSize: 11,
         background: true,
@@ -645,56 +760,16 @@ export default function NetworkMap({
           transitions: reducedMotion ? {} : { getElevation: 100 },
         }),
       );
-    if (mode === "flow" && !busFailed)
-      layers.push(
-        new ScenegraphLayer<ProjectedVehicle>({
-          id: "bus-models",
-          data: ui.vehiclesVisible ? displayedVehicles : [],
-          scenegraph: "/models/bus.glb",
-          getPosition: (d) => [d.position.lon, d.position.lat, 1],
-          // The normalized bus is Y-up, +Z forward; deck uses Z-up and yaw around Z.
-          getOrientation: (d) => [0, 180 - d.headingDeg, 90],
-          getScale: (d) =>
-            d.id === ui.selectedVehicleId
-              ? [0.75, 0.5625, 1.25]
-              : [0.6, 0.45, 1],
-          // The unit-length bus needs 2.7× the scale of the former tram model.
-          sizeScale: 7.8 * 2.7,
-          sizeMinPixels: (zoom < 11 ? 15 : 21) * 2.7,
-          sizeMaxPixels: 54 * 2.7,
-          getColor: (d) => [
-            255,
-            255,
-            255,
-            selected && d.routeId !== selected ? 170 : 255,
-          ],
-          updateTriggers: {
-            getColor: [selected],
-            getScale: [ui.selectedVehicleId],
-          },
-          _lighting: "pbr",
-          getScene: (gltf) => {
-            if (gltf?.scenes?.[0]) {
-              queueMicrotask(() => setBusReady(true));
-              return gltf.scenes[0];
-            }
-            return null;
-          },
-          onError: () => {
-            setBusFailed(true);
-            return true;
-          },
-          pickable: true,
-          onClick: ({ object }) => {
-            if (object) ui.selectVehicle(object.id, object.routeId);
-          },
-        }),
-      );
+    if (mode === "flow" && !busFailed) layers.push(busSceneLayer);
     overlay.current.setProps({ layers });
   }, [
     ready,
     data,
+    routeLayers,
+    visibleStops,
+    busSceneLayer,
     displayedVehicles,
+    currentVehicles,
     mode,
     ui,
     zoom,
@@ -716,7 +791,7 @@ export default function NetworkMap({
       data-map-mode={mode}
       data-bus-models={
         mode === "flow" && ui.vehiclesVisible && busReady && !busFailed
-          ? displayedVehicles.length
+          ? currentVehicles.length
           : 0
       }
       data-bus-model-status={
@@ -724,6 +799,8 @@ export default function NetworkMap({
       }
       data-selected-vehicle-heading={selectedDisplayVehicle?.headingDeg}
       data-map-theme={theme}
+      data-visible-vehicles={ui.vehiclesVisible ? vehicles.length : 0}
+      data-road-paths={config.officialMode ? data.length : undefined}
       data-forecast-offset={ui.forecastOffsetMin}
       data-selected-vehicle-position={
         selectedDisplayVehicle
@@ -847,15 +924,17 @@ export default function NetworkMap({
             : "Текущий риск задержки"}
         </span>
         <small className="local-risk-key">
-          {mode === "flow"
+          {config.officialMode
+            ? "Линии — справочная трасса OSM · автобусы — свежий GPS · серые точки — последний сигнал"
+            : mode === "flow"
             ? "Кольцо — маршрут · линии и столбцы — риск"
             : "Линии — участки · значки — автобусы"}
         </small>
         <div>
-          {(["normal", "elevated", "high", "critical"] as const).map((r, i) => (
+          {(["normal", "elevated", "high", "critical", ...(config.officialMode ? ["unknown" as const] : [])] as const).map((r, i) => (
             <span key={r}>
               <i style={{ background: `rgb(${riskRgb[r].join(",")})` }} />
-              {["Норма", "Внимание", "Высокий", "Критический"][i]}
+              {["Норма", "Внимание", "Высокий", "Критический", "Нет прогноза / старый GPS"][i]}
             </span>
           ))}
         </div>
@@ -873,7 +952,7 @@ export default function NetworkMap({
         </div>
       )}
       <div className="map-counter">
-        {ui.vehiclesVisible ? vehicles.length : 0} ТС <span>на карте</span>
+        {ui.vehiclesVisible ? vehicles.length : 0} {config.officialMode ? "GPS-точек" : "ТС"} <span>на карте</span>
       </div>
     </div>
   );

@@ -4,6 +4,9 @@ type Prediction = {
   currentDelaySec: number;
   predictedDelaySec: number;
   riskLevel: RiskLevel;
+  telemetryStale?: boolean;
+  hasForecast?: boolean;
+  currentDelayKnown?: boolean;
 };
 export const delayAt = (item: Prediction, minutes: number) =>
   config.officialMode
@@ -15,6 +18,7 @@ export const delayAt = (item: Prediction, minutes: number) =>
         Math.max(0, Math.min(15, minutes))) /
         15;
 export function riskAt(item: Prediction, minutes: number): RiskLevel {
+  if (item.telemetryStale || (minutes > 0 ? item.hasForecast === false : item.currentDelayKnown === false)) return "unknown";
   const delay = delayAt(item, minutes);
   if (config.officialMode)
     return delay < -60 ? "elevated" : riskFromDelay(delay);
@@ -28,7 +32,7 @@ export function riskAt(item: Prediction, minutes: number): RiskLevel {
         : "normal";
 }
 
-export const riskFromDelay = (seconds: number): RiskLevel =>
+export const riskFromDelay = (seconds: number): Exclude<RiskLevel, "unknown"> =>
   seconds >= 420
     ? "critical"
     : seconds >= 240

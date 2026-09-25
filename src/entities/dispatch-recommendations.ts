@@ -44,6 +44,9 @@ export function recommendDispatch({
       const fresh = vehicles.filter(
         (v) =>
           v.routeId === route.id &&
+          v.hasForecast !== false &&
+          v.currentDelayKnown !== false &&
+          !v.telemetryStale &&
           Number.isFinite(v.predictedDelaySec) &&
           Number.isFinite(v.currentDelaySec) &&
           Number.isFinite(now) &&
@@ -121,9 +124,9 @@ export function recommendDispatch({
         b.predictedDelaySec - a.predictedDelaySec || a.id.localeCompare(b.id),
     );
     const target = worst.find((v) =>
-      route.stops.some((s) => s.id === v.nextStop.id),
+      route.stops.some((s) => s.id === v.nextStop?.id),
     );
-    if (target) {
+    if (target?.nextStop) {
       rec.stopId = target.nextStop.id;
       rec.stopName = target.nextStop.name;
       rec.currentDwellSec = rec.targetDwellSec = 30;

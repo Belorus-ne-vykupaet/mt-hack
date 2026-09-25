@@ -13,4 +13,5 @@ export const VehicleDtoRiskLevel = {
   elevated: 'elevated',
   high: 'high',
   critical: 'critical',
+  unknown: 'unknown',
 } as const;

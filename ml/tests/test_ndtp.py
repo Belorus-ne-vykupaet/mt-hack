@@ -66,7 +66,8 @@ def test_crc_handshake_and_unknown_cells():
 
 def test_tcp_fragmentation_multiple_frames_and_reconnect():
     async def run():
-        receiver = Receiver()
+        received = []
+        receiver = Receiver(on_packet=received.append)
         server = await asyncio.start_server(receiver.handle, "127.0.0.1", 0)
         async with server:
             port = server.sockets[0].getsockname()[1]
@@ -91,6 +92,7 @@ def test_tcp_fragmentation_multiple_frames_and_reconnect():
             receiver.frames == 3
             and receiver.errors == 0
             and len(receiver.histories[123]) == 3
+            and len(received) == 3
         )
 
     asyncio.run(run())

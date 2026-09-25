@@ -6,14 +6,15 @@ import math
 import os
 import time
 from collections import deque
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 from pathlib import Path
 
 import httpx
+import numpy as np
 import pandas as pd
 from fastapi import FastAPI
 
-from .features import Dataset, seconds
+from .features import Dataset, distance, seconds
 from .ndtp import Receiver
 
 
@@ -53,6 +54,70 @@ def stop(row, sequence=0):
     }
 
 
+def observed_arrival(target, observed_actual, history, cutoff, live=False):
+    """Exclude an event already observed at T, never inspect its future outcome."""
+    if not live:
+        return bool(
+            len(observed_actual)
+            and observed_actual.tt_action_item_id.eq(target["tt_action_item_id"]).any()
+        )
+    if history.empty:
+        return False
+    # Without factual arrivals in NDTP, a bounded stopped GPS match is evidence
+    # of arrival. A future or stale packet cannot close the target.
+    stopped = history[
+        history.speed.between(0, 3)
+        & history.ts.between(target["ts"] - 1800, cutoff)
+        & history.location_valid.eq(True)
+    ]
+    return any(
+        distance(row.lon, row.lat, target["lon"], target["lat"]) < 50
+        for row in stopped.itertuples()
+    )
+
+
+def observed_factor(features, current_delay):
+    """Describe only signals observed by T; never claim a causal ML explanation."""
+    if features["dwell_s"] > 90:
+        return "длительная наблюдаемая стоянка"
+    if features["speed_mean_120"] < 8:
+        return "низкая наблюдаемая скорость за 2 минуты"
+    if current_delay is not None and current_delay > 120:
+        return "задержка уже есть на предыдущих остановках"
+    return "отклонение и телеметрия до момента прогноза"
+
+
+def observed_paths(gps, cutoff):
+    """Causal GPS trails; split gaps and jumps instead of drawing across streets."""
+    if gps.empty:
+        return []
+    end = np.searchsorted(gps.ts.to_numpy(), cutoff, side="right")
+    samples = gps.iloc[:end][["ts", "lon", "lat"]].to_numpy(dtype=float)
+    if len(samples) < 2:
+        return []
+    lon, lat = samples[:, 1], samples[:, 2]
+    jump_m = np.hypot(
+        np.diff(lon) * np.cos(np.deg2rad((lat[1:] + lat[:-1]) / 2)),
+        np.diff(lat),
+    ) * 111195
+    breaks = np.where((np.diff(samples[:, 0]) > 120) | (jump_m > 250))[0] + 1
+    paths = []
+    for chunk in np.split(samples[:, 1:3], breaks):
+        if len(chunk) < 2:
+            continue
+        # Stationary packets add no visible geometry.
+        moved = np.r_[True, np.any(np.diff(chunk, axis=0) != 0, axis=1)]
+        coords = chunk[moved]
+        if len(coords) < 2:
+            continue
+        stride = max(1, math.ceil(len(coords) / 400))
+        line = coords[::stride]
+        if not np.array_equal(line[-1], coords[-1]):
+            line = np.vstack((line, coords[-1]))
+        paths.append(line.tolist())
+    return paths
+
+
 class Engine:
     def __init__(self):
         self.root = Path(os.getenv("OFFICIAL_DATA_DIR", "ml/data/official"))
@@ -68,13 +133,14 @@ class Engine:
         self.plans = {int(k): v for k, v in self.dataset.schedule.groupby("tr_id")}
         self.started = time.monotonic()
         self.start = pd.Timestamp(
-            os.getenv("REPLAY_START", "2026-01-06 17:50:00"), tz="UTC"
+            os.getenv("REPLAY_START", "2026-01-06 11:55:00"), tz="UTC"
         ).timestamp()
         self.speed = float(os.getenv("REPLAY_SPEED", "1"))
         self.mode = os.getenv("TELEMETRY_MODE", "replay")
         if self.mode not in ("replay", "ndtp"):
             raise ValueError("TELEMETRY_MODE must be replay or ndtp")
-        self.receiver = Receiver()
+        self.packet_event = asyncio.Event()
+        self.receiver = Receiver(on_packet=self._on_packet)
         self.cache = None
         self.cache_at = 0.0
         self.lock = asyncio.Lock()
@@ -105,21 +171,27 @@ class Engine:
         self.catalog = []
         self.geometry = []
         self.series = deque(maxlen=240)
-        for tr, plan in self.plans.items():
+        # First publication is immutable for each vehicle/target/model state.
+        # The bounded audit is evidence of when an alert actually appeared.
+        self.warning_first_issued = {}
+        self.warning_audit = deque(maxlen=5000)
+        self.last_cutoff = None
+        for tr in sorted(set(self.plans) | set(self.dataset.groups) | set(self.unit_map.values())):
+            plan = self.plans.get(tr, self.dataset.schedule.iloc[:0])
             valid = plan[plan.lat.between(-90, 90) & plan.lon.between(-180, 180)]
             stops = [stop(row, i) for i, row in enumerate(valid.to_dict("records"))]
             self.catalog.append(
                 {
                     "id": f"duty-{tr}",
                     "number": str(tr),
-                    "name": f"План ТС {tr} · официальный CSV",
+                    "name": f"План ТС {tr} · официальный CSV" if tr in self.plans else f"ТС {tr} · расписание отсутствует",
                     "transport_type": "bus",
                     "stops": stops,
                     "vehicle_count": 0,
-                    "current_delay_sec": 0,
-                    "predicted_delay_sec": 0,
-                    "risk_probability": 0,
-                    "risk_level": "normal",
+                    "current_delay_sec": None,
+                    "predicted_delay_sec": None,
+                    "risk_probability": None,
+                    "risk_level": "unknown",
                 }
             )
             # No invented street geometry: empty line until a real trace is available.
@@ -130,6 +202,24 @@ class Engine:
                     "properties": {"route_id": f"duty-{tr}"},
                 }
             )
+
+    def _on_packet(self, row):
+        if row["unit_id"] in self.unit_map:
+            self.packet_event.set()
+
+    async def stream_forecasts(self):
+        """Coalesce live NDTP frames into at most one forecast per second."""
+        while True:
+            await self.packet_event.wait()
+            self.packet_event.clear()
+            remaining = 1 - (time.monotonic() - self.cache_at)
+            if remaining > 0:
+                await asyncio.sleep(remaining)
+            self.cache_at = 0
+            try:
+                await self.snapshot()
+            except Exception as error:
+                self.last_error = type(error).__name__
 
     async def snapshot(self):
         async with self.lock:
@@ -148,12 +238,15 @@ class Engine:
                 else cutoff
             )
             timestamp = iso(cutoff)
+            self.last_cutoff = cutoff
             vehicles = []
             items = []
             targets = {}
             features = {}
             geometries = []
-            for tr, plan in self.plans.items():
+            for route in self.catalog:
+                tr = int(route["number"])
+                plan = self.plans.get(tr, self.dataset.schedule.iloc[:0])
                 h = self.dataset.history(tr, cutoff)
                 if self.mode == "ndtp":
                     rows = [
@@ -161,7 +254,7 @@ class Engine:
                         for unit, rows in self.receiver.histories.items()
                         if self.unit_map.get(unit) == tr
                         for r in rows
-                        if cutoff - 1800 <= r["ts"] <= cutoff
+                        if r["ts"] <= cutoff
                     ]
                     if not rows:
                         continue
@@ -171,28 +264,46 @@ class Engine:
                     & h.lat.between(-90, 90)
                     & h.lon.between(-180, 180)
                 ]
-                if gps.empty or cutoff - gps.iloc[-1].ts > 180:
-                    continue
-                last = gps.iloc[-1]
-                future = plan[(plan.ts > cutoff + 600) & (plan.ts <= cutoff + 900)]
-                if future.empty:
-                    continue
-                target = future.iloc[0].to_dict()
+                last = (
+                    self.dataset.last_position(tr, cutoff)
+                    if self.mode == "replay"
+                    else gps.iloc[-1] if not gps.empty else None
+                )
+                if last is None:
+                    continue  # Never invent a position or use a future observation.
+                age = max(0.0, cutoff - float(last.ts))
+                fresh = age <= 180
                 past = self.actual.get(tr)
                 observed = (
                     past[past.actual_ts <= cutoff]
                     if self.mode == "replay" and past is not None
                     else pd.DataFrame()
                 )
+                future = plan[(plan.ts > cutoff + 600) & (plan.ts <= cutoff + 900)]
+                target = next(
+                    (
+                        candidate
+                        for candidate in future.to_dict("records")
+                        if not observed_arrival(
+                            candidate, observed, h, cutoff, self.mode == "ndtp"
+                        )
+                    ),
+                    None,
+                )
+                forecast_status = (
+                    "stale_gps" if not fresh else
+                    "no_schedule" if plan.empty else
+                    "no_target" if target is None else "pending"
+                )
                 cur = (
                     float(observed.iloc[-1].actual_ts - observed.iloc[-1].plan_ts)
                     if len(observed)
-                    else 0.0
+                    else None
                 )
-                if self.mode == "ndtp":
+                if not fresh:
+                    cur = None
+                if self.mode == "ndtp" and fresh:
                     # Match a recent low-speed GPS observation to a planned stop, only in a bounded time window.
-                    from .features import distance
-
                     candidates = plan[
                         (plan.ts >= cutoff - 1800) & (plan.ts <= cutoff + 300)
                     ]
@@ -209,18 +320,18 @@ class Engine:
                         cur = float(
                             min((d for t, d in matches if t == latest), key=abs)
                         )
-                point = {
-                    "tr_id": tr,
-                    "T": cutoff,
-                    "target_stop_id": target["tt_action_item_id"],
-                    "target_time_begin": target["time_begin"],
-                    "cur_dev_s": cur,
-                }
-                feature = self.dataset.feature(point, h)
                 vehicle_id = f"vehicle-{tr}"
-                targets[vehicle_id] = target
-                features[vehicle_id] = feature
-                items.append({"vehicleId": vehicle_id, "features": finite(feature)})
+                if forecast_status == "pending":
+                    point = {
+                        "tr_id": tr, "T": cutoff,
+                        "target_stop_id": target["tt_action_item_id"],
+                        "target_time_begin": target["time_begin"],
+                        "cur_dev_s": cur if cur is not None else float("nan"),
+                    }
+                    feature = self.dataset.feature(point, h)
+                    targets[vehicle_id] = target
+                    features[vehicle_id] = feature
+                    items.append({"vehicleId": vehicle_id, "features": finite(feature)})
                 vehicles.append(
                     {
                         "id": vehicle_id,
@@ -233,29 +344,38 @@ class Engine:
                         if pd.notna(last.speed) and 0 <= last.speed <= 150
                         else 0.0,
                         "current_delay_sec": cur,
-                        "predicted_delay_sec": cur,
-                        "risk_probability": 0.0,
-                        "risk_level": risk(cur),
-                        "status": "active",
-                        "next_stop": stop(target),
+                        "predicted_delay_sec": None,
+                        "risk_probability": None,
+                        "risk_level": "unknown",
+                        "status": "active" if fresh else "stale",
+                        "telemetry_age_sec": round(age, 1),
+                        "forecast_status": forecast_status,
+                        "forecast_horizon_sec": None,
+                        "forecast_target_time": None,
+                        "forecast_model": None,
+                        "next_stop": stop(target) if target is not None and fresh else None,
                         "updated_at": iso(float(last.ts)),
                     }
                 )
-                # A short observed GPS trace only; never connect stops through buildings.
-                trace = (
-                    gps[gps.ts >= cutoff - 600][["lon", "lat"]]
-                    .iloc[::3]
-                    .to_numpy()
-                    .tolist()
+                # Map geometry may use past observations beyond the 30-minute ML
+                # feature window; the model still receives only causal features.
+                observed = (
+                    self.dataset.gps_groups.get(tr)
+                    if self.mode == "replay"
+                    else gps
                 )
+                paths = observed_paths(observed, cutoff)
                 geometries.append(
                     {
                         "type": "Feature",
                         "geometry": {
                             "type": "LineString",
-                            "coordinates": trace if len(trace) > 1 else [],
+                            "coordinates": max(paths, key=len) if paths else [],
                         },
-                        "properties": {"route_id": f"duty-{tr}"},
+                        "properties": {
+                            "route_id": f"duty-{tr}",
+                            "observed_paths": paths,
+                        },
                     }
                 )
             self.status = "no_targets" if not items else "baseline"
@@ -269,10 +389,12 @@ class Engine:
                     result = response.json()
                     values = {p["vehicleId"]: p for p in result["predictions"]}
                     if result["asOf"] != timestamp or set(values) != {
-                        v["id"] for v in vehicles
+                        i["vehicleId"] for i in items
                     }:
                         raise ValueError("Incomplete ML response")
                     for vehicle in vehicles:
+                        if vehicle["id"] not in features:
+                            continue
                         prediction = values[vehicle["id"]]
                         if (
                             not math.isfinite(prediction["delaySec"])
@@ -280,6 +402,9 @@ class Engine:
                         ):
                             raise ValueError("Invalid prediction")
                     for v in vehicles:
+                        if v["id"] not in features:
+                            continue
+                        v["forecast_status"] = "ready"
                         p = values[v["id"]]
                         v["predicted_delay_sec"] = p["delaySec"]
                         v["risk_probability"] = p["lateProbability"]
@@ -291,6 +416,12 @@ class Engine:
                     self.status = "fallback"
                     self.last_error = type(error).__name__
             for v in vehicles:
+                if v["id"] not in features:
+                    continue
+                if self.status != "connected":
+                    v["forecast_status"] = "fallback" if v["current_delay_sec"] is not None else "unavailable"
+                    v["predicted_delay_sec"] = v["current_delay_sec"]
+                    v["risk_level"] = risk(v["current_delay_sec"]) if v["current_delay_sec"] is not None else "unknown"
                 v["forecast_horizon_sec"] = features[v["id"]]["horizon_s"]
                 v["forecast_target_time"] = iso(targets[v["id"]]["ts"])
                 v["forecast_model"] = (
@@ -314,39 +445,57 @@ class Engine:
                                     "predicted_delay_sec",
                                     "risk_probability",
                                     "risk_level",
+                                    "forecast_status",
                                 ]
                             },
                         }
                     )
-            count = len(vehicles)
-            delayed = sum(v["current_delay_sec"] > 120 for v in vehicles)
+            fresh_vehicles = [v for v in vehicles if v["status"] == "active"]
+            predicted = [v for v in vehicles if v["predicted_delay_sec"] is not None]
+            assessed = [v for v in predicted if v["current_delay_sec"] is not None]
+            count = len(assessed)
+            delayed = sum(v["current_delay_sec"] > 120 for v in assessed)
             at_risk = sum(
                 v["current_delay_sec"] < -60
-                or (
-                    -60 <= v["current_delay_sec"] <= 120
-                    and (
-                        v["predicted_delay_sec"] > 120 or v["predicted_delay_sec"] < -60
-                    )
-                )
-                for v in vehicles
+                or (-60 <= v["current_delay_sec"] <= 120 and
+                    (v["predicted_delay_sec"] > 120 or v["predicted_delay_sec"] < -60))
+                for v in assessed
             )
-            avg = lambda key: sum(v[key] for v in vehicles) / (count or 1)
+            def avg(key):
+                values = [v[key] for v in fresh_vehicles if v[key] is not None]
+                return sum(values) / len(values) if values else 0
             alerts = []
             for v in vehicles:
-                if v["predicted_delay_sec"] <= 120 and v["risk_probability"] < 0.5:
+                if v["predicted_delay_sec"] is None:
+                    continue
+                if v["predicted_delay_sec"] <= 120 and (v["risk_probability"] or 0) < 0.5:
                     continue
                 target = targets[v["id"]]
                 f = features[v["id"]]
-                reason = (
-                    "длительная стоянка"
-                    if f["dwell_s"] > 90
-                    else "низкая скорость"
-                    if f["speed_mean_120"] < 8
-                    else "текущее отклонение от расписания"
-                )
+                reason = observed_factor(f, v["current_delay_sec"])
+                alert_id = f"forecast-{v['id']}-{int(target['tt_action_item_id'])}"
+                first_issue = self.warning_first_issued.get(alert_id)
+                if first_issue is None:
+                    first_issue = cutoff
+                    self.warning_first_issued[alert_id] = first_issue
+                    if len(self.warning_first_issued) > 5000:
+                        self.warning_first_issued.pop(next(iter(self.warning_first_issued)))
+                    self.warning_audit.append({
+                        "id": alert_id,
+                        "vehicle_id": v["id"],
+                        "target_stop_id": str(target["tt_action_item_id"]),
+                        "issued_at": iso(first_issue),
+                        "target_time": iso(target["ts"]),
+                        "lead_time_sec": round(target["ts"] - first_issue, 1),
+                        "model_status": v["forecast_status"],
+                        "source": self.mode,
+                    })
+                lead_time = target["ts"] - cutoff
+                assert 600 < lead_time <= 900
+                eta = target["ts"] + v["predicted_delay_sec"]
                 alerts.append(
                     {
-                        "id": f"forecast-{v['id']}-{int(target['tt_action_item_id'])}",
+                        "id": alert_id,
                         "type": "delay_risk",
                         "route_id": v["route_id"],
                         "vehicle_id": v["id"],
@@ -356,21 +505,31 @@ class Engine:
                         if v["risk_level"] == "high"
                         else "warning",
                         "title": f"ТС {v['id'].removeprefix('vehicle-')} · {v['next_stop']['name']}",
-                        "description": f"Остановка через {f['horizon_s'] / 60:.1f} мин · план {iso(target['ts'])[11:16]} (часы CSV). Наблюдаемый фактор: {reason}. "
+                        "description": f"Остановка через {lead_time / 60:.1f} мин · план {iso(target['ts'])[11:16]}, ожидается {iso(eta)[11:16]} (часы CSV). Наблюдаемый фактор: {reason}. "
                         + (
                             "CatBoost; вероятность опоздания >120 с."
                             if self.status == "connected"
                             else "ML недоступен: текущая задержка сохранится, вероятность не оценена."
                         ),
-                        "risk_probability": v["risk_probability"],
+                        "risk_probability": v["risk_probability"] or 0,
                         "predicted_delay_sec": v["predicted_delay_sec"],
-                        "created_at": timestamp,
+                        "created_at": iso(first_issue),
+                        "target_time": iso(target["ts"]),
+                        "expected_arrival_at": iso(eta),
+                        "lead_time_sec": round(target["ts"] - first_issue, 1),
+                        "observed_factor": reason,
+                        "model_status": v["forecast_status"],
                     }
                 )
             summary = {
                 "timestamp": timestamp,
-                "vehicles_total": len(self.plans),
-                "vehicles_active": count,
+                "vehicles_total": len(self.catalog),
+                "vehicles_active": len(fresh_vehicles),
+                "vehicles_located": len(vehicles),
+                "vehicles_stale": len(vehicles) - len(fresh_vehicles),
+                "vehicles_predicted": len(predicted),
+                "vehicles_assessed": count,
+                "vehicles_without_position": len(self.catalog) - len(vehicles),
                 "routes_active": len(routes),
                 "on_time_percent": (count - delayed - at_risk) / (count or 1) * 100,
                 "at_risk_percent": at_risk / (count or 1) * 100,
@@ -411,11 +570,18 @@ async def lifespan(app):
     app.state.engine = engine
     async with httpx.AsyncClient(timeout=1.5) as client:
         engine.client = client
+        pump = asyncio.create_task(engine.stream_forecasts()) if engine.mode == "ndtp" else None
         tcp = await asyncio.start_server(
             engine.receiver.handle, "127.0.0.1", int(os.getenv("NDTP_PORT", "9201"))
         )
-        async with tcp:
-            yield
+        try:
+            async with tcp:
+                yield
+        finally:
+            if pump is not None:
+                pump.cancel()
+                with suppress(asyncio.CancelledError):
+                    await pump
 
 
 app = FastAPI(
@@ -439,6 +605,12 @@ def catalog():
 async def status():
     e = app.state.engine
     await e.snapshot()
+    vehicles = e.cache["vehicles"]
+    located_scheduled = {
+        int(v["id"].removeprefix("vehicle-"))
+        for v in vehicles
+        if int(v["id"].removeprefix("vehicle-")) in e.plans
+    }
     return {
         "mode": "official-" + e.mode,
         "status": e.status,
@@ -452,5 +624,47 @@ async def status():
         "ndtp": e.receiver.status(),
         "lastError": e.last_error,
         "clockNote": "Время исходного CSV без указанной временной зоны; часы не переводятся в МСК.",
-        "predictedVehicles": len(e.cache["vehicles"]),
+        "predictedVehicles": e.cache["summary"]["vehicles_predicted"],
+        "locatedVehicles": e.cache["summary"]["vehicles_located"],
+        "freshVehicles": e.cache["summary"]["vehicles_active"],
+        "staleVehicles": e.cache["summary"]["vehicles_stale"],
+        "totalVehicles": e.cache["summary"]["vehicles_total"],
+        "scheduledVehicles": len(e.plans),
+        "contextVehicles": len(e.catalog) - len(e.plans),
+        "scheduledWithoutPosition": len(e.plans) - len(located_scheduled),
+        "scheduledStale": sum(
+            v["forecast_status"] == "stale_gps"
+            for v in vehicles
+            if int(v["id"].removeprefix("vehicle-")) in e.plans
+        ),
+        "scheduledWithoutTarget": sum(
+            v["forecast_status"] == "no_target" for v in vehicles
+        ),
+        "warningsIssued": len(e.warning_audit),
     }
+
+
+@app.get("/warnings/audit")
+async def warning_audit():
+    """First publication only; future actual arrival is never used to issue a warning."""
+    e = app.state.engine
+    await e.snapshot()
+    items = []
+    for entry in e.warning_audit:
+        result = dict(entry)
+        if e.mode == "replay":
+            actual = e.actual.get(int(entry["vehicle_id"].removeprefix("vehicle-")))
+            if actual is not None:
+                arrived = actual[
+                    actual.tt_action_item_id.eq(int(entry["target_stop_id"]))
+                    & actual.actual_ts.le(e.last_cutoff)
+                ]
+                if not arrived.empty:
+                    row = arrived.iloc[0]
+                    result["actual_arrival_at"] = iso(row.actual_ts)
+                    result["actual_delay_sec"] = round(float(row.actual_ts - row.plan_ts), 1)
+                    result["lead_to_actual_sec"] = round(
+                        float(row.actual_ts - pd.Timestamp(entry["issued_at"]).timestamp()), 1
+                    )
+        items.append(result)
+    return {"asOf": iso(e.last_cutoff), "items": items}

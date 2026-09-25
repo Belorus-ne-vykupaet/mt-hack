@@ -1,11 +1,12 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { WebSocket } from "ws";
 import { createApi } from "../server/app";
 import type { ServerOptions } from "../server/app";
-import { csvSnapshot } from "../src/mocks/csv-scenario";
+import { csvSnapshot, csvGeometries } from "../src/mocks/csv-scenario";
+import type { OfficialSource } from "../server/official";
 import { ModelProvider, validatePredictions } from "../server/model";
 import { Providers, parseTraffic } from "../server/providers";
 const cleanups: (() => Promise<unknown>)[] = [];
@@ -182,6 +183,74 @@ describe("real HTTP integration API", () => {
     ]);
     ws.close();
   });
+  it("marks cached official WebSocket updates stale and clears the flag after recovery", async () => {
+    const snapshot = { ...csvSnapshot(900), geometries: csvGeometries };
+    const official = {
+      routes: snapshot.routes,
+      stale: true,
+      snapshot: async () => snapshot,
+    } as unknown as OfficialSource;
+    const api = await start({ official });
+    const ws = new WebSocket(api.url.replace("http:", "ws:") + "/stream");
+    cleanups.push(async () => { ws.close(); });
+    async function heartbeat(stale: boolean) {
+      await new Promise<void>((resolve, reject) => {
+        const onError = (error: Error) => { cleanup(); reject(error); };
+        const cleanup = () => {
+          clearTimeout(timer);
+          ws.off("message", onMessage);
+          ws.off("error", onError);
+        };
+        const onMessage = (raw: Buffer) => {
+          const event = JSON.parse(raw.toString());
+          if (event.type !== "system.heartbeat" || event.payload.stale !== stale) return;
+          cleanup();
+          resolve();
+        };
+        const timer = setTimeout(() => onError(new Error("No expected heartbeat")), 4500);
+        ws.on("message", onMessage);
+        ws.on("error", onError);
+      });
+    }
+    await heartbeat(true);
+    official.stale = false;
+    await heartbeat(false);
+  });
+  it("sends full route identity once, then bounded patches without duplicate forecast arrays", async () => {
+    const state = { ...csvSnapshot(900), geometries: csvGeometries };
+    const official = {
+      routes: state.routes,
+      stale: false,
+      snapshot: async () => state,
+    } as unknown as OfficialSource;
+    const api = await start({ official });
+    const ws = new WebSocket(api.url.replace("http:", "ws:") + "/stream");
+    cleanups.push(async () => { ws.close(); });
+    const received: any[] = [];
+    ws.on("message", (raw) => received.push(JSON.parse(raw.toString())));
+    const heartbeatIndexes = () => received
+      .map((event, index) => event.type === "system.heartbeat" ? index : -1)
+      .filter((index) => index >= 0);
+    await vi.waitFor(() => expect(heartbeatIndexes().length).toBeGreaterThanOrEqual(2), {
+      timeout: 4500,
+    });
+    const [firstTick, secondTick] = heartbeatIndexes();
+    const initialRoute = received.slice(firstTick, secondTick).find((event) =>
+      event.type === "route.updated" && event.payload.id === state.routes[0].id);
+    expect(initialRoute.payload.stops.length).toBeGreaterThan(0);
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(received.slice(secondTick).some((event) => event.type === "route.updated")).toBe(false);
+    state.routes[0].vehicle_count += 1;
+    await vi.waitFor(() => {
+      expect(received.slice(secondTick).some((event) =>
+        event.type === "route.updated" && event.payload.id === state.routes[0].id)).toBe(true);
+    }, { timeout: 8000 });
+    const laterRoute = received.slice(secondTick).find((event) =>
+      event.type === "route.updated" && event.payload.id === state.routes[0].id);
+    expect(laterRoute.payload.stops).toBeUndefined();
+    expect(JSON.stringify(laterRoute).length).toBeLessThan(JSON.stringify(initialRoute).length / 3);
+    expect(received.find((event) => event.type === "forecast.updated").payload).toEqual({ segments: expect.any(Array) });
+  }, 12000);
   it("does not fabricate traffic when no key exists", async () => {
     const api = await start();
     const r = await fetch(

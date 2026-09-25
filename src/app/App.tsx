@@ -24,7 +24,7 @@ import {
   Orbit,
 } from "lucide-react";
 import { useNetwork, useGeometries, queryClient } from "../entities/queries";
-import { useUi, useConnection } from "./store";
+import { useUi } from "./store";
 import { config } from "../shared/config/env";
 
 import { AlertsPanel } from "../widgets/AlertsPanel";
@@ -41,6 +41,7 @@ import { ResizableWorkspace } from "../widgets/ResizableWorkspace";
 import { NetworkList } from "../widgets/NetworkList";
 import type { NetworkListKind } from "../widgets/NetworkList";
 import { NetworkStatus } from "../widgets/NetworkStatus";
+import { HeaderStatus } from "../widgets/HeaderStatus";
 import { installWebMcp } from "./webmcp";
 const Integrations = lazy(() => import("../widgets/Integrations"));
 const DispatchCenter = lazy(() => import("../widgets/DispatchCenter"));
@@ -54,7 +55,6 @@ export default function App() {
   const [listView, setListView] = useState<NetworkListKind | null>(null);
   const net = useNetwork();
   const ui = useUi();
-  const connection = useConnection();
   const dispatchPlans = useDispatch((s) => s.plans);
   const activePlanCount = dispatchPlans.filter(
     (p) => p.status === "active",
@@ -75,12 +75,6 @@ export default function App() {
       navigate(`/overview${location.search}`, { replace: true });
     }
   }, [location.pathname, location.search, navigate]);
-  const [clock, setClock] = useState(new Date());
-  useEffect(() => {
-    if (config.visualTest) return;
-    const t = setInterval(() => setClock(new Date()), 1000);
-    return () => clearInterval(t);
-  }, []);
   const routes = net.routes.data || EMPTY_ROUTES;
   const vehicles = net.vehicles.data || EMPTY_VEHICLES;
   const alerts = net.alerts.data || [];
@@ -104,9 +98,17 @@ export default function App() {
     () => vehicles.filter((v) => visibleIds.has(v.routeId)),
     [vehicles, visibleIds],
   );
+  const visibleRouteIdsKey = visibleRoutes.map((route) => route.id).join("|");
   const visibleGeo = useMemo(
-    () => (geometry.data || []).filter((g) => visibleIds.has(g.routeId)),
-    [geometry.data, visibleIds],
+    () => {
+      const ids = new Set(visibleRouteIdsKey.split("|"));
+      return (geometry.data || []).filter((g) => ids.has(g.routeId));
+    },
+    [geometry.data, visibleRouteIdsKey],
+  );
+  const visibleSegments = useMemo(
+    () => (net.segments.data || []).filter((segment) => visibleIds.has(segment.routeId)),
+    [net.segments.data, visibleIds],
   );
 
   const search = ui.search.trim().toLowerCase();
@@ -202,51 +204,7 @@ export default function App() {
             {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
             <span>{theme === "dark" ? "Светлая тема" : "Тёмная тема"}</span>
           </button>
-          <div className={`connection ${connection.status}`}>
-            <i />
-            <div>
-              <strong>
-                {connection.status === "connected"
-                  ? config.csvMode
-                    ? "Архив CSV"
-                    : "Поток активен"
-                  : connection.status === "connecting"
-                    ? "Подключение"
-                    : connection.status === "stale"
-                      ? "Данные устарели"
-                      : connection.status === "offline"
-                        ? "Нет соединения"
-                        : "Переподключение"}
-              </strong>
-              <small>
-                {connection.status === "connected"
-                  ? config.csvMode
-                    ? "Время указано под картой"
-                    : "Обновлено только что"
-                  : `Обновление ${Math.max(0, Math.floor((clock.getTime() - connection.lastUpdate) / 1000))} сек назад`}
-              </small>
-            </div>
-          </div>
-          <div className="clock">
-            <strong>
-              {config.visualTest
-                ? "18:24:17"
-                : clock.toLocaleTimeString("ru-RU", {
-                    timeZone: "Europe/Moscow",
-                  })}
-            </strong>
-            <small>
-              {(config.visualTest
-                ? new Date("2026-09-22T15:24:00Z")
-                : clock
-              ).toLocaleDateString("ru-RU", {
-                day: "numeric",
-                month: "long",
-                timeZone: "Europe/Moscow",
-              })}{" "}
-              · МСК
-            </small>
-          </div>
+          <HeaderStatus />
         </div>
       </header>
       <div className="body-shell">
@@ -407,8 +365,8 @@ export default function App() {
           {summary && mode === "overview" && (
             <div className="summary-strip">
               <div>
-                <strong>{summary.vehiclesActive}</strong>
-                <span>транспорт на линии</span>
+                <strong>{summary.vehiclesLocated ?? summary.vehiclesActive}</strong>
+                <span>{config.officialMode ? <>GPS-позиций на карте<br /><small>{summary.vehiclesActive} свежих · {summary.vehiclesStale ?? 0} последних известных</small></> : "транспорт на линии"}</span>
                 <button
                   aria-label="Посмотреть транспорт на линии"
                   onClick={() => setListView("vehicles")}
@@ -418,15 +376,15 @@ export default function App() {
                 </button>
               </div>
               <div>
-                <strong>{summary.routesActive}</strong>
+                <strong>{summary.vehiclesPredicted ?? summary.routesActive}</strong>
                 <span>
                   {config.officialMode
-                    ? "планов ТС в прогнозе"
+                    ? "автобусов с прогнозом"
                     : "активных маршрутов"}
                 </span>
                 <button
                   aria-label="Посмотреть активные маршруты"
-                  onClick={() => setListView("routes")}
+                  onClick={() => setListView(config.officialMode ? "forecasts" : "routes")}
                 >
                   Посмотреть
                   <ArrowUpRight size={15} />
@@ -437,7 +395,7 @@ export default function App() {
                   {Math.round(summary.onTimePercent)}
                   <small>%</small>
                 </strong>
-                <span>по расписанию</span>
+                <span>по расписанию{config.officialMode && <><br /><small>среди {summary.vehiclesAssessed ?? 0} оценённых ТС</small></>}</span>
                 <button
                   aria-label="Посмотреть транспорт по расписанию"
                   onClick={() => setListView("on-time")}
@@ -492,6 +450,7 @@ export default function App() {
               >
                 <option value="all">Любой риск</option>
                 <option value="normal">Норма</option>
+                {config.officialMode && <option value="unknown">Нет прогноза</option>}
                 <option value="elevated">Внимание</option>
                 <option value="high">Высокий риск</option>
                 <option value="critical">Критический риск</option>
@@ -604,16 +563,14 @@ export default function App() {
                           routes={visibleRoutes}
                           vehicles={visibleVehicles}
                           geometries={visibleGeo}
-                          segments={(net.segments.data || []).filter((s) =>
-                            visibleIds.has(s.routeId),
-                          )}
+                          segments={visibleSegments}
                         />
                       </Suspense>
                     </Boundary>
                     <div className="map-strip">
                       <span>
                         <Radio size={14} />
-                        {visibleRoutes.length} маршрутов в зоне обзора
+                        {config.officialMode ? `${visibleVehicles.length} GPS-позиций на карте` : `${visibleRoutes.length} маршрутов в зоне обзора`}
                       </span>
                       <span>
                         <Clock3 size={13} />
