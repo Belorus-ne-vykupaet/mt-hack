@@ -9,6 +9,7 @@ test("official Sasha predictions, archive clock, map and themes", async ({
   const state = await (await request.get("/api/v1/ml/status")).json();
   expect(state.status).toBe("connected");
   expect(state.metrics.testRows).toBe(353);
+  expect(state.metrics.maeSec).toBeCloseTo(58.1, 1);
   expect(state.totalVehicles).toBe(30);
   expect(state.scheduledVehicles).toBe(13);
   expect(state.contextVehicles).toBe(17);
@@ -37,11 +38,7 @@ test("official Sasha predictions, archive clock, map and themes", async ({
     ),
   ).toBeTruthy();
   await page.goto("/overview?source=official");
-  await expect(
-    page.getByText("ExtraTrees · официальный датасет", { exact: true }),
-  ).toBeVisible();
   await expect(page.locator(".demo-badge")).toHaveText("EXTRATREES · АРХИВ");
-  await expect(page.getByText("58.1 с", { exact: true })).toBeVisible();
   await expect(page.getByLabel("Горизонт прогноза в минутах")).toHaveCount(0);
   await page
     .getByRole("button", { name: "Прогноз ExtraTrees", exact: true })
@@ -91,7 +88,6 @@ test("official header and forecast controls show the actual model and fallback",
   }));
   await page.goto("/overview?source=official");
   await expect(page.locator(".demo-badge")).toHaveText("CANDIDATE · АРХИВ");
-  await expect(page.getByText("Candidate · официальный датасет", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Прогноз Candidate", exact: true })).toBeVisible();
 
   await page.unroute("**/api/v1/ml/status");
@@ -100,7 +96,6 @@ test("official header and forecast controls show the actual model and fallback",
   }));
   await page.reload();
   await expect(page.locator(".demo-badge")).toHaveText("РЕЗЕРВНЫЙ ПРОГНОЗ");
-  await expect(page.getByText("Резервный прогноз · модель недоступна", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Резервная оценка", exact: true })).toBeVisible();
 });
 

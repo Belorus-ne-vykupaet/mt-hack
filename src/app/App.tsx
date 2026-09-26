@@ -1,4 +1,3 @@
-import { ModelStatus } from "../widgets/ModelStatus";
 import { matchesSearch } from "../shared/lib/search";
 import { Dialog } from "../shared/ui/Dialog";
 import { RouteFilter } from "../widgets/RouteFilter";
@@ -385,7 +384,6 @@ export default function App() {
               )}
             </div>
           </div>
-          <ModelStatus />
           {summary && mode === "overview" && (
             <div className="summary-strip">
               <div>
