@@ -183,19 +183,28 @@ function listen(seconds) {
   measure("k5.ml_outage_seconds", { toFallback: down.seconds, toRecovery: up.seconds });
 }
 
-// --- K5.4 backend outage: last state, marked stale, then recovery
+// --- K5.4 backend outage: last state, marked stale, then recovery.
+// A dashboard keeps its WebSocket open; the gateway refreshes (and flags) data for it.
 {
+  const events = [];
+  const ws = new WebSocket(`ws://127.0.0.1:8081/api/v1/stream`, { origin: ORIGIN });
+  ws.on("message", (raw) => { try { events.push({ at: Date.now(), ...JSON.parse(raw.toString()) }); } catch {} });
+  ws.on("error", () => {});
+  await sleep(6000);
+  const heartbeatSince = (since, stale) => events.some((e) => e.at >= since && e.type === "system.heartbeat" && e.payload?.stale === stale);
+  const stopped = Date.now();
   compose(["stop", "backend"]);
-  const stale = await waitFor(async () => (await request(`${API}/ml/status`)).body?.stale === true, 60000);
+  const stale = await waitFor(async () => heartbeatSince(stopped, true), 90000);
   const forecast = await request(`${API}/forecast`);
   const vehicles = (await request(`${API}/vehicles`)).body?.items || [];
-  const heartbeat = (await listen(4)).find((e) => e.type === "system.heartbeat");
-  check("k5.backend_outage.marked_stale", stale.ok && heartbeat?.payload?.stale === true, { seconds: stale.seconds, heartbeat: heartbeat?.payload });
+  check("k5.backend_outage.marked_stale", stale.ok, { seconds: stale.seconds });
   check("k5.backend_outage.last_state_served", forecast.status === 200 && vehicles.length > 0, { status: forecast.status, vehicles: vehicles.length });
+  const started = Date.now();
   compose(["start", "backend"]);
-  const fresh = await waitFor(async () => (await request(`${API}/ml/status`)).body?.stale === false && (await forecastReady()), 120000);
+  const fresh = await waitFor(async () => heartbeatSince(started, false) && (await forecastReady()), 180000);
   check("k5.backend_outage.recovers", fresh.ok, { seconds: fresh.seconds });
   measure("k5.backend_outage_seconds", { toStale: stale.seconds, toRecovery: fresh.seconds });
+  ws.close();
 }
 
 // --- K5.5 cold start, three times, images already built

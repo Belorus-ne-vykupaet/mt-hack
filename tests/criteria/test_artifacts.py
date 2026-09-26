@@ -52,6 +52,7 @@ def test_artifacts_criteria_matrix_numbers_match_the_committed_reports():
     audit = json.loads((ROOT / "reports/early-warning-audit-2026-09-26.json").read_text(encoding="utf-8"))
     cold = json.loads((ROOT / "reports/reliability-cold-start-2026-09-26.json").read_text(encoding="utf-8"))
     matrix = (ROOT / "docs/22-criteria-evidence.md").read_text(encoding="utf-8")
+    evidence = (ROOT / "docs/21-early-warning-evidence.md").read_text(encoding="utf-8")
     facts = {
         "first warnings": (audit["distinct_first_warnings"], "95 первых предупреждений"),
         "late warned": (f"{audit['late_events_warned_before_actual']}/{audit['late_events']}", "92/120"),
@@ -59,9 +60,9 @@ def test_artifacts_criteria_matrix_numbers_match_the_committed_reports():
         "after actual": (len(audit["warnings_issued_after_actual_arrival"]), "ни одного после фактического прибытия"),
     }
     record("artifacts.early_warning_report", {k: v[0] for k, v in facts.items()})
-    assert audit["distinct_first_warnings"] == 95 and "95 первых предупреждений" in matrix
-    assert facts["late warned"][0] == "92/120" and "92/120" in matrix
-    assert facts["false"][0] == "3/95" and "3/95" in matrix
+    lead = f"{audit['minimum_lead_to_plan_sec']:.0f}–{audit['maximum_lead_to_plan_sec']:.0f} с"
+    assert f"все {audit['distinct_first_warnings']} исходов" in matrix and lead in matrix
+    assert f"{facts['late warned'][0]} = " in evidence and f"{facts['false'][0]} = " in evidence
     assert facts["after actual"][0] == 0
     seconds = json.dumps(cold)
     assert "17.6" in seconds and "17,60" in matrix

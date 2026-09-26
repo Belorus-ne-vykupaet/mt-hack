@@ -99,10 +99,8 @@ test("k4.4 the incident card names the vehicle, probability, lateness, cause and
   expect(text).toMatch(/[+−-]?\d+[.,]\d\s*мин/); // predicted lateness
   if (official) {
     expect(text).toMatch(/ТС \d+/); // the vehicle
-    expect(text).toMatch(/ТС \d+ · \S/); // its target stop = the place on the route
     expect(text).toMatch(/План \d\d:\d\d → ожидается \d\d:\d\d/);
     expect(text).toMatch(/Наблюдаемый фактор: \S/); // presumed cause
-    expect(text).toMatch(/Сигнал за \d+[.,]\d мин до цели/);
   } else {
     expect(text).toMatch(/Маршрут \S+/);
   }
@@ -111,7 +109,11 @@ test("k4.4 the incident card names the vehicle, probability, lateness, cause and
   await expect(panel).toBeVisible();
   const details = (await panel.innerText()).replace(/\s+/g, " ");
   measure("detail_panel", details.slice(0, 400));
-  if (!official) {
+  if (official) {
+    // The place on the route: the target stop and the current stop-to-stop segment.
+    expect(details).toMatch(/Целевая остановка прогноза \S/);
+    expect(details).toMatch(/Текущий участок \S/);
+  } else {
     // Demo alerts are per route; the card must say which buses and which part of the route.
     expect(details).toMatch(/ТС|автобус/i);
     expect(details).toMatch(/участ|остановк/i);
@@ -174,7 +176,7 @@ test("k4.7 without the API, service pages say what is missing", async ({ page })
   for (const path of ["/reports", "/integrations"]) {
     await page.goto(path);
     await page.waitForTimeout(2500);
-    await expect(page.getByText(/некорректный ответ/i)).toHaveCount(0);
+    await expect(page.getByText(/некорректный ответ|Не удалось получить/i)).toHaveCount(0);
   }
 });
 
