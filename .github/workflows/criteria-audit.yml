@@ -50,19 +50,19 @@ jobs:
           python -m pip install torch==2.14.0 --index-url https://download.pytorch.org/whl/cpu
           python -m pip install -r ml/requirements.txt pyyaml
       # The organizers' archive is downloaded on the runner only; raw data never
-      # reaches the artifacts. The cache is private to this repository.
-      - uses: actions/cache@v4
-        with:
-          path: ml/data/official-dataset.zip
-          key: official-dataset-v1
+      # reaches the artifacts. No cache: the documented download is tested every run.
       - name: Official archive (JURY_QUICKSTART step 1)
         run: |
-          if [ -f ml/data/official-dataset.zip ]; then
-            python3 scripts/prepare-official-data.py --archive ml/data/official-dataset.zip
+          if python3 scripts/prepare-official-data.py --save-archive ml/data/official-dataset.zip > reports/criteria/jury-step1.log 2>&1; then
+            echo '{"jury_step_1": "ok"}' > reports/criteria/jury-step1.json
           else
-            python3 scripts/prepare-official-data.py --save-archive ml/data/official-dataset.zip
+            echo "{\"jury_step_1\": \"failed\", \"error\": \"$(tail -1 reports/criteria/jury-step1.log | tr -d '"')\"}" > reports/criteria/jury-step1.json
           fi
+          cat reports/criteria/jury-step1.json
           sha256sum ml/data/official-dataset.zip | tee reports/criteria/dataset-sha256.txt
+          unzip -l ml/data/official-dataset.zip | head -25 | tee reports/criteria/archive-listing.txt
+          python3 tests/criteria/flatten_archive.py ml/data/official-dataset.zip
+          python3 scripts/prepare-official-data.py --archive ml/data/official-dataset.zip
 
       - name: The project's own Python tests
         continue-on-error: true
