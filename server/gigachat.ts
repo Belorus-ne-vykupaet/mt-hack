@@ -1,18 +1,24 @@
 import { randomUUID } from "node:crypto";
 import type { Route, Vehicle } from "../src/entities/models";
-import { hasBusForecast, ruleAdvice } from "../src/entities/dispatch-advice";
+import { hasBusForecast } from "../src/entities/dispatch-advice";
 import type { AdviceKind, DispatchAdvice } from "../src/entities/dispatch-advice";
 import { isRaining } from "../src/entities/weather-current";
 import type { CurrentWeatherSnapshot } from "../src/entities/weather-current";
 import type { DailyReport } from "../src/entities/daily-report";
 export { ruleAdvice } from "../src/entities/dispatch-advice";
 const clipped = (value: unknown, max: number) => typeof value === "string" ? value.trim().slice(0, max) : "";
+const visibleText = (value: unknown, max: number, route: Route) => clipped(value, max)
+  .replaceAll(route.id, route.number)
+  .replace(/\bvehicle-([\w-]+)\b/g, (_, id: string) => `ТС ${id}`)
+  .replace(/\bdelay\b/gi, "задержка");
 
-const SYSTEM_PROMPT = `Ты аналитик автобусной диспетчерской. Вход — архивный снимок, не текущая ситуация. Самостоятельно посчитай для каждого переданного автобуса изменение задержки (прогноз минус текущая), число автобусов с прогнозом >= 120 с и долю таких автобусов от машин с известным прогнозом (округлить до целого процента). Если sampledVehicleCount меньше totalVehicleCount, явно скажи, что анализ ограничен выборкой. Укажи важные вычисленные числа в summary и reason. currentWeather, если передана, — погода Яндекса СЕЙЧАС, а архивная телеметрия относится к другому времени. Не используй сегодняшнюю погоду как причину архивной задержки и не утверждай, что в момент поездки шёл дождь. Можно отдельно предложить проверить актуальную обстановку перед будущим действием; если погода недоступна, не выдумывай её. Предлагай максимум 3 проверяемых действия: текст водителю, безопасное уточнение скорости, стоянку на остановке или проверку дополнительного выпуска. Не выдумывай пробки, ограничения скорости, пассажиропоток, наличие водителей или доказанный эффект решения. Скорость только в рамках ПДД и локального ограничения, которого в данных нет; никогда не советуй превышение. Стоянка только после завершения посадки/высадки. Дополнительный выпуск предлагай лишь как проверку, если есть минимум 2 задержанных автобуса и резерв > 0. Если данных мало, скажи это. Никаких команд не отправляй. Верни только JSON-объект: {"summary":"...","metrics":{"forecastedCount":0,"delayedCount":0,"delayedSharePercent":0},"cards":[{"kind":"message|speed|dwell|reserve","title":"...","reason":"...","vehicleId":"идентификатор автобуса или null","message":"готовый текст водителю или null"}]}. Пиши по-русски.`;
+const SYSTEM_PROMPT = `Ты аналитик автобусной диспетчерской. Вход — архивный снимок, не текущая ситуация. Числа в metrics уже вычислены системой: не пересчитывай и не искажай их. Если sampledVehicleCount меньше totalVehicleCount, явно скажи, что анализ ограничен выборкой. currentWeather, если передана, — погода Яндекса СЕЙЧАС, а архивная телеметрия относится к другому времени. Не используй сегодняшнюю погоду как причину архивной задержки и не утверждай, что в момент поездки шёл дождь. Предлагай максимум 3 коротких проверяемых действия: текст водителю, безопасное уточнение скорости, стоянку на остановке или проверку дополнительного выпуска. Низкая скорость сама по себе не доказывает пробку, неисправность или длительную стоянку. Не выдумывай пробки, ограничения скорости, пассажиропоток, наличие водителей или доказанный эффект решения. Скорость только в рамках ПДД и локального ограничения, которого в данных нет; никогда не советуй превышение. Стоянка только после завершения посадки/высадки. Дополнительный выпуск предлагай лишь как проверку, если есть минимум 2 задержанных автобуса и резерв > 0. Если данных мало, скажи это и верни cards: []. Видимый текст пиши коротко по-русски, без ISO-дат, технических идентификаторов и английских терминов; точный исходный ID передавай только в поле vehicleId. Никаких команд не отправляй. Верни только JSON-объект: {"summary":"одно короткое предложение","cards":[{"kind":"message|speed|dwell|reserve","title":"...","reason":"...","vehicleId":"исходный идентификатор автобуса или null","message":"готовый текст водителю или null"}]}.`;
 
 export class GigachatAdvisor {
   private token = "";
   private tokenUntil = 0;
+  private adviceCache = new Map<string, { until: number; value: DispatchAdvice }>();
+  private pending = new Map<string, Promise<DispatchAdvice>>();
   constructor(
     private readonly authKey?: string,
     private readonly scope = "GIGACHAT_API_PERS",
@@ -47,9 +53,23 @@ export class GigachatAdvisor {
       : Date.now() + 25 * 60000;
     return this.token;
   }
-  async analyze(route: Route, vehicles: Vehicle[], reserve: number, weather?: CurrentWeatherSnapshot | null): Promise<DispatchAdvice> {
-    if (!this.configured) return ruleAdvice(route, vehicles, reserve);
-    const fallback = ruleAdvice(route, vehicles, reserve, true);
+  async analyze(route: Route, vehicles: Vehicle[], reserve: number, weather?: CurrentWeatherSnapshot | null, force = false): Promise<DispatchAdvice> {
+    if (!this.configured) throw new Error("GigaChat не подключён.");
+    const cacheKey = route.id;
+    const cached = this.adviceCache.get(cacheKey);
+    if (!force && cached && cached.until > Date.now()) return cached.value;
+    const pending = this.pending.get(cacheKey);
+    if (pending) return pending;
+    const task = this.analyzeFresh(route, vehicles, reserve, weather);
+    this.pending.set(cacheKey, task);
+    try {
+      const value = await task;
+      this.adviceCache.set(cacheKey, { until: Date.now() + 90_000, value });
+      if (this.adviceCache.size > 100) this.adviceCache.delete(this.adviceCache.keys().next().value!);
+      return value;
+    } finally { this.pending.delete(cacheKey); }
+  }
+  private async analyzeFresh(route: Route, vehicles: Vehicle[], reserve: number, weather?: CurrentWeatherSnapshot | null): Promise<DispatchAdvice> {
     const fleet = vehicles.slice(0, 80).map((v) => ({
       vehicleId: v.id,
       currentDelaySec: v.currentDelayKnown === false ? null : v.currentDelaySec,
@@ -59,6 +79,10 @@ export class GigachatAdvisor {
       nextStop: v.nextStop?.name || null,
       forecastStatus: v.forecastStatus || "unknown",
     }));
+    const forecasted = fleet.filter((v) => v.predictedDelaySec !== null);
+    const delayed = forecasted.filter((v) => v.predictedDelaySec! >= 120);
+    const metrics = { forecastedCount: forecasted.length, delayedCount: delayed.length,
+      delayedSharePercent: forecasted.length ? Math.round(delayed.length / forecasted.length * 100) : 0 };
     try {
       const token = await this.accessToken();
       const response = await this.fetcher(this.chatUrl, {
@@ -71,7 +95,7 @@ export class GigachatAdvisor {
             { role: "user", content: JSON.stringify({
               route: { id: route.id, number: route.number, name: route.name },
               archiveAsOf: vehicles[0]?.updatedAt || null,
-              reserve, totalVehicleCount: vehicles.length, sampledVehicleCount: fleet.length, vehicles: fleet,
+              reserve, totalVehicleCount: vehicles.length, sampledVehicleCount: fleet.length, metrics, vehicles: fleet,
               currentWeather: weather ? {
                 source: weather.source, observedAt: weather.fetchedAt,
                 checkedPoints: weather.points.length,
@@ -89,15 +113,7 @@ export class GigachatAdvisor {
       const content = data.choices?.[0]?.message?.content || "";
       const match = content.match(/\{[\s\S]*\}/);
       if (!match) throw new Error("No JSON object");
-      const parsed = JSON.parse(match[0]) as { summary?: unknown; cards?: unknown; metrics?: Record<string, unknown> };
-      const forecasted = fleet.filter((v) => v.predictedDelaySec !== null);
-      const delayed = forecasted.filter((v) => v.predictedDelaySec! >= 120);
-      const share = forecasted.length ? Math.round(delayed.length / forecasted.length * 100) : 0;
-      if (parsed.metrics?.forecastedCount !== forecasted.length ||
-          parsed.metrics?.delayedCount !== delayed.length ||
-          !Number.isFinite(Number(parsed.metrics?.delayedSharePercent)) ||
-          Math.abs(Number(parsed.metrics?.delayedSharePercent) - share) > 1)
-        throw new Error("Model calculation does not match telemetry");
+      const parsed = JSON.parse(match[0]) as { summary?: unknown; cards?: unknown };
       const ids = new Set(vehicles.map((v) => v.id));
       const cards = (Array.isArray(parsed.cards) ? parsed.cards : [])
         .slice(0, 3)
@@ -108,18 +124,19 @@ export class GigachatAdvisor {
           const vehicleId = typeof item.vehicleId === "string" && ids.has(item.vehicleId) ? item.vehicleId : null;
           if (!["message", "speed", "dwell", "reserve"].includes(String(kind)) || (kind !== "reserve" && !vehicleId)) return [];
           if (kind === "reserve" && !(reserve > 0 && fleet.filter((v) => (v.predictedDelaySec ?? -Infinity) >= 120).length >= 2)) return [];
-          const title = clipped(item.title, 90), reason = clipped(item.reason, 280);
+          const title = visibleText(item.title, 90, route), reason = visibleText(item.reason, 280, route);
           if (!title || !reason) return [];
-          return [{ kind: kind as AdviceKind, title, reason, vehicleId, message: clipped(item.message, 400) || null }];
+          return [{ kind: kind as AdviceKind, title, reason, vehicleId, message: visibleText(item.message, 400, route) || null }];
         });
-      if (!cards.length) throw new Error("No usable advice");
+      const summary = clipped(parsed.summary, 400);
+      if (!summary) throw new Error("GigaChat returned no summary");
       return {
         configured: true, source: "gigachat", model: this.model, generatedAt: new Date().toISOString(),
-        summary: clipped(parsed.summary, 400) || fallback.summary,
-        cards, note: "Текст GigaChat — гипотеза для проверки диспетчером, не расчёт эффекта и не команда водителю.",
+        summary: `Прогноз есть у ${metrics.forecastedCount} из ${vehicles.length} автобусов; задержка от 2 минут ожидается у ${metrics.delayedCount}.`,
+        cards, note: "Проверьте рекомендацию перед отправкой в тестовую диспетчерскую.",
       };
-    } catch {
-      return ruleAdvice(route, vehicles, reserve, true, "GigaChat недоступен либо его расчёт не прошёл проверку. Показаны подсказки по правилам.");
+    } catch (error) {
+      throw new Error(`GigaChat не ответил: ${(error as Error).message}`);
     }
   }
   async dailyReport(report: DailyReport) {

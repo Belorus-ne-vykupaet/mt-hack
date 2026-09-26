@@ -16,10 +16,11 @@ export interface DriverMessage {
   dwellStops: number | null;
   stopId: string | null;
   createdAt: string;
-  status: "draft";
+  /** Accepted by the test dispatch inbox; driver delivery is a separate integration. */
+  status: "sent_test" | "draft";
 }
 
-/** Durable drafts only: no driver gateway is connected to this endpoint. */
+/** Durable test dispatch inbox. No driver gateway is connected to this endpoint. */
 export class DriverOutbox {
   private items: DriverMessage[];
   constructor(private readonly path?: string) {
@@ -56,7 +57,7 @@ export class DriverOutbox {
       id: randomUUID(), routeId: route.id, vehicleId: vehicle.id,
       kind: kind as DriverMessageKind, text,
       speedKmh, dwellSec, dwellStops, stopId,
-      createdAt: new Date().toISOString(), status: "draft",
+      createdAt: new Date().toISOString(), status: "sent_test",
     };
     const next = [item, ...this.items].slice(0, 500);
     if (this.path) {

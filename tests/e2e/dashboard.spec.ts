@@ -722,15 +722,15 @@ test("dispatch suggestions cover all routes, prefill without applying, and keep 
 }) => {
   await page.addInitScript(() => localStorage.setItem("transit-theme", "dark"));
   await page.goto("/dispatch?visual-test=1");
-  const rows = page.locator(".recommend-table tbody tr");
+  await page.getByRole("button", { name: /Обзор всех маршрутов/ }).click();
+  const drawer = page.getByRole("dialog", { name: "Обзор маршрутов и сценариев" });
+  const rows = drawer.locator(".network-drawer-card");
   await expect(rows).toHaveCount(15);
-  await expect(page.locator(".recommend-method")).toHaveText(
-    "Подсказки по правилам",
-  );
-  const button = page.locator(".recommend-table button:enabled").first();
+  const button = drawer.getByRole("button", { name: "Подготовить план" }).first();
   const row = button.locator("..").locator("..");
   const routeId = await row.getAttribute("data-recommendation-route");
-  const target = await row.locator("td").nth(1).locator("strong").innerText();
+  const target = (await row.locator("small").innerText()).match(/Автобусы \d+ → (\d+)/)?.[1];
+  expect(target).toBeTruthy();
   await button.click();
   await expect(page.getByLabel("Маршрут для управления")).toHaveValue(routeId!);
   await expect(page.getByLabel("Плановое количество автобусов")).toHaveValue(
@@ -758,9 +758,9 @@ test("dispatch suggestions cover all routes, prefill without applying, and keep 
   await expect(page.locator(".dispatch-journal")).toContainText(
     "Применён в демо",
   );
-  await expect(
-    page.locator(`tr[data-recommendation-route="${routeId}"]`),
-  ).toContainText("Уже применён");
+  await page.getByRole("button", { name: /Обзор всех маршрутов/ }).click();
+  await expect(page.locator(`.network-drawer-card[data-recommendation-route="${routeId}"]`).getByRole("button", { name: "Подготовить план" })).toHaveCount(0);
+  await page.getByRole("button", { name: "Закрыть обзор маршрутов" }).click();
   await page.setViewportSize({ width: 390, height: 844 });
   await page.getByRole("button", { name: "Включить светлую тему" }).click();
   expect(

@@ -1,4 +1,4 @@
-import { RotateCcw, Settings2 } from "lucide-react";
+import { ChevronDown, PencilLine, RotateCcw, Settings2 } from "lucide-react";
 import { useDispatchSettings } from "../../app/dispatch-settings-store";
 import {
   DEFAULT_DISPATCH_SETTINGS,
@@ -19,8 +19,9 @@ export function DispatchSettingsPanel({ apiMode }: { apiMode: boolean }) {
         <small>
           {changed
             ? `изменено: ${changed}`
-            : "демодопущения, не нормативы перевозчика"}
+            : "настройте пороги и времена"}
         </small>
+        <strong><PencilLine size={14}/> Изменить <ChevronDown size={14}/></strong>
       </summary>
       <p>
         Все пороги и времена, по которым формируются подсказки.

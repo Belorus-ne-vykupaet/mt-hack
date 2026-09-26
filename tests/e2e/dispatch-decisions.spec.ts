@@ -95,11 +95,9 @@ test("rule parameters recalculate the suggestions, persist and can be reset", as
   await expect(title).toContainText(" 120 с");
 });
 
-test("reserve advice opens a prefilled plan without applying it", async ({ page }) => {
+test("without a key the GigaChat panel does not present rule suggestions as AI", async ({ page }) => {
   await page.goto("/dispatch?visual-test=1");
   const assistant = page.getByRole("region", { name: "Советник GigaChat" });
-  await expect(assistant).toContainText("3 с ожидаемой задержкой");
-  await assistant.getByRole("button", { name: "Открыть план выпуска" }).click();
-  await expect(page.getByLabel("Плановое количество автобусов")).toHaveValue("9");
-  await expect(page.locator(".dispatch-journal")).not.toContainText("Применён");
+  await expect(assistant).toContainText("GigaChat не подключён");
+  await expect(assistant.locator(".gigachat-cards article")).toHaveCount(0);
 });

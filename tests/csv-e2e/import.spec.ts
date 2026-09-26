@@ -25,8 +25,10 @@ test("CSV import drives routes, telemetry, geometry, baseline and planning witho
     "%",
   );
   await page.getByRole("button", { name: "Управление маршрутом" }).click();
-  await expect(page.locator(".recommend-table tbody tr")).toHaveCount(15);
-  await expect(page.locator(".recommend-table button:enabled")).toHaveCount(0);
+  await page.getByRole("button", { name: /Обзор всех маршрутов/ }).click();
+  await expect(page.locator(".network-drawer-card")).toHaveCount(15);
+  await expect(page.getByRole("dialog", { name: "Обзор маршрутов и сценариев" }).getByRole("button", { name: "Подготовить план" })).toHaveCount(0);
+  await page.getByRole("button", { name: "Закрыть обзор маршрутов" }).click();
   await expect(page.locator(".recommend-selected")).toContainText(
     "Нужны подтверждённые данные",
   );

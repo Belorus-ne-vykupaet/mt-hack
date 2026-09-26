@@ -31,7 +31,7 @@ describe("bus-level dispatch and GigaChat integration", () => {
     expect(ruleAdvice(route, noForecast, 2).cards).toHaveLength(0);
   });
 
-  it("stores driver contact as a persistent draft and never marks it delivered", async () => {
+  it("stores driver contact in the persistent test dispatcher inbox without claiming driver delivery", async () => {
     const dir = await mkdtemp(join(tmpdir(), "driver-outbox-"));
     close.push(() => rm(dir, { recursive: true, force: true }));
     const token = "dispatch-test-token-1234567890";
@@ -49,7 +49,7 @@ describe("bus-level dispatch and GigaChat integration", () => {
     expect((await post({ ...body, vehicleId: "unknown" })).status).toBe(404);
     expect((await post({ ...body, dwellSec: 5 })).status).toBe(422);
     const saved = await (await post(body)).json();
-    expect(saved.status).toBe("draft");
+    expect(saved.status).toBe("sent_test");
     expect(saved.dwellStops).toBe(1);
     expect(saved).not.toHaveProperty("deliveredAt");
     expect((await fetch(`${url}/dispatch/driver-messages`)).status).toBe(401);
@@ -58,7 +58,7 @@ describe("bus-level dispatch and GigaChat integration", () => {
     expect(journal.items[0].id).toBe(saved.id);
   });
 
-  it("requests GigaChat only on operator POST, caches OAuth and validates model cards", async () => {
+  it("requests GigaChat on POST, caches advice and validates model cards", async () => {
     const calls: { url: string; options?: RequestInit }[] = [];
     let validVehicleId = "";
     let metrics = { forecastedCount: 0, delayedCount: 0, delayedSharePercent: 0 };
@@ -84,7 +84,7 @@ describe("bus-level dispatch and GigaChat integration", () => {
     const delayed = forecasted.filter((v) => v.predicted_delay_sec! >= 120);
     metrics = { forecastedCount: forecasted.length, delayedCount: delayed.length, delayedSharePercent: forecasted.length ? Math.round(delayed.length / forecasted.length * 100) : 0 };
     const read = await (await fetch(`${url}/dispatch/advice?route_id=${routeId}`)).json();
-    expect(read.source).toBe("rules");
+    expect(read).not.toHaveProperty("cards");
     expect(read.configured).toBe(true);
     expect(calls).toHaveLength(0);
     const analyze = () => fetch(`${url}/dispatch/advice`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ routeId }) });
@@ -98,10 +98,9 @@ describe("bus-level dispatch and GigaChat integration", () => {
     await analyze();
     expect(weatherFetch).toHaveBeenCalledTimes(1);
     expect(calls.filter((call) => call.url.includes("oauth"))).toHaveLength(1);
+    expect(calls.filter((call) => call.url.includes("chat/completions"))).toHaveLength(1);
+    const forced = await fetch(`${url}/dispatch/advice`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ routeId, refresh: true }) });
+    expect((await forced.json()).source).toBe("gigachat");
     expect(calls.filter((call) => call.url.includes("chat/completions"))).toHaveLength(2);
-    metrics = { ...metrics, delayedCount: metrics.delayedCount + 1 };
-    const rejected = await (await analyze()).json();
-    expect(rejected.source).toBe("rules");
-    expect(rejected.note).toContain("расчёт не прошёл проверку");
   });
 });

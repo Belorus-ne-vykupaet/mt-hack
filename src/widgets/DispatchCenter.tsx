@@ -34,9 +34,7 @@ import {
 import type { CommandState } from "../shared/api/integrations";
 import { recommendDispatch } from "../entities/dispatch-recommendations";
 import type { DispatchRecommendation } from "../entities/dispatch-recommendations";
-import DispatchRecommendations, {
-  RecommendationValue,
-} from "./DispatchRecommendations";
+import { RecommendationValue } from "./DispatchRecommendations";
 import { useDispatchSettings } from "../app/dispatch-settings-store";
 import type { DispatchSettings } from "../entities/dispatch-settings";
 import {
@@ -56,6 +54,7 @@ import type { ContactTarget } from "./dispatch/VehicleBoard";
 import { GigachatPanel } from "./dispatch/GigachatPanel";
 import { YandexWeatherBrief } from "./dispatch/YandexWeatherBrief";
 import { DispatchSettingsPanel } from "./dispatch/DispatchSettingsPanel";
+import { NetworkScenariosDrawer } from "./dispatch/NetworkScenariosDrawer";
 import { usePlanSubmit } from "./dispatch/usePlanSubmit";
 /** Targeting of a plan (one bus, several stops), taken from a suggestion or an applied plan. */
 type Target = Pick<DispatchPlan, "vehicleId" | "decisionKind" | "dwellStops">;
@@ -100,8 +99,10 @@ export default function DispatchCenter({
   const [apiNow, setApiNow] = useState(() => Date.now());
   useEffect(() => {
     if (!config.dispatchApi) return;
-    const timer = setInterval(() => setApiNow(Date.now()), 1000);
-    return () => clearInterval(timer);
+    const tick = () => { if (!document.hidden) setApiNow(Date.now()); };
+    const timer = setInterval(tick, 5000);
+    document.addEventListener("visibilitychange", tick);
+    return () => { clearInterval(timer); document.removeEventListener("visibilitychange", tick); };
   }, []);
   const plans = config.dispatchApi
     ? api.commands.data?.commands.map((c) => c.plan) || []
@@ -152,6 +153,7 @@ export default function DispatchCenter({
   });
   const [decisionId, setDecisionId] = useState<string>();
   const [contact, setContact] = useState<ContactTarget | null>(null);
+  const [networkOpen, setNetworkOpen] = useState(false);
   const decisionSubmit = usePlanSubmit(setNotice);
   const decisions = recommendation?.decisions || [];
   const decision = decisions.find((d) => d.id === decisionId) || decisions[0];
@@ -341,6 +343,7 @@ export default function DispatchCenter({
         </p>
       )}
       <DispatchSettingsPanel apiMode={config.dispatchApi} />
+      <button className="network-drawer-trigger" onClick={() => setNetworkOpen(true)}><RouteIcon size={16}/> Обзор всех маршрутов <span>{routes.length}</span><ArrowRight size={15}/></button>
       <div className="dispatch-workspace">
         <aside className="dispatch-queue" aria-label="Очередь маршрутов">
           <div className="dispatch-queue-heading">
@@ -542,11 +545,17 @@ export default function DispatchCenter({
           {notice}
         </p>
       )}
-      <DispatchRecommendations
+      {networkOpen && <NetworkScenariosDrawer
         routes={routes}
         items={recommendations}
-        onChoose={choose}
-      />
+        onClose={() => setNetworkOpen(false)}
+        onOpenAdvice={(id) => {
+          focusRoute(id);
+          setNetworkOpen(false);
+          requestAnimationFrame(() => document.querySelector(".gigachat-panel")?.scrollIntoView({ behavior: "smooth", block: "center" }));
+        }}
+        onPrepare={(item) => { choose(item); setNetworkOpen(false); }}
+      />}
       <div className="dispatch-journal">
         <div className="row-between">
           <h3>

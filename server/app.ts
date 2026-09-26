@@ -18,7 +18,7 @@ import { Providers } from "./providers";
 import { ModelProvider } from "./model";
 import { sendStreamEvent } from "./stream";
 import { DriverOutbox } from "./driver-outbox";
-import { GigachatAdvisor, ruleAdvice } from "./gigachat";
+import { GigachatAdvisor } from "./gigachat";
 import { DailyReports } from "./daily-reports";
 export interface ServerOptions {
   official?: OfficialSource;
@@ -397,9 +397,8 @@ export function createApi(options: ServerOptions = {}) {
         return json(res, 201, driverOutbox.save(body, mapRoute(route), mapVehicle(vehicle)));
       }
       if (path === "/dispatch/advice" && (req.method === "GET" || req.method === "POST")) {
-        const routeId = req.method === "GET"
-          ? url.searchParams.get("route_id")
-          : (await readBody(req) as { routeId?: unknown }).routeId;
+        const body = req.method === "POST" ? await readBody(req) as { routeId?: unknown; refresh?: unknown } : null;
+        const routeId = req.method === "GET" ? url.searchParams.get("route_id") : body?.routeId;
         const s = await snapshot();
         const rawRoute = s.routes.find((r) => r.id === routeId);
         if (!rawRoute) throw new ApiError(404, "Маршрут не найден.");
@@ -409,9 +408,17 @@ export function createApi(options: ServerOptions = {}) {
         const currentWeather = req.method === "POST" && gigachat.configured && yandexWeather.configured
           ? await yandexWeather.current().catch(() => null)
           : null;
-        return json(res, 200, req.method === "POST"
-          ? await gigachat.analyze(route, vehicles, reserve, currentWeather)
-          : ruleAdvice(route, vehicles, reserve, gigachat.configured));
+        if (req.method === "GET") return json(res, 200, { configured: gigachat.configured, model: gigachat.modelName });
+        if (!gigachat.configured) throw new ApiError(503, "GigaChat не подключён.");
+        try {
+          return json(res, 200, await gigachat.analyze(route, vehicles, reserve, currentWeather, body?.refresh === true));
+        } catch (error) {
+          const detail = (error as Error).message;
+          console.warn("GigaChat route advice failed:", detail);
+          if (/fetch failed|timeout|aborted/i.test(detail))
+            throw new ApiError(503, "Нет соединения с GigaChat API. Повторите запрос, когда сеть будет доступна.");
+          throw new ApiError(502, "Не удалось получить рекомендации GigaChat. Повторите запрос позже.");
+        }
       }
       if (path === "/dispatch/reports" && req.method === "GET") {
         await snapshot();

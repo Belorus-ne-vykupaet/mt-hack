@@ -98,7 +98,7 @@ export function DecisionFeed({
         </p>
       ) : (
         <>
-          {decisions.length > 1 && (
+          {decisions.length > 0 && (
             <div className="decision-tabs" role="tablist" aria-label="Решения маршрута">
               {decisions.map((d) => {
                 const Icon = kindIcon[d.kind];

@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { BusFront, Clock3, Gauge, MessageSquareText, Save, Timer, X } from "lucide-react";
+import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { BusFront, Clock3, Gauge, MessageSquareText, PencilLine, Send, Timer, X } from "lucide-react";
 import type { Route, Vehicle } from "../../entities/models";
 import { busLabel } from "../../entities/dispatch-decisions";
 import { integrationRequest } from "../../shared/api/integrations";
@@ -7,13 +8,13 @@ import { config } from "../../shared/config/env";
 
 export type ContactKind = "message" | "speed" | "dwell";
 export interface ContactTarget { vehicleId: string; kind: ContactKind; message?: string }
-interface Draft {
+interface DriverMessage {
   id: string; routeId: string; vehicleId: string; kind: ContactKind; text: string;
-  createdAt: string; status: "draft";
+  createdAt: string; status: "sent_test" | "draft";
 }
-const LOCAL_DRAFTS = "transit-driver-drafts-v1";
-const savedLocal = (): Draft[] => {
-  try { const value = JSON.parse(localStorage.getItem(LOCAL_DRAFTS) || "[]"); return Array.isArray(value) ? value : []; }
+const LOCAL_OUTBOX = "transit-driver-test-inbox-v1";
+const savedLocal = (): DriverMessage[] => {
+  try { const value = JSON.parse(localStorage.getItem(LOCAL_OUTBOX) || "[]"); return Array.isArray(value) ? value : []; }
   catch { return []; }
 };
 const delay = (sec: number) => {
@@ -33,16 +34,16 @@ export function VehicleBoard({ route, vehicles, contact, onCloseContact }: {
   const [ownContact, setOwnContact] = useState<ContactTarget | null>(null);
   const active = contact || ownContact;
   const vehicle = fleet.find((v) => v.id === active?.vehicleId);
-  const [drafts, setDrafts] = useState<Draft[]>(() => config.dataSource === "mock"
+  const [messages, setMessages] = useState<DriverMessage[]>(() => config.dataSource === "mock"
     ? savedLocal().filter((item) => item.routeId === route.id).slice(0, 50)
     : []);
   const [saved, setSaved] = useState("");
   useEffect(() => {
     if (config.dataSource === "mock") return;
     let alive = true;
-    integrationRequest<{ items: Draft[] }>(`/dispatch/driver-messages?route_id=${encodeURIComponent(route.id)}`)
-      .then((data) => { if (alive) setDrafts(data.items); })
-      .catch(() => { if (alive) setDrafts([]); });
+    integrationRequest<{ items: DriverMessage[] }>(`/dispatch/driver-messages?route_id=${encodeURIComponent(route.id)}`)
+      .then((data) => { if (alive) setMessages(data.items); })
+      .catch(() => { if (alive) setMessages([]); });
     return () => { alive = false; };
   }, [route.id]);
   const open = (vehicleId: string, kind: ContactKind) => {
@@ -77,13 +78,13 @@ export function VehicleBoard({ route, vehicles, contact, onCloseContact }: {
       key={`${active.vehicleId}-${active.kind}-${active.message || ""}`}
       route={route} vehicle={vehicle} contact={active} onClose={close}
       onSaved={(item) => {
-        setDrafts((prev) => [item, ...prev].slice(0, 50));
-        setSaved(config.dataSource === "mock" ? "Черновик сохранён в этом браузере. Водителю он не отправлен." : "Черновик сохранён в журнале. Водителю он не отправлен.");
+        setMessages((prev) => [item, ...prev].slice(0, 50));
+        setSaved(config.dataSource === "mock" ? "Команда принята тестовой диспетчерской в этом браузере." : "Команда принята тестовой диспетчерской и сохранена на сервере.");
         close();
       }}
     />}
     {saved && <p className="dispatch-notice" role="status">{saved}</p>}
-    {drafts.length > 0 && <details className="driver-drafts"><summary><Clock3 size={15}/> Журнал сообщений · {drafts.length} черновиков</summary><ul>{drafts.slice(0, 10).map((draft) => <li key={draft.id}><strong>{busLabel(draft.vehicleId)}</strong><span>{draft.text}</span><small>{new Date(draft.createdAt).toLocaleString("ru-RU")} · не отправлено</small></li>)}</ul></details>}
+    {messages.length > 0 && <details className="driver-drafts"><summary><Clock3 size={15}/> Тестовая диспетчерская · {messages.length} сообщений</summary><ul>{messages.slice(0, 10).map((item) => <li key={item.id}><strong>{busLabel(item.vehicleId)}</strong><span>{item.text}</span><small>{new Date(item.createdAt).toLocaleString("ru-RU")} · {item.status === "draft" ? "старый черновик" : "принято тестовым контуром"}</small></li>)}</ul></details>}
   </section>;
 }
 
@@ -92,9 +93,10 @@ function DriverComposer({ route, vehicle, contact, onClose, onSaved }: {
   vehicle: Vehicle;
   contact: ContactTarget;
   onClose: () => void;
-  onSaved: (item: Draft) => void;
+  onSaved: (item: DriverMessage) => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const closeDrawer = useEffectEvent(onClose);
   const [text, setText] = useState(() => contact.message?.slice(0, 250) || (contact.kind === "message"
     ? `Маршрут ${route.number}, ${busLabel(vehicle.id)}: сообщите обстановку у ${vehicle.nextStop?.name || "следующей остановки"}. Соблюдайте график и ПДД.`
     : ""));
@@ -107,8 +109,11 @@ function DriverComposer({ route, vehicle, contact, onClose, onSaved }: {
   const [error, setError] = useState("");
   const maxStops = Math.min(5, route.stops.length - route.stops.findIndex((s) => s.id === stopId));
   useEffect(() => {
-    const frame = requestAnimationFrame(() => ref.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }));
-    return () => cancelAnimationFrame(frame);
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const onKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape") closeDrawer(); };
+    document.addEventListener("keydown", onKeyDown);
+    ref.current?.querySelector<HTMLElement>("textarea, input, select")?.focus();
+    return () => { document.removeEventListener("keydown", onKeyDown); previousFocus?.focus(); };
   }, []);
   const save = async () => {
     const targetStop = route.stops.find((s) => s.id === stopId);
@@ -126,11 +131,11 @@ function DriverComposer({ route, vehicle, contact, onClose, onSaved }: {
     try {
       const item = config.dataSource === "mock"
         ? (() => {
-            const draft: Draft = { id: crypto.randomUUID(), routeId: route.id, vehicleId: vehicle.id, kind: contact.kind, text: message, createdAt: new Date().toISOString(), status: "draft" };
-            localStorage.setItem(LOCAL_DRAFTS, JSON.stringify([draft, ...savedLocal()].slice(0, 500)));
-            return draft;
+            const item: DriverMessage = { id: crypto.randomUUID(), routeId: route.id, vehicleId: vehicle.id, kind: contact.kind, text: message, createdAt: new Date().toISOString(), status: "sent_test" };
+            localStorage.setItem(LOCAL_OUTBOX, JSON.stringify([item, ...savedLocal()].slice(0, 500)));
+            return item;
           })()
-        : await integrationRequest<Draft>("/dispatch/driver-messages", {
+        : await integrationRequest<DriverMessage>("/dispatch/driver-messages", {
             method: "POST",
             body: JSON.stringify({ routeId: route.id, vehicleId: vehicle.id, kind: contact.kind, text: message, speedKmh: speed, dwellSec: dwell, dwellStops, stopId }),
           });
@@ -138,12 +143,15 @@ function DriverComposer({ route, vehicle, contact, onClose, onSaved }: {
     } catch (cause) { setError((cause as Error).message); }
     finally { setBusy(false); }
   };
-  return <div ref={ref} className="driver-composer" role="region" aria-label={`Подготовить сообщение для ${busLabel(vehicle.id)}`}>
-    <div className="driver-composer-top"><div><span className="dispatch-eyebrow">КАНАЛ ВОДИТЕЛЯ · ЧЕРНОВИК</span><h4>{busLabel(vehicle.id)} · {contact.kind === "message" ? "сообщение" : contact.kind === "speed" ? "рекомендация скорости" : "время стоянки"}</h4></div><button className="driver-close" aria-label="Закрыть сообщение" onClick={onClose}><X size={18}/></button></div>
+  return createPortal(<div className="driver-drawer-layer" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+    <div ref={ref} className="driver-composer" role="dialog" aria-modal="true" aria-label={`Команда для ${busLabel(vehicle.id)}`}>
+    <div className="driver-composer-top"><div><span className="dispatch-eyebrow"><PencilLine size={13}/> ТЕСТОВАЯ ДИСПЕТЧЕРСКАЯ</span><h4>{busLabel(vehicle.id)} · {contact.kind === "message" ? "сообщение" : contact.kind === "speed" ? "рекомендация скорости" : "время стоянки"}</h4></div><button className="driver-close" aria-label="Закрыть сообщение" onClick={onClose}><X size={18}/></button></div>
     {contact.kind === "speed" && <label className="driver-field">Ориентир скорости, км/ч<input type="number" min="5" max="60" step="1" value={speed} onChange={(e) => setSpeed(Number(e.target.value))}/><small>Без данных о дорожном ограничении. Диспетчер обязан проверить его перед использованием.</small></label>}
-    {contact.kind === "dwell" && <div className="driver-field-row"><label className="driver-field">Первая остановка<select value={stopId} onChange={(e) => setStopId(e.target.value)}>{route.stops.map((stop) => <option key={stop.id} value={stop.id}>{stop.name}</option>)}</select></label><label className="driver-field">Стоянка, секунд<input type="number" min="10" max="300" step="5" value={dwell} onChange={(e) => setDwell(Number(e.target.value))}/></label><label className="driver-field">Число остановок<input type="number" min="1" max={maxStops} step="1" value={dwellStops} onChange={(e) => setDwellStops(Number(e.target.value))}/></label></div>}
+    {contact.kind === "dwell" && <div className="driver-field-row"><label className="driver-field">Первая остановка<select value={stopId} onChange={(e) => setStopId(e.target.value)}>{route.stops.map((stop) => <option key={stop.id} value={stop.id}>{stop.name}</option>)}</select></label><label className="driver-field">Стоянка, секунд<input type="number" min="10" max="300" step="5" value={dwell} onChange={(e) => setDwell(Number(e.target.value))}/></label><label className="driver-field">На скольких следующих остановках<input type="number" min="1" max={maxStops} step="1" value={dwellStops} onChange={(e) => setDwellStops(Number(e.target.value))}/></label></div>}
+    {contact.kind === "dwell" && <p className="driver-field-help">Считая от выбранной остановки. Например, 1 — только на ней, 3 — на ней и ещё на двух следующих.</p>}
     <label className="driver-field">{contact.kind === "message" ? "Текст водителю" : "Комментарий диспетчера"}<textarea value={text} maxLength={250} rows={3} placeholder="Контекст для водителя" onChange={(e) => setText(e.target.value)}/></label>
-    <div className="driver-composer-foot"><p>Это подготовка команды в учебном контуре. Канал доставки водителю пока не подключён.</p><button className="primary-button" disabled={busy} onClick={() => void save()}><Save size={15}/>{busy ? "Сохраняем…" : "Сохранить черновик"}</button></div>
+    <div className="driver-composer-foot"><p>Команда попадёт в тестовую диспетчерскую и её журнал. Отдельный канал доставки водителю пока не подключён.</p><button className="primary-button" disabled={busy} onClick={() => void save()}><Send size={15}/>{busy ? "Отправляем…" : "Отправить в тестовую диспетчерскую"}</button></div>
     {error && <p className="dispatch-error" role="alert">{error}</p>}
-  </div>;
+    </div>
+  </div>, document.body);
 }

@@ -1,14 +1,16 @@
-import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, Bot, RefreshCw, Sparkles } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowRight, Bot, RefreshCw } from "lucide-react";
 import { Link } from "react-router-dom";
 import { integrationRequest } from "../../shared/api/integrations";
 import { busLabel } from "../../entities/dispatch-decisions";
-import { ruleAdvice } from "../../entities/dispatch-advice";
 import type { DispatchAdvice } from "../../entities/dispatch-advice";
 import type { Route, Vehicle } from "../../entities/models";
 import { config } from "../../shared/config/env";
 import type { ContactKind, ContactTarget } from "./VehicleBoard";
-export function GigachatPanel({ route, vehicles, reserve, onContact, onReserve }: {
+
+type AdvisorStatus = { configured: boolean; model?: string };
+
+export function GigachatPanel({ route, onContact, onReserve }: {
   route: Route;
   vehicles: Vehicle[];
   reserve: number;
@@ -16,43 +18,57 @@ export function GigachatPanel({ route, vehicles, reserve, onContact, onReserve }
   onReserve: () => void;
 }) {
   const [adviceByRoute, setAdviceByRoute] = useState<Record<string, DispatchAdvice>>({});
+  const [status, setStatus] = useState<AdvisorStatus | null>(null);
   const [loadingRoute, setLoadingRoute] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const routeId = route.id;
-  const stored = adviceByRoute[routeId];
-  const localAdvice = useMemo(() => ruleAdvice(
-    route, vehicles.filter((v) => v.routeId === route.id), reserve,
-    config.dataSource === "api" && !!stored?.configured,
-    stored?.note.startsWith("GigaChat недоступен") ? stored.note : config.dataSource === "mock"
-      ? "Демо-подсказки по правилам. Для GigaChat подключите сайт к API и задайте серверный ключ."
-      : "Подсказки пересчитываются по текущим данным. GigaChat вызывается только по кнопке.",
-  ), [route, vehicles, reserve, stored]);
-  const modelAdvice = stored?.source === "gigachat" ? stored : null;
-  const shown = modelAdvice || localAdvice;
-  const error = errors[routeId] || "";
+  const shown = adviceByRoute[routeId]?.source === "gigachat" ? adviceByRoute[routeId] : null;
   const loading = loadingRoute === routeId;
-  useEffect(() => {
-    if (config.dataSource === "mock") return;
-    let alive = true;
-    integrationRequest<DispatchAdvice>(`/dispatch/advice?route_id=${encodeURIComponent(routeId)}`)
-      .then((value) => { if (alive) setAdviceByRoute((previous) => ({ ...previous, [routeId]: value })); })
-      .catch((cause) => { if (alive) setErrors((previous) => ({ ...previous, [routeId]: (cause as Error).message })); });
-    return () => { alive = false; };
-  }, [routeId]);
-  const analyze = async () => {
-    setLoadingRoute(routeId);
-    setErrors((previous) => ({ ...previous, [routeId]: "" }));
+  const error = errors[routeId] || "";
+
+  const analyze = async (id: string, refresh = false) => {
+    setLoadingRoute(id);
+    setErrors((previous) => ({ ...previous, [id]: "" }));
     try {
       const result = await integrationRequest<DispatchAdvice>("/dispatch/advice", {
-        method: "POST", body: JSON.stringify({ routeId }), signal: AbortSignal.timeout(40000),
+        method: "POST", body: JSON.stringify({ routeId: id, refresh }), signal: AbortSignal.timeout(40000),
       });
-      setAdviceByRoute((previous) => ({ ...previous, [routeId]: result }));
-    } catch (cause) { setErrors((previous) => ({ ...previous, [routeId]: (cause as Error).message })); }
-    finally { setLoadingRoute((current) => current === routeId ? "" : current); }
+      if (result.source !== "gigachat") throw new Error("GigaChat не вернул рекомендации.");
+      setAdviceByRoute((previous) => ({ ...previous, [id]: result }));
+    } catch (cause) {
+      setErrors((previous) => ({ ...previous, [id]: (cause as Error).message }));
+    } finally {
+      setLoadingRoute((current) => current === id ? "" : current);
+    }
   };
+
+  useEffect(() => {
+    if (config.dataSource === "mock") { setStatus({ configured: false }); return; }
+    let alive = true;
+    let timer: ReturnType<typeof setInterval> | undefined;
+    integrationRequest<AdvisorStatus>(`/dispatch/advice?route_id=${encodeURIComponent(routeId)}`)
+      .then((value) => {
+        if (!alive) return;
+        setStatus(value);
+        if (!value.configured) return;
+        void analyze(routeId);
+        timer = setInterval(() => {
+          if (document.visibilityState === "visible") void analyze(routeId);
+        }, 120_000);
+      })
+      .catch((cause) => { if (alive) setErrors((previous) => ({ ...previous, [routeId]: (cause as Error).message })); });
+    return () => { alive = false; if (timer) clearInterval(timer); };
+    // The selected route alone starts a new analysis; telemetry updates do not trigger model requests.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routeId]);
+
   return <section className="gigachat-panel" aria-label="Советник GigaChat">
-    <div className="gigachat-heading"><span className="gigachat-mark"><Bot size={22}/></span><div><span className="dispatch-eyebrow">ПОМОЩНИК ДИСПЕТЧЕРА</span><h3>Предложения по маршруту</h3></div><span className={`gigachat-source ${shown?.source || "rules"}`}>{shown?.source === "gigachat" ? shown.model || "GigaChat" : "Правила"}</span></div>
-    {shown ? <>
+    <div className="gigachat-heading">
+      <span className="gigachat-mark"><Bot size={22}/></span>
+      <div><span className="dispatch-eyebrow">GIGACHAT · ПО ВЫБРАННОМУ МАРШРУТУ</span><h3>Рекомендации для диспетчера</h3></div>
+      <span className="gigachat-source gigachat">{status?.configured ? status.model || "GigaChat" : "Не подключён"}</span>
+    </div>
+    {shown && <>
       <p className="gigachat-summary">{shown.summary}</p>
       <div className="gigachat-cards">{shown.cards.map((card, index) => <article key={`${card.kind}-${card.vehicleId}-${index}`}>
         <div className="gigachat-card-top"><span>{String(index + 1).padStart(2, "0")}</span><strong>{card.title}</strong></div>
@@ -60,14 +76,17 @@ export function GigachatPanel({ route, vehicles, reserve, onContact, onReserve }
         {card.vehicleId && <small>{busLabel(card.vehicleId)}</small>}
         {card.kind === "reserve"
           ? <button onClick={onReserve}>Открыть план выпуска <ArrowRight size={14}/></button>
-          : card.vehicleId && <button onClick={() => onContact({ vehicleId: card.vehicleId!, kind: card.kind as ContactKind, message: card.kind === "message" ? card.message || undefined : undefined })}>Подготовить для водителя <ArrowRight size={14}/></button>}
+          : card.vehicleId && <button onClick={() => onContact({ vehicleId: card.vehicleId!, kind: card.kind as ContactKind, message: card.message || undefined })}>Открыть команду водителю <ArrowRight size={14}/></button>}
       </article>)}
-      {!shown.cards.length && <p className="gigachat-empty">Недостаточно данных для конкретного действия.</p>}</div>
-      <div className="gigachat-footer"><p>{shown.note} При запросе GigaChat сводка архивного маршрута и доступная текущая погода передаются внешнему сервису отдельно. Сегодняшняя погода не объясняет задержки в архиве.</p><button disabled={!shown.configured || loading} onClick={() => void analyze()}><Sparkles size={15}/>{loading ? "Анализируем…" : "Спросить GigaChat"}</button></div>
-      <Link className="gigachat-reports-link" to="/reports">Ежедневный отчёт и прошлые дни <ArrowRight size={14}/></Link>
-      {!shown.configured && <small className="gigachat-key-note">Для включения задайте <code>GIGACHAT_AUTH_KEY</code> в <code>server/.env</code> и перезапустите сервер.</small>}
-    </> : <p className="gigachat-empty">{error || "Собираем данные маршрута…"}</p>}
-    {error && shown && <p className="dispatch-error" role="alert">{error}</p>}
-    {shown?.source === "gigachat" && <small className="gigachat-generated"><RefreshCw size={12}/> Обновлено {new Date(shown.generatedAt).toLocaleTimeString("ru-RU")}</small>}
+      {!shown.cards.length && <p className="gigachat-empty">Сейчас GigaChat не предложил действие для этого маршрута.</p>}</div>
+    </>}
+    {!shown && !loading && !error && <p className="gigachat-empty">{status?.configured === false ? "GigaChat не подключён. Рекомендации появятся после настройки ключа на сервере." : "Анализируем маршрут…"}</p>}
+    {loading && <p className="gigachat-empty" role="status">Обновляем рекомендации по маршруту {route.number}…</p>}
+    {error && <p className="dispatch-error" role="alert">{error}</p>}
+    <div className="gigachat-footer">
+      <p>{shown ? `Обновлено ${new Date(shown.generatedAt).toLocaleTimeString("ru-RU")}. Проверьте рекомендацию перед отправкой.` : "Рекомендации основаны на телеметрии и прогнозе выбранного маршрута."}</p>
+      <button disabled={!status?.configured || loading} onClick={() => void analyze(routeId, true)}><RefreshCw size={15}/>{loading ? "Обновляем…" : "Обновить"}</button>
+    </div>
+    <Link className="gigachat-reports-link" to="/reports">Отчёты по дням <ArrowRight size={14}/></Link>
   </section>;
 }
