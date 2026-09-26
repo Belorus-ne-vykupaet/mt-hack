@@ -1,3 +1,4 @@
+import { incidentTiming } from "../entities/incident";
 import { forecastAvailability, telemetryAge } from "../entities/availability";
 import { matchesSearch } from "../shared/lib/search";
 import { Timeline } from "./Timeline";
@@ -21,18 +22,20 @@ import { minutes, riskHex, riskInk, horizonLabel } from "../shared/ui/format";
 import { Chart } from "../shared/ui/Chart";
 import { config } from "../shared/config/env";
 import { useOfficialModelStatus } from "../entities/official-model-status";
-import type { Route, Vehicle, Segment } from "../entities/models";
+import type { Route, Vehicle, Segment, Alert } from "../entities/models";
 import { useNavigate } from "react-router-dom";
 const DebugPanel = () => import("./DebugPanel");
 export function DetailsPanel({
   routes,
   vehicles,
   segments,
+  alerts = [],
   forecastControl = false,
 }: {
   routes: Route[];
   vehicles: Vehicle[];
   segments: Segment[];
+  alerts?: Alert[];
   forecastControl?: boolean;
 }) {
   const ui = useUi();
@@ -67,6 +70,17 @@ export function DetailsPanel({
         ? v.routeId === ui.selectedRouteId
         : true) && matchesSearch(`${v.id} ${v.routeId}`, q),
   );
+  const routeSegments = segments.filter((s) => s.routeId === route?.id);
+  const relatedAlerts = alerts
+    .filter((alert) => isVehicle ? alert.vehicleId === vehicle?.id : alert.routeId === route?.id)
+    .sort((a, b) => b.riskProbability - a.riskProbability);
+  const factorVehicle = isVehicle ? vehicle : [...localVehicles]
+    .filter((v) => v.observedFactor)
+    .sort((a, b) => b.riskProbability - a.riskProbability)[0];
+  const observedFactor = factorVehicle?.observedFactor || relatedAlerts.find((alert) => alert.observedFactor)?.observedFactor;
+  const incident = relatedAlerts[0];
+  const timing = incident ? incidentTiming(incident) : undefined;
+  const currentSegment = routeSegments.find((segment) => segment.id === vehicle?.currentSegmentId);
   const renderVehicle = (v: Vehicle) => (
     <button
       className="entity-row"
@@ -140,27 +154,18 @@ export function DetailsPanel({
             <>
               {!isVehicle && (
                 <div className="route-impact">
-                  <strong>Где возникла задержка</strong>
+                  <strong>Участки и транспорт с риском</strong>
                   <span>
-                    {
-                      segments.filter(
-                        (s) =>
-                          s.routeId === route.id && s.riskLevel !== "normal",
-                      ).length
-                    }{" "}
-                    из {segments.filter((s) => s.routeId === route.id).length}{" "}
-                    участков ·{" "}
-                    {
-                      vehicles.filter(
-                        (v) =>
-                          v.routeId === route.id && v.riskLevel !== "normal",
-                      ).length
-                    }{" "}
-                    из {route.activeVehicleCount} автобусов
+                    {routeSegments.length
+                      ? `${routeSegments.filter((s) => s.riskLevel !== "normal" && s.riskLevel !== "unknown").length} из ${routeSegments.length} наблюдаемых участков`
+                      : "Участок не определён"}
+                    {" · "}
+                    {vehicles.filter((v) => v.routeId === route.id && v.riskLevel !== "normal" && v.riskLevel !== "unknown").length}
+                    {" из "}{route.activeVehicleCount} автобусов
                   </span>
                   <small>
-                    Статус маршрута отражает наибольший риск. Цвет каждого
-                    участка и автобуса рассчитывается отдельно.
+                    Статус маршрута отражает наибольший риск. Цвет участка
+                    показывает риск находящихся на нём ТС к целевой остановке.
                   </small>
                 </div>
               )}
@@ -220,6 +225,20 @@ export function DetailsPanel({
                     <strong>{vehicle.nextStop?.name || "Не определена"}</strong>
                   </div>
                   <div className="detail-data">
+                    <span>Текущий участок</span>
+                    <strong>{currentSegment?.name || "Участок не определён"}</strong>
+                  </div>
+                  {currentSegment && <>
+                    <div className="detail-data">
+                      <span>Средняя скорость на участке</span>
+                      <strong>{currentSegment.meanSpeedKmh == null ? "Нет данных" : `${currentSegment.meanSpeedKmh.toFixed(1)} км/ч`}</strong>
+                    </div>
+                    <div className="detail-data">
+                      <span>Простой на участке</span>
+                      <strong>{currentSegment.dwellSec == null ? "Нет данных" : `${(currentSegment.dwellSec / 60).toFixed(1)} мин`}</strong>
+                    </div>
+                  </>}
+                  <div className="detail-data">
                     <span>{telemetryAge(vehicle)}</span>
                     <strong>{vehicle.updatedAt.replace("T", " ").slice(11, 19)} · {planClock}</strong>
                   </div>
@@ -231,6 +250,13 @@ export function DetailsPanel({
                     Транспорт на линии
                   </span>
                   <strong>{route.activeVehicleCount} ТС</strong>
+                </div>
+              )}
+              {config.officialMode && incident?.eventType === "late_threshold" && (
+                <div className="official-detail-note">
+                  <strong>Риск опоздания &gt;2 мин</strong>
+                  <p>{timing?.event}. {timing?.warning}.</p>
+                  {timing?.forecast && <small>{timing.forecast}.</small>}
                 </div>
               )}
               <button
@@ -305,8 +331,9 @@ export function DetailsPanel({
               <div className="explanation-placeholder">
                 <Info size={16} />
                 <div>
-                  <strong>Факторы прогноза</strong>
-                  <p>Объяснение появится после подключения модели.</p>
+                  <strong>Наблюдаемый фактор</strong>
+                  <p>{observedFactor || "Недостаточно данных, чтобы выделить наблюдаемый фактор задержки."}</p>
+                  {observedFactor && <small>Наблюдение по телеметрии; причинность моделью не установлена.</small>}
                 </div>
               </div>
               <button

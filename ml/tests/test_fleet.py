@@ -236,7 +236,14 @@ def test_early_actual_arrival_is_not_forecast_after_event(fleet):
 
 
 def test_live_ndtp_delayed_packet_and_observed_arrival_do_not_reissue_warning(fleet, monkeypatch):
+    from transit_ml.segments import SegmentMatcher
+
     fleet.mode = 'ndtp'
+    # Distinct visits and observed departure establish which stop was reached;
+    # co-located previous/future visits without that evidence are ambiguous.
+    previous = fleet.plans[1].ts < T.timestamp()
+    fleet.plans[1].loc[previous, ['lon', 'lat']] = [37.63, 55.75]
+    fleet.segment_matchers[1] = SegmentMatcher(fleet.plans[1], route_id='duty-1')
     clock = [T.timestamp()]
     monkeypatch.setattr('transit_ml.backend.time.time', lambda: clock[0])
     row = dict(ts=T.timestamp() - 181, lat=55.75, lon=37.63,
@@ -245,6 +252,7 @@ def test_live_ndtp_delayed_packet_and_observed_arrival_do_not_reissue_warning(fl
     missing = snapshot(fleet)
     assert not any(a['vehicle_id'] == 'vehicle-1' for a in missing['alerts'])
 
+    fleet.receiver.histories[1].append({**row, 'ts': clock[0] - 10, 'speed': 0})
     fleet.receiver.histories[1].append({**row, 'ts': clock[0]})
     issued = snapshot(fleet)
     warning = next(a for a in issued['alerts'] if a['vehicle_id'] == 'vehicle-1')

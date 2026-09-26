@@ -17,6 +17,7 @@ import pandas as pd
 
 from transit_ml.backend import Engine
 from transit_ml.inference import app as ml_app
+from transit_ml.warnings import EVENT_TYPE, LATENESS_THRESHOLD_SEC
 
 
 async def audit():
@@ -30,6 +31,9 @@ async def audit():
     ready_snapshots = 0
     active_alerts = 0
     prediction_opportunities = set()
+    forecast_horizon_violations = []
+    first_issue_mutations = []
+    first_issue_by_id = {}
     async with ml_app.router.lifespan_context(ml_app):
         async with httpx.AsyncClient(
             transport=httpx.ASGITransport(app=ml_app), base_url="http://model"
@@ -43,6 +47,23 @@ async def audit():
                 snapshots += 1
                 ready_snapshots += engine.status == "connected"
                 active_alerts += len(snapshot["alerts"])
+                for vehicle in snapshot["vehicles"]:
+                    horizon = vehicle.get("forecast_horizon_sec")
+                    if horizon is not None and not 600 < horizon <= 900:
+                        forecast_horizon_violations.append({
+                            "vehicle_id": vehicle["id"], "cutoff": cutoff,
+                            "forecast_horizon_sec": horizon,
+                        })
+                for alert in snapshot["alerts"]:
+                    immutable = {
+                        key: alert.get(key) for key in (
+                            "created_at", "target_time", "event_time",
+                            "lead_time_sec", "forecast_horizon_sec", "event_lead_time_sec",
+                        )
+                    }
+                    previous = first_issue_by_id.setdefault(alert["id"], immutable)
+                    if immutable != previous:
+                        first_issue_mutations.append(alert["id"])
                 prediction_opportunities.update(
                     (int(vehicle["id"].removeprefix("vehicle-")),
                      int(vehicle["next_stop"]["id"]))
@@ -53,6 +74,8 @@ async def audit():
 
     records = list(engine.warning_audit)
     retrospective = []
+    event_window_violations = []
+    event_metadata_violations = []
     actual_before_issue = []
     warning_rows = []
     warning_by_target = {}
@@ -61,6 +84,18 @@ async def audit():
         target = pd.Timestamp(row["target_time"]).timestamp()
         if not 600 < target - issued <= 900:
             retrospective.append(row["id"])
+        expected_event = target + LATENESS_THRESHOLD_SEC
+        if not 600 < expected_event - issued <= 900:
+            event_window_violations.append(row["id"])
+        event_time = row.get("event_time")
+        if (
+            row.get("event_type") != EVENT_TYPE
+            or event_time is None
+            or abs(pd.Timestamp(event_time).timestamp() - expected_event) > 0.001
+            or row.get("event_lead_time_sec") != round(expected_event - issued, 1)
+            or row.get("forecast_horizon_sec") != round(target - issued, 1)
+        ):
+            event_metadata_violations.append(row["id"])
         tr = int(row["vehicle_id"].removeprefix("vehicle-"))
         actual = engine.actual.get(tr)
         event = (
@@ -78,12 +113,13 @@ async def audit():
             "actual_delay_sec": round(delay, 1) if delay is not None else None,
             "lead_to_actual_sec": round(observed_time - issued, 1)
             if observed_time is not None else None,
-            # A late event first exceeds the +120 s threshold at plan+120.
-            # This is a retrospective timestamp, not a live observation.
-            "first_threshold_exceedance_at": pd.Timestamp(target + 120, unit="s", tz="UTC").isoformat()
-            if delay is not None and delay > 120 else None,
-            "lead_to_threshold_sec": round(target + 120 - issued, 1)
-            if delay is not None and delay > 120 else None,
+            # The event clock is declared from plan for every warning, including
+            # false positives. The outcome alone is determined retrospectively.
+            "event_occurred": delay > LATENESS_THRESHOLD_SEC if delay is not None else None,
+            "first_threshold_exceedance_at": pd.Timestamp(expected_event, unit="s", tz="UTC").isoformat()
+            if delay is not None and delay > LATENESS_THRESHOLD_SEC else None,
+            "lead_to_threshold_sec": round(expected_event - issued, 1)
+            if delay is not None and delay > LATENESS_THRESHOLD_SEC else None,
         })
         warning_by_target[(tr, int(row["target_stop_id"]))] = warning_rows[-1]
 
@@ -115,12 +151,16 @@ async def audit():
             "had_ready_prediction": (int(event.tr_id), int(event.tt_action_item_id))
             in prediction_opportunities,
             "warning_before_actual": issued is not None and issued < actual_time,
+            "warning_before_event": issued is not None and issued < float(event.ts) + LATENESS_THRESHOLD_SEC,
+            "warning_in_event_window": issued is not None
+            and 600 < float(event.ts) + LATENESS_THRESHOLD_SEC - issued <= 900,
         })
 
     late_events = [event for event in scored_events if event["late_event"]]
     ready_late_events = [event for event in late_events if event["had_ready_prediction"]]
     detected = sum(event["warning_before_actual"] for event in late_events)
     detected_ready = sum(event["warning_before_actual"] for event in ready_late_events)
+    detected_in_window = sum(event["warning_in_event_window"] for event in late_events)
     false_alerts = [row for row in warning_rows if row["actual_delay_sec"] is not None
                     and row["actual_delay_sec"] <= 120]
     actual_leads = [row["lead_to_actual_sec"] for row in warning_rows
@@ -128,6 +168,8 @@ async def audit():
     threshold_leads = [row["lead_to_threshold_sec"] for row in warning_rows
                        if row["lead_to_threshold_sec"] is not None]
     leads = [row["lead_time_sec"] for row in records]
+    declared_event_leads = [row["event_lead_time_sec"] for row in records
+                            if row.get("event_lead_time_sec") is not None]
     def distribution(values):
         return {
             "min": round(float(min(values)), 1),
@@ -154,13 +196,23 @@ async def audit():
         "maximum_lead_to_plan_sec": max(leads) if leads else None,
         "actual_outcomes_available_for_audit": len(actual_leads),
         "warnings_issued_after_plan_window": retrospective,
+        "warnings_outside_event_window": event_window_violations,
+        "warning_event_metadata_violations": event_metadata_violations,
+        "forecast_horizon_violations": forecast_horizon_violations,
+        "first_issue_mutations": sorted(set(first_issue_mutations)),
         "warnings_issued_after_actual_arrival": actual_before_issue,
-        "event_rule": "actual arrival later than planned arrival by >120 seconds",
-        "denominator_rule": "all distinct scheduled arrivals with plan in (start+600s, end+900s] and known actual arrival, including missing GPS",
+        "event_type": EVENT_TYPE,
+        "event_rule": "potential lateness threshold breach at planned arrival + 120 seconds; event occurs only if actual arrival is >120 seconds late",
+        "publication_rule": "ML target: 600 < plan-T <= 900; first warning additionally requires 600 < plan+120-T <= 900; actual outcome is never a publication input",
+        "denominator_rule": "frozen original forecast denominator: all distinct scheduled arrivals with plan in (start+600s, end+900s] and known actual arrival, including missing GPS; not narrowed to the new warning window",
         "scheduled_targets_in_window": len(plan),
         "targets_with_actual_outcome": len(scored_events),
         "late_events": len(late_events),
         "late_events_warned_before_actual": detected,
+        "late_events_warned_in_event_window": detected_in_window,
+        "late_events_missed_in_event_window": len(late_events) - detected_in_window,
+        "late_event_window_recall": round(detected_in_window / len(late_events), 4)
+        if late_events else None,
         "late_event_recall": round(detected / len(late_events), 4) if late_events else None,
         "late_events_with_ready_prediction": len(ready_late_events),
         "ready_late_events_warned_before_actual": detected_ready,
@@ -171,11 +223,15 @@ async def audit():
         "false_alert_fraction": round(len(false_alerts) / len(actual_leads), 4)
         if actual_leads else None,
         "lead_to_actual_sec": distribution(actual_leads),
+        "lead_to_declared_event_sec": distribution(declared_event_leads),
         "lead_to_late_threshold_sec": distribution(threshold_leads),
+        "events": scored_events,
         "warnings": warning_rows,
     }
     print(json.dumps(report, ensure_ascii=False, indent=2))
-    if retrospective or actual_before_issue or not records:
+    if (retrospective or event_window_violations or event_metadata_violations
+            or forecast_horizon_violations or first_issue_mutations
+            or actual_before_issue or not records):
         raise SystemExit("Horizon audit failed")
 
 

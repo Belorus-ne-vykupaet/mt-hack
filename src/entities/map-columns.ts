@@ -1,5 +1,6 @@
 import type { Route, Segment, RiskLevel, Stop, Vehicle } from "./models";
 import { delayAt, riskAt } from "./forecast";
+import { config } from "../shared/config/env";
 import { minutes, horizonLabel, percent } from "../shared/ui/format";
 export interface RiskColumn {
   forecastHorizonSec?: number;
@@ -26,7 +27,9 @@ export function buildStopColumns(
 ): RiskColumn[] {
   const byRoute = new Map(routes.map((r) => [r.id, r]));
   const columns = new Map<string, RiskColumn>();
-  for (const segment of segments) {
+  // Official segment colours locate vehicles at risk; the ML target is a
+  // future stop, so only vehicle target-stop forecasts receive a 3D column.
+  for (const segment of config.officialMode ? [] : segments) {
     const route = byRoute.get(segment.routeId);
     if (!route?.stops.length || !segment.coordinates.length) continue;
     const middle =

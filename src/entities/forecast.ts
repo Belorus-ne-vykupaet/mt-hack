@@ -20,8 +20,13 @@ export const delayAt = (item: Prediction, minutes: number) =>
 export function riskAt(item: Prediction, minutes: number): RiskLevel {
   if (item.telemetryStale || (minutes > 0 ? item.hasForecast === false : item.currentDelayKnown === false)) return "unknown";
   const delay = delayAt(item, minutes);
+  // The model's probability can signal risk even when the expected delay is
+  // below two minutes. Preserve the backend assessment in the forecast view;
+  // the current view describes the observed deviation only.
   if (config.officialMode)
-    return delay < -60 ? "elevated" : riskFromDelay(delay);
+    return minutes > 0
+      ? item.riskLevel
+      : delay < -60 ? "elevated" : delay <= 120 ? "normal" : riskFromDelay(delay);
   if (item.riskLevel === "normal") return "normal";
   return delay >= 420
     ? "critical"

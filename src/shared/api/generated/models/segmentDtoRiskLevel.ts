@@ -13,4 +13,5 @@ export const SegmentDtoRiskLevel = {
   elevated: 'elevated',
   high: 'high',
   critical: 'critical',
+  unknown: 'unknown',
 } as const;

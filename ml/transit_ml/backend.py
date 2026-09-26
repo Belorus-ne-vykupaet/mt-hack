@@ -16,6 +16,8 @@ from fastapi import FastAPI
 
 from .features import Dataset, distance, seconds
 from .ndtp import Receiver
+from .segments import SegmentMatcher
+from .warnings import LATENESS_THRESHOLD_SEC, warning_timing
 
 
 def iso(ts):
@@ -151,6 +153,10 @@ class Engine:
                 for k, v in actual.groupby("tr_id")
             }
         self.plans = {int(k): v for k, v in self.dataset.schedule.groupby("tr_id")}
+        self.segment_matchers = {
+            tr: SegmentMatcher(plan, route_id=f"duty-{tr}")
+            for tr, plan in self.plans.items()
+        }
         self.started = time.monotonic()
         self.start = pd.Timestamp(
             os.getenv("REPLAY_START", "2026-01-06 07:27:00"), tz="UTC"
@@ -282,6 +288,7 @@ class Engine:
             items = []
             targets = {}
             features = {}
+            segment_matches = {}
             geometries = []
             live_histories = {}
             if self.mode == "ndtp":
@@ -324,13 +331,22 @@ class Engine:
                     if self.mode == "replay" and past is not None
                     else pd.DataFrame()
                 )
+                matcher = self.segment_matchers.get(tr)
+                matched = matcher.match(h, cutoff) if matcher is not None else {
+                    "status": "unavailable", "reason": "no_schedule",
+                    "current_segment_id": None, "current_delay_sec": None,
+                    "segments": [], "observed_stop_ids": [],
+                }
+                reached_stops = set(matched["observed_stop_ids"])
                 future = plan[(plan.ts > cutoff + 600) & (plan.ts <= cutoff + 900)]
                 target = next(
                     (
                         candidate
                         for candidate in future.to_dict("records")
-                        if not observed_arrival(
-                            candidate, observed, h, cutoff, self.mode == "ndtp"
+                        if not (
+                            str(int(candidate["tt_action_item_id"])) in reached_stops
+                            if self.mode == "ndtp" and len(plan) > 1 else
+                            observed_arrival(candidate, observed, h, cutoff, self.mode == "ndtp")
                         )
                     ),
                     None,
@@ -348,24 +364,11 @@ class Engine:
                 if not fresh:
                     cur = None
                 if self.mode == "ndtp" and fresh:
-                    # Match a recent low-speed GPS observation to a planned stop, only in a bounded time window.
-                    candidates = plan[
-                        (plan.ts >= cutoff - 1800) & (plan.ts <= cutoff + 300)
-                    ]
-                    matches = []
-                    for row in h[h.speed.between(0, 3)].tail(30).itertuples():
-                        for candidate in candidates.itertuples():
-                            if (
-                                distance(row.lon, row.lat, candidate.lon, candidate.lat)
-                                < 50
-                            ):
-                                matches.append((row.ts, row.ts - candidate.ts))
-                    if matches:
-                        latest = max(t for t, _ in matches)
-                        cur = float(
-                            min((d for t, d in matches if t == latest), key=abs)
-                        )
+                    # An ordered observed visit anchors deviation. Repeated
+                    # stationary packets must not become a later arrival.
+                    cur = matched["current_delay_sec"]
                 vehicle_id = f"vehicle-{tr}"
+                segment_matches[vehicle_id] = matched
                 if forecast_status == "pending":
                     # The model uses only the last 30 minutes; avoid uploading
                     # older map-trail packets on every packet-triggered forecast.
@@ -425,6 +428,10 @@ class Engine:
                         "forecast_horizon_sec": None,
                         "forecast_target_time": None,
                         "forecast_model": None,
+                        "observed_factor": None,
+                        "current_segment_id": matched["current_segment_id"],
+                        "segment_match_status": "matched" if matched["status"] == "matched" else "unavailable",
+                        "segment_match_reason": matched["reason"],
                         "next_stop": stop(target) if target is not None and fresh else None,
                         "updated_at": iso(float(last.ts)),
                     }
@@ -508,6 +515,33 @@ class Engine:
                     if self.status == "connected"
                     else "persistence-fallback"
                 )
+                v["observed_factor"] = observed_factor(
+                    features[v["id"]], v["current_delay_sec"]
+                )
+            segments = []
+            for v in vehicles:
+                match = segment_matches[v["id"]]
+                for observed_segment in match["segments"]:
+                    segment = {
+                        **observed_segment,
+                        "predicted_delay_sec": None,
+                        "risk_probability": None,
+                        "risk_level": risk(observed_segment["current_delay_sec"])
+                        if observed_segment["current_delay_sec"] is not None else "unknown",
+                    }
+                    if observed_segment["id"] == v["current_segment_id"]:
+                        # Locate the vehicle's stop-arrival forecast on its
+                        # currently observed segment. This is not a separate
+                        # model predicting road congestion on that segment.
+                        segment.update({
+                            "predicted_delay_sec": v["predicted_delay_sec"],
+                            "risk_probability": v["risk_probability"],
+                            "risk_level": v["risk_level"],
+                            "risk_scope": "vehicle_target_stop",
+                        })
+                        if v["next_stop"] is not None:
+                            segment["forecast_target_stop_id"] = v["next_stop"]["id"]
+                    segments.append(segment)
             by_route = {v["route_id"]: v for v in vehicles}
             routes = []
             for route in self.catalog:
@@ -554,12 +588,19 @@ class Engine:
                 reason = observed_factor(f, v["current_delay_sec"])
                 alert_id = f"forecast-{v['id']}-{int(target['tt_action_item_id'])}"
                 first_issue = self.warning_first_issued.get(alert_id)
+                timing = warning_timing(float(target["ts"]), cutoff, first_issue)
+                if timing is None:
+                    # Vehicle forecasts/risk remain available across the full
+                    # ML window. Publish a first warning only inside the
+                    # declared event window, never by moving its issue time.
+                    continue
                 if first_issue is None:
                     first_issue = cutoff
                     self.warning_first_issued[alert_id] = first_issue
                     if len(self.warning_first_issued) > 5000:
                         self.warning_first_issued.pop(next(iter(self.warning_first_issued)))
                     self.warning_audit.append({
+                        **timing,
                         "id": alert_id,
                         "vehicle_id": v["id"],
                         "target_stop_id": str(target["tt_action_item_id"]),
@@ -574,6 +615,7 @@ class Engine:
                 eta = target["ts"] + v["predicted_delay_sec"]
                 alerts.append(
                     {
+                        **timing,
                         "id": alert_id,
                         "type": "delay_risk",
                         "route_id": v["route_id"],
@@ -633,7 +675,7 @@ class Engine:
                 "routes": routes,
                 "vehicles": vehicles,
                 "alerts": alerts,
-                "segments": [],
+                "segments": segments,
                 "summary": summary,
                 "points": points,
                 "geometries": geometries,
@@ -742,6 +784,13 @@ async def status():
             v["forecast_status"] == "no_target" for v in vehicles
         ),
         "warningsIssued": len(e.warning_audit),
+        "warningEvent": {
+            "type": "late_threshold",
+            "latenessThresholdSec": LATENESS_THRESHOLD_SEC,
+            "definition": "Potential lateness threshold breach at planned arrival + 120 seconds",
+            "firstPublicationLeadSec": {"minExclusive": 600, "maxInclusive": 900},
+            "actualArrivalKnownAtPublication": False,
+        },
     }
 
 

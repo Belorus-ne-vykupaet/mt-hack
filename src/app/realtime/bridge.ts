@@ -21,6 +21,20 @@ import type { StreamEvent } from "./client";
 import { useConnection } from "../store";
 import { config } from "../../shared/config/env";
 const fields: Record<string, string> = {
+  target_time: "targetTime",
+  expected_arrival_at: "expectedArrivalAt",
+  lead_time_sec: "leadTimeSec",
+  event_type: "eventType",
+  event_time: "eventTime",
+  event_lead_time_sec: "eventLeadTimeSec",
+  current_segment_id: "currentSegmentId",
+  segment_match_status: "segmentMatchStatus",
+  segment_match_reason: "segmentMatchReason",
+  lateness_threshold_sec: "latenessThresholdSec",
+  current_forecast_horizon_sec: "currentForecastHorizonSec",
+  current_event_lead_time_sec: "currentEventLeadTimeSec",
+  observed_factor: "observedFactor",
+  model_status: "modelStatus",
   forecast_horizon_sec: "forecastHorizonSec",
   forecast_target_time: "forecastTargetTime",
   forecast_model: "forecastModel",
@@ -47,7 +61,7 @@ export function domainPatch(payload: Record<string, unknown>) {
   if ("predicted_delay_sec" in payload) result.hasForecast = payload.predicted_delay_sec !== null;
   if ("current_delay_sec" in payload) result.currentDelayKnown = payload.current_delay_sec !== null;
   if ("status" in payload) result.telemetryStale = payload.status === "stale";
-  for (const field of ["forecastHorizonSec", "forecastTargetTime", "forecastModel"]) {
+  for (const field of ["forecastHorizonSec", "forecastTargetTime", "forecastModel", "currentSegmentId", "segmentMatchReason", "observedFactor"]) {
     if (result[field] === null) result[field] = undefined;
   }
   return result;

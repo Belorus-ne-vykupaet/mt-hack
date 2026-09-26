@@ -296,7 +296,9 @@ export default function NetworkMap({
               text = `Остановка «${String(object.name)}»`;
             } else if ("coordinates" in object && "currentDelaySec" in object) {
               const segment = object as Segment;
-              text = `Маршрут ${segment.routeId} · отдельный участок\n${horizonLabel(useUi.getState().forecastOffsetMin)}: ${minutes(delayAt(segment, useUi.getState().forecastOffsetMin))} мин\nОстальные участки оцениваются независимо`;
+              text = config.officialMode
+                ? `${segment.name || "Наблюдаемый участок"}\nСредняя скорость: ${segment.meanSpeedKmh == null ? "нет данных" : `${segment.meanSpeedKmh.toFixed(1)} км/ч`}\nПростой: ${segment.dwellSec == null ? "нет данных" : `${(segment.dwellSec / 60).toFixed(1)} мин`}\n${segment.riskScope === "vehicle_target_stop" ? "Цвет — риск ТС на участке к целевой остановке" : "Только наблюдаемая телеметрия; прогноза для участка нет"}`
+                : `Маршрут ${segment.routeId} · отдельный участок\n${horizonLabel(useUi.getState().forecastOffsetMin)}: ${minutes(delayAt(segment, useUi.getState().forecastOffsetMin))} мин\nОстальные участки оцениваются независимо`;
             }
             return text
               ? {
@@ -555,7 +557,9 @@ export default function NetworkMap({
         id: "risk-segments",
         parameters: mode === "flow" ? PITCHED_ROUTE_DEPTH : undefined,
         data: ui.routesVisible
-          ? [...segments].sort(
+          ? segments.flatMap((segment) => segment.observedPaths?.length
+              ? segment.observedPaths.filter((path) => path.length > 1).map((coordinates) => ({ ...segment, coordinates }))
+              : [segment]).filter((segment) => segment.coordinates.length > 1).sort(
               (a, b) =>
                 Number(a.routeId === selected) -
                   Number(b.routeId === selected) ||
@@ -589,15 +593,11 @@ export default function NetworkMap({
         getRadius: zoom < 11 ? 12 : 18,
         radiusUnits: "pixels",
         getFillColor: (d) => [
-          ...(d.telemetryStale ? riskRgb.unknown : mode === "flow"
-            ? routeRgb(d.routeId)
-            : riskRgb[riskAt(d, ui.forecastOffsetMin)]),
+          ...riskRgb[riskAt(d, ui.forecastOffsetMin)],
           selected && d.routeId !== selected ? 30 : mode === "flow" ? 85 : 55,
         ],
         getLineColor: (d) => [
-          ...(d.telemetryStale ? riskRgb.unknown : mode === "flow"
-            ? routeRgb(d.routeId)
-            : riskRgb[riskAt(d, ui.forecastOffsetMin)]),
+          ...riskRgb[riskAt(d, ui.forecastOffsetMin)],
           selected && d.routeId !== selected ? 130 : 255,
         ],
         updateTriggers: {
@@ -953,9 +953,9 @@ export default function NetworkMap({
         </span>
         <small className="local-risk-key">
           {config.officialMode
-            ? "Линии — справочная трасса OSM · автобусы — свежий GPS · серые точки — последний сигнал"
+            ? "Тонкие линии — маршрут · участки и кольца ТС — риск · серые — нет прогноза / старый GPS"
             : mode === "flow"
-            ? "Кольцо — маршрут · линии и столбцы — риск"
+            ? "Кольца, участки и столбцы — риск"
             : "Линии — участки · значки — автобусы"}
         </small>
         <div>

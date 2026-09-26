@@ -29,6 +29,10 @@ export interface Vehicle extends PredictionAvailability {
   forecastHorizonSec?: number;
   forecastTargetTime?: string;
   forecastModel?: string;
+  currentSegmentId?: string;
+  segmentMatchStatus?: "matched" | "unavailable";
+  segmentMatchReason?: string;
+  observedFactor?: string;
   id: string;
   routeId: string;
   position: { lat: number; lon: number };
@@ -53,6 +57,13 @@ export interface Alert {
   targetTime?: string;
   expectedArrivalAt?: string;
   leadTimeSec?: number;
+  eventType?: "late_threshold";
+  eventTime?: string;
+  eventLeadTimeSec?: number;
+  latenessThresholdSec?: number;
+  currentForecastHorizonSec?: number;
+  currentEventLeadTimeSec?: number;
+  forecastHorizonSec?: number;
   observedFactor?: string;
   modelStatus?: "ready" | "fallback";
 }
@@ -84,7 +95,21 @@ export interface Geometry {
   validUntil?: string;
 }
 
-export interface Segment {
+export interface Segment extends PredictionAvailability {
+  name?: string;
+  fromStopId?: string;
+  toStopId?: string;
+  fromSequence?: number | null;
+  toSequence?: number | null;
+  meanSpeedKmh?: number | null;
+  dwellSec?: number | null;
+  observedDistanceM?: number | null;
+  coverageSec?: number | null;
+  observedPaths?: number[][][];
+  isCurrent?: boolean;
+  matchingMethod?: "ordered_stop_visits";
+  riskScope?: "vehicle_target_stop";
+  forecastTargetStopId?: string;
   id: string;
   routeId: string;
   coordinates: number[][];

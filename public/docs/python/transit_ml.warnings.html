@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Python: module transit_ml.warnings</title>
+</head><body>
+
+<table class="heading">
+<tr class="heading-text decor">
+<td class="title">&nbsp;<br><strong class="title"><a href="transit_ml.html" class="white">transit_ml</a>.warnings</strong></td>
+<td class="extra"><a href=".">index</a><br><a href="https://github.com/Belorus-ne-vykupaet/mt-hack/blob/main/ml/transit_ml/warnings.py">Исходный код</a></td></tr></table>
+    <p><span class="code">Causal&nbsp;publication&nbsp;clock&nbsp;for&nbsp;a&nbsp;possible,&nbsp;explicitly&nbsp;defined&nbsp;lateness&nbsp;event.<br>
+&nbsp;<br>
+The&nbsp;ML&nbsp;target&nbsp;stays&nbsp;the&nbsp;planned&nbsp;arrival&nbsp;within&nbsp;(600,&nbsp;900]&nbsp;seconds.&nbsp;A&nbsp;warning<br>
+has&nbsp;an&nbsp;additional&nbsp;clock:&nbsp;a&nbsp;potential&nbsp;breach&nbsp;of&nbsp;the&nbsp;120-second&nbsp;lateness<br>
+threshold&nbsp;at&nbsp;plan+120.&nbsp;Actual&nbsp;arrival&nbsp;is&nbsp;deliberately&nbsp;not&nbsp;an&nbsp;input&nbsp;here:&nbsp;it&nbsp;is<br>
+unknown&nbsp;when&nbsp;a&nbsp;live&nbsp;warning&nbsp;is&nbsp;published&nbsp;and&nbsp;is&nbsp;used&nbsp;only&nbsp;to&nbsp;score&nbsp;outcomes.</span></p>
+<p>
+<table class="section">
+<tr class="decor functions-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Functions</strong></td></tr>
+
+<tr><td class="decor functions-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><dl><dt><a name="-isfinite"><strong>isfinite</strong></a>(x, /)</dt><dd><span class="code">Return&nbsp;True&nbsp;if&nbsp;x&nbsp;is&nbsp;neither&nbsp;an&nbsp;infinity&nbsp;nor&nbsp;a&nbsp;NaN,&nbsp;and&nbsp;False&nbsp;otherwise.</span></dd></dl>
+ <dl><dt><a name="-warning_timing"><strong>warning_timing</strong></a>(plan_ts: float, cutoff: float, first_issued_at: float | None = None) -&gt; dict | None</dt><dd><span class="code">Return&nbsp;truthful&nbsp;first-publication&nbsp;timing,&nbsp;or&nbsp;defer&nbsp;a&nbsp;new&nbsp;warning.<br>
+&nbsp;<br>
+Both&nbsp;the&nbsp;ML&nbsp;horizon&nbsp;to&nbsp;plan&nbsp;and&nbsp;the&nbsp;first&nbsp;warning's&nbsp;lead&nbsp;to&nbsp;the&nbsp;potential<br>
+threshold&nbsp;event&nbsp;must&nbsp;be&nbsp;in&nbsp;(600,&nbsp;900].&nbsp;Their&nbsp;intersection&nbsp;for&nbsp;a&nbsp;new&nbsp;warning<br>
+is&nbsp;therefore&nbsp;600&nbsp;&lt;&nbsp;plan-cutoff&nbsp;&lt;=&nbsp;780.&nbsp;Predictions&nbsp;and&nbsp;vehicle&nbsp;risk&nbsp;may&nbsp;be<br>
+published&nbsp;over&nbsp;the&nbsp;full&nbsp;ML&nbsp;window;&nbsp;this&nbsp;function&nbsp;gates&nbsp;only&nbsp;the&nbsp;warning.<br>
+&nbsp;<br>
+A&nbsp;previously&nbsp;stored&nbsp;first&nbsp;issue&nbsp;is&nbsp;immutable&nbsp;and&nbsp;must&nbsp;itself&nbsp;satisfy&nbsp;the<br>
+contract.&nbsp;Reject&nbsp;invalid/future&nbsp;first&nbsp;issues&nbsp;rather&nbsp;than&nbsp;rewriting&nbsp;history.<br>
+Current&nbsp;countdowns&nbsp;are&nbsp;separate&nbsp;from&nbsp;the&nbsp;immutable&nbsp;publication&nbsp;metadata.</span></dd></dl>
+</td></tr></table><p>
+<table class="section">
+<tr class="decor data-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Data</strong></td></tr>
+
+<tr><td class="decor data-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><strong>EVENT_TYPE</strong> = 'late_threshold'<br>
+<strong>LATENESS_THRESHOLD_SEC</strong> = 120<br>
+<strong>MAX_LEAD_SEC</strong> = 900<br>
+<strong>MIN_LEAD_SEC</strong> = 600</td></tr></table>
+</body></html>

@@ -124,6 +124,43 @@ def test_backend_ml_failure_fallback_and_recovery(monkeypatch):
     asyncio.run(run())
 
 
+def test_observed_segments_locate_vehicle_risk_without_inventing_segment_forecasts(monkeypatch):
+    monkeypatch.setenv("REPLAY_SPEED", "0")
+    engine = Engine()
+
+    def uncertain(request):
+        body = json.loads(request.content)
+        return httpx.Response(200, json={
+            "asOf": body["asOf"], "latencyMs": 1,
+            "predictions": [{"vehicleId": item["vehicleId"], "delaySec": 105,
+                             "lateProbability": .71} for item in body["items"]],
+        })
+
+    async def run():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(uncertain)) as client:
+            engine.client = client
+            return await engine.snapshot()
+
+    snapshot = asyncio.run(run())
+    segments = {segment["id"]: segment for segment in snapshot["segments"]}
+    assert segments and len(segments) == len(snapshot["segments"])
+    matched = [v for v in snapshot["vehicles"]
+               if v["current_segment_id"] and v["forecast_status"] == "ready"]
+    assert matched
+    for vehicle in matched:
+        segment = segments[vehicle["current_segment_id"]]
+        assert segment["risk_level"] == vehicle["risk_level"] == "elevated"
+        assert segment["risk_scope"] == "vehicle_target_stop"
+        assert segment["forecast_target_stop_id"] == vehicle["next_stop"]["id"]
+        assert segment["mean_speed_kmh"] is None or 0 <= segment["mean_speed_kmh"] <= 150
+        assert segment["dwell_sec"] is None or 0 <= segment["dwell_sec"] <= segment["coverage_sec"]
+        assert vehicle["observed_factor"]
+    historical = [s for s in segments.values() if not s["is_current"]]
+    assert historical and all(s["predicted_delay_sec"] is None for s in historical)
+    assert all(s["geometry_source"] == "observed_gps" and s["started_at"] <= engine.last_cutoff
+               for s in segments.values())
+
+
 def test_live_ndtp_features_to_real_sasha_model(tmp_path, monkeypatch):
     """A current binary navigation frame + matching plan reaches the actual loaded ML model."""
     import struct

@@ -4,6 +4,7 @@
  * Transit Control — proposed frontend contract
  * OpenAPI spec version: 0.1.0
  */
+import type { AlertDtoEventType } from './alertDtoEventType';
 import type { AlertDtoModelStatus } from './alertDtoModelStatus';
 import type { AlertDtoSeverity } from './alertDtoSeverity';
 
@@ -27,4 +28,18 @@ export interface AlertDto {
   /** Observed signal, not a causal explanation of the model. */
   observed_factor?: string;
   model_status?: AlertDtoModelStatus;
+  /** Warning event: absence of arrival after scheduled arrival + 120 seconds. */
+  event_type?: AlertDtoEventType;
+  /** Scheduled target arrival + 120 seconds; event used for the early-warning window. */
+  event_time?: string;
+  /** Seconds from the first warning publication to event_time; 600–900 seconds for new official warnings. */
+  event_lead_time_sec?: number;
+  /** Model horizon to planned arrival at first warning publication; immutable. */
+  forecast_horizon_sec?: number;
+  /** Lateness threshold in seconds; 120 for the official late_threshold event. */
+  lateness_threshold_sec?: number;
+  /** Current countdown to the model scheduled target. */
+  current_forecast_horizon_sec?: number;
+  /** Current countdown to the lateness threshold event. */
+  current_event_lead_time_sec?: number;
 }
