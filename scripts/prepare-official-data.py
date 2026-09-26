@@ -12,7 +12,21 @@ from pathlib import Path
 PUBLIC = "https://disk.yandex.ru/d/CA6tsj4aJJ4Aaw"
 
 
+def unwrap_public_folder(archive):
+    """The public link is a folder holding one dataset.zip; its download is a ZIP of that folder."""
+    with zipfile.ZipFile(archive) as z:
+        files = [name for name in z.namelist() if not name.endswith("/")]
+        if "README.md" in files or len(files) != 1 or not files[0].endswith(".zip"):
+            return
+        inner = Path(f"{archive}.inner")
+        with z.open(files[0]) as src, inner.open("wb") as dst:
+            shutil.copyfileobj(src, dst)
+    inner.replace(archive)
+    print(f"Unpacked {files[0]} from the downloaded folder", flush=True)
+
+
 def prepare(archive, destination):
+    unwrap_public_folder(archive)
     allowed = [
         "README.md",
         "sample_submission.csv",
