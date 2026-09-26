@@ -337,6 +337,33 @@ def test_k3_6_live_deviation_comes_from_a_stop_the_bus_is_standing_at(tmp_path, 
     assert vehicles["vehicle-602"]["current_delay_sec"] is None  # moving: not an observed stop
 
 
+def test_k3_6_segment_speed_dwell_and_deviation_between_observed_stops():
+    """Stop-to-stop segment: 30 s standing at A, 90 s at 36 km/h, arrives at B 70 s early."""
+    from transit_ml.segments import SegmentMatcher
+
+    t0 = 1_800_000_000.0
+    plan = pd.DataFrame([
+        {"tt_action_item_id": 1, "ts": t0, "lon": STOP_LON, "lat": STOP_LAT, "building_address": "A"},
+        {"tt_action_item_id": 2, "ts": t0 + 240, "lon": STOP_LON, "lat": STOP_LAT + 0.009, "building_address": "B"},
+        {"tt_action_item_id": 3, "ts": t0 + 480, "lon": STOP_LON, "lat": STOP_LAT + 0.018, "building_address": "C"},
+    ])
+    rows = [(t0 + s, STOP_LAT, 0.0) for s in (30, 40, 50, 60)]
+    rows += [(t0 + 70 + 10 * i, STOP_LAT + 0.0009 * (i + 1), 36.0) for i in range(10)]
+    rows += [(t0 + s, STOP_LAT + 0.009, 0.0) for s in (170, 180, 190, 200)]
+    rows += [(t0 + 260, STOP_LAT + 0.5, 90.0)]  # after the cutoff: must be ignored
+    history = pd.DataFrame([{"ts": ts, "lon": STOP_LON, "lat": lat, "speed": speed,
+                             "location_valid": True} for ts, lat, speed in rows])
+    result = SegmentMatcher(plan, route_id="duty-1").match(history, t0 + 200)
+    assert result["status"] == "matched"
+    assert [round(v["delay_sec"]) for v in result["stop_visits"]] == [30, -70]
+    first = next(s for s in result["segments"] if s["from_stop_id"] == "1")
+    assert first["complete"] and first["to_stop_id"] == "2"
+    assert first["mean_speed_kmh"] == pytest.approx(3600 / 140, abs=0.01)  # time-weighted
+    assert first["dwell_sec"] == pytest.approx(30.0)
+    assert result["current_delay_sec"] == pytest.approx(-70)
+    record("k3.segment_example", {k: first[k] for k in ("mean_speed_kmh", "dwell_sec", "observed_distance_m")})
+
+
 # --- 3.4 / 3.9 API specification and generated documentation
 
 def test_k3_4_ml_swagger_answers_and_lists_the_prediction_endpoints():

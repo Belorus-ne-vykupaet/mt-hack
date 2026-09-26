@@ -63,3 +63,6 @@ reports/*predictions.csv
 reports/example_request.json
 reports/example_response.json
 docker/local-data/
+
+# Criteria audit output (CI artifact)
+reports/criteria/
