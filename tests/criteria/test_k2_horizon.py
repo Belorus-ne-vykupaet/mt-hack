@@ -185,7 +185,7 @@ async def _replay(start, end, step):
     engine = Engine()
     violations, hindsight, stale = [], [], []
     shown, statuses, ready_counts = {}, {}, []
-    snapshots = ready = 0
+    snapshots = ready = fallback = 0
     async with in_process_ml() as (client, _):
         engine.client, engine.ml_url = client, "http://ml"
         for cutoff in range(int(start), int(end) + 1, step):
@@ -193,6 +193,7 @@ async def _replay(start, end, step):
             snap = await engine.snapshot()
             snapshots += 1
             ready += engine.status == "connected"
+            fallback += engine.status == "fallback"
             now = pd.Timestamp(snap["summary"]["timestamp"]).timestamp()
             count = 0
             for v in snap["vehicles"]:
@@ -225,7 +226,8 @@ async def _replay(start, end, step):
                 if vehicle["status"] != "active":
                     stale.append(alert["id"])
     return engine, {
-        "snapshots": snapshots, "model_ready_snapshots": ready, "violations": violations,
+        "snapshots": snapshots, "model_ready_snapshots": ready, "ml_fallback_snapshots": fallback,
+        "violations": violations,
         "hindsight": hindsight, "stale": stale, "shown": shown, "statuses": statuses,
         "ready_counts": ready_counts,
     }
@@ -318,12 +320,14 @@ def test_k2_whole_test_day_keeps_the_window_and_never_warns_in_hindsight():
         "step_sec": step,
         "snapshots": result["snapshots"],
         "model_ready_snapshots": result["model_ready_snapshots"],
+        "ml_fallback_snapshots": result["ml_fallback_snapshots"],
         "window_violations": len(result["violations"]),
         "alerts_shown_after_arrival": len(result["hindsight"]),
         "alerts_for_stale_gps": len(result["stale"]),
         **quality,
     })
-    assert result["model_ready_snapshots"] == result["snapshots"]
+    # Night snapshots have no targets at all; only a failed model call is a fault.
+    assert result["ml_fallback_snapshots"] == 0
     assert not result["violations"], result["violations"][:5]
     assert not result["hindsight"], result["hindsight"][:5]
     assert not result["stale"]

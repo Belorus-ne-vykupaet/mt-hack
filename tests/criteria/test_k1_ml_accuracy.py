@@ -71,10 +71,11 @@ def test_k1_1_submission_matches_the_official_template_and_points():
     assert sub.sample_id.tolist() == template.sample_id.tolist(), "order or IDs differ"
     assert set(points.sample_id) == set(sub.sample_id)
     # The encoded T must agree with the point itself.
+    from mt_hack.features import seconds
+
     joined = sub.merge(points, on="sample_id", validate="one_to_one")
-    encoded = joined.sample_id.str.split("_").str[1].astype(int)
-    parsed = pd.to_datetime(joined["T"], format="mixed", utc=True).astype("int64") // 10**9
-    assert (encoded == parsed).all()
+    encoded = joined.sample_id.str.split("_").str[1].astype(int).to_numpy()
+    assert (encoded == seconds(joined["T"]).astype(int)).all()
 
 
 @needs_data
@@ -109,7 +110,9 @@ def test_k1_3_deployed_ml_service_returns_the_submitted_numbers():
     points = pd.read_csv(DATA / "validate" / "points.csv", dtype={"sample_id": str})
     traffic = pd.read_csv(DATA / "validate" / "traffic.csv", low_memory=False)
     plan = pd.read_csv(DATA / "validate" / "schedule_plan.csv")
-    traffic["_t"] = pd.to_datetime(traffic.event_time, format="mixed", utc=True).astype("int64") / 1e9
+    from mt_hack.features import seconds
+
+    traffic["_t"] = seconds(traffic.event_time)  # pandas 3 keeps microseconds: no manual int64
     dataset = Dataset(DATA / "validate")
     submitted = read_submission().set_index("sample_id").prediction
 
