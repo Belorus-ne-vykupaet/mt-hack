@@ -12,7 +12,9 @@ server/weather-demo.env
 server/data
 test-results-api
 test-results-csv
-ml/data
+ml/data/*
+!ml/data/external/
+!ml/data/external/**
 work
 artifacts
 outputs

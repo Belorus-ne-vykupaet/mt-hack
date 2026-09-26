@@ -1,43 +1,43 @@
 {
   "chronological_holdout": {
-    "extra_trees": 57.79947695035462,
-    "catboost": 60.305312517135256,
+    "extra_trees": 55.55234929078014,
+    "catboost": 56.50539437431639,
     "linear": 61.47733580018501,
-    "gru": 61.89071897359182,
-    "ensemble": 61.89071897359182,
+    "gru": 63.259597695272426,
+    "ensemble": 63.259597695272426,
     "persistence": 75.58156028368795,
     "zero": 74.93617021276596,
     "n": 141,
     "improvement_vs_persistence_95pct_s": [
-      2.0942637087231066,
-      33.79987326902151
+      -5.95979863798259,
+      38.60434767154028
     ]
   },
   "provided_test": {
-    "gru": 69.35465256747375,
-    "extra_trees": 58.087528328611896,
-    "catboost": 65.87334690280622,
+    "gru": 62.2784921654603,
+    "extra_trees": 52.19818696883853,
+    "catboost": 62.03101005838888,
     "linear": 86.08918943616924,
-    "ensemble": 69.35465256747375,
+    "ensemble": 62.2784921654603,
     "persistence": 93.35977337110482,
     "zero": 103.33711048158641,
     "n": 353,
     "improvement_vs_persistence_95pct_s": [
-      11.180128885096028,
-      36.98834066230767
+      17.956066322846684,
+      45.925702847077126
     ]
   },
   "final_selection": {
     "candidate": "extra_trees",
     "source": "provided_test (selection set, not independent final test)",
-    "mae_s": 58.087528328611896,
+    "mae_s": 52.19818696883853,
     "original_chronological_choice": "gru",
-    "selected_candidate_chronological_mae_s": 57.79947695035462
+    "selected_candidate_chronological_mae_s": 55.55234929078014
   },
-  "batch_inference_seconds": 0.04137045895913616,
+  "batch_inference_seconds": 0.25985420199867804,
   "batch_rows": 353,
   "submission_rows": 151,
-  "submission_sha256": "0c5d798e40b5d8a4257b9834d7588799e22df59f443622f37ffcd65e29367781",
-  "risk_brier_test": 0.12059608101844788,
-  "neural_interval_coverage_test": 0.7677053824362606
+  "submission_sha256": "65a1a39a07b54dbff7fa6b6350501f967c727f2e9083ed81b3034ad438ebf571",
+  "risk_brier_test": 0.1006113737821579,
+  "neural_interval_coverage_test": 0.7847025495750708
 }
