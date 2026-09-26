@@ -45,6 +45,7 @@ import type { NetworkListKind } from "../widgets/NetworkList";
 import { NetworkStatus } from "../widgets/NetworkStatus";
 import { HeaderStatus } from "../widgets/HeaderStatus";
 import { InstallApp } from "../widgets/InstallApp";
+import { AndroidDownload } from "../widgets/AndroidDownload";
 import { installWebMcp } from "./webmcp";
 const Integrations = lazy(() => import("../widgets/Integrations"));
 const DispatchCenter = lazy(() => import("../widgets/DispatchCenter"));
@@ -221,6 +222,7 @@ export default function App() {
             {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
             <span>{theme === "dark" ? "Светлая тема" : "Тёмная тема"}</span>
           </button>
+          <AndroidDownload />
           <InstallApp />
           <HeaderStatus />
         </div>

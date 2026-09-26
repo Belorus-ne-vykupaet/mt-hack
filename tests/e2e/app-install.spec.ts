@@ -42,3 +42,21 @@ test("the dashboard is installable as an app and offers install from the header"
     .toBe(true);
   await expect(install).toHaveCount(0);
 });
+
+test("the header offers the Android app and the site serves a real APK", async ({
+  page,
+  request,
+}) => {
+  await page.goto("/overview?visual-test=1");
+  const link = page.getByRole("link", { name: "Скачать APK" });
+  await expect(link).toBeVisible();
+  await expect(link).toHaveAttribute("href", "/downloads/transit-hub.apk");
+  await expect(link).toHaveAttribute("download", "transit-hub.apk");
+  const response = await request.get("/downloads/transit-hub.apk");
+  expect(response.ok()).toBe(true);
+  const body = await response.body();
+  // An APK is a ZIP archive with the Android manifest inside, not the SPA fallback page.
+  expect(body.subarray(0, 2).toString()).toBe("PK");
+  expect(body.includes(Buffer.from("AndroidManifest.xml"))).toBe(true);
+  expect(body.length).toBeGreaterThan(1_000_000);
+});
