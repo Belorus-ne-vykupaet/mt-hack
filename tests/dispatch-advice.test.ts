@@ -6,6 +6,7 @@ import { createApi } from "../server/app";
 import { ruleAdvice } from "../server/gigachat";
 import { mapRoute, mapVehicle } from "../src/entities/adapters";
 import { csvSnapshot } from "../src/mocks/csv-scenario";
+import { WEATHER_LOCATIONS } from "../src/entities/weather-current";
 
 const close: (() => Promise<unknown>)[] = [];
 afterEach(async () => { for (const cleanup of close.splice(0).reverse()) await cleanup(); });
@@ -67,7 +68,14 @@ describe("bus-level dispatch and GigaChat integration", () => {
       if (url.includes("oauth")) return new Response(JSON.stringify({ access_token: "test-access", expires_at: Math.floor(Date.now() / 1000) + 1800 }), { status: 200 });
       return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({ summary: "Проверены задержки автобусов.", metrics, cards: [{ kind: "message", title: "Уточнить обстановку", reason: "Прогноз выше текущей задержки.", vehicleId: validVehicleId, message: "Сообщите о заторе." }, { kind: "message", title: "Ложный автобус", reason: "Несуществующий ID", vehicleId: "unknown" }] }) } }] }), { status: 200 });
     });
-    const url = await start({ gigachatKey: "test-key", gigachatFetcher: fakeFetch as typeof fetch });
+    const weatherFetch = vi.fn(async () => new Response(JSON.stringify({ data: Object.fromEntries(
+      WEATHER_LOCATIONS.map((location) => [location.id, { now: {
+        cloudiness: "CLOUDY", precType: location.id === "center" ? "RAIN" : "NO_TYPE",
+        precStrength: location.id === "center" ? "WEAK" : "ZERO",
+      } }]),
+    ) }), { status: 200 }));
+    const url = await start({ gigachatKey: "test-key", gigachatFetcher: fakeFetch as typeof fetch,
+      yandexWeatherKey: "test-weather-key", fetcher: weatherFetch as typeof fetch });
     const routes = await (await fetch(`${url}/routes`)).json();
     const routeId = routes.items.find((r: { id: string }) => r.id === "route-46")?.id || routes.items[0].id;
     const own = (await (await fetch(`${url}/vehicles?route_id=${routeId}`)).json()).items as { id: string; predicted_delay_sec: number | null; has_forecast?: boolean }[];
@@ -82,9 +90,13 @@ describe("bus-level dispatch and GigaChat integration", () => {
     const analyze = () => fetch(`${url}/dispatch/advice`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ routeId }) });
     const first = await (await analyze()).json();
     expect(first.source).toBe("gigachat");
+    const chatRequest = calls.find((call) => call.url.includes("chat/completions"));
+    const weatherContext = JSON.parse(JSON.parse(String(chatRequest?.options?.body)).messages[1].content).currentWeather;
+    expect(weatherContext).toMatchObject({ source: "Яндекс Погода", checkedPoints: 13, rainPoints: ["Центр"] });
     expect(first.cards.some((card: { title: string }) => card.title === "Ложный автобус")).toBe(false);
     expect(JSON.stringify(first)).not.toContain("test-key");
     await analyze();
+    expect(weatherFetch).toHaveBeenCalledTimes(1);
     expect(calls.filter((call) => call.url.includes("oauth"))).toHaveLength(1);
     expect(calls.filter((call) => call.url.includes("chat/completions"))).toHaveLength(2);
     metrics = { ...metrics, delayedCount: metrics.delayedCount + 1 };

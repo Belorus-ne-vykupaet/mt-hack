@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { WEATHER_LOCATIONS } from "../../src/entities/weather-current";
 
 test("dispatcher shows per-bus delays, contact drafts and explicit AI fallback", async ({ page, request }) => {
   const errors: string[] = [];
@@ -7,12 +8,22 @@ test("dispatcher shows per-bus delays, contact drafts and explicit AI fallback",
   const fleet = (await (await request.get("/api/v1/vehicles")).json()).items as { route_id: string; predicted_delay_sec: number | null }[];
   const route = routes.find((r) => fleet.some((v) => v.route_id === r.id && v.predicted_delay_sec !== null));
   expect(route).toBeTruthy();
+  await page.route("**/external/yandex-weather/status", (requestRoute) => requestRoute.fulfill({ json: { configured: true } }));
+  await page.route("**/external/yandex-weather/current", (requestRoute) => requestRoute.fulfill({ json: {
+    schemaVersion: 1, source: "Яндекс Погода", mode: "current-points",
+    fetchedAt: new Date().toISOString(), refreshAfterSec: 900, unavailablePoints: [],
+    points: WEATHER_LOCATIONS.map((point) => ({ ...point, cloudiness: "CLEAR",
+      precipitationType: "NO_TYPE", precipitationStrength: "ZERO" })),
+  } }));
   await page.route("**/api/v1/dispatch/driver-messages", async (requestRoute) => {
     if (requestRoute.request().method() !== "POST") return requestRoute.continue();
     const body = requestRoute.request().postDataJSON();
     return requestRoute.fulfill({ status: 201, json: { ...body, id: "e2e-draft", createdAt: new Date().toISOString(), status: "draft" } });
   });
   await page.goto("/dispatch?source=official&visual-test=1");
+  const weather = page.getByRole("region", { name: "Яндекс Погода сейчас" });
+  await expect(weather).toContainText("Дождя нет в 13 проверенных точках");
+  await expect(weather).toContainText("не соответствует времени архивной телеметрии");
   await page.getByRole("combobox", { name: "Маршрут для управления" }).selectOption(route!.id);
   const board = page.getByRole("region", { name: /Автобусы маршрута/ });
   await expect(board).toBeVisible();
@@ -42,5 +53,8 @@ test("dispatcher shows per-bus delays, contact drafts and explicit AI fallback",
     await expect(board.locator(".vehicle-board-row")).toHaveCount(fleet.filter((v) => v.route_id === noForecast.id).length);
     await expect(board.locator(".vehicle-board-value.unknown").first()).toContainText("—");
   }
+  await weather.getByRole("button", { name: "На карте" }).click();
+  await expect(page).toHaveURL(/\/overview/);
+  await expect(page.getByRole("button", { name: "Погода на 3D-карте" })).toBeVisible();
   expect(errors).toEqual([]);
 });

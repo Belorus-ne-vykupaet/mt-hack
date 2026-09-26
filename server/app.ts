@@ -397,8 +397,11 @@ export function createApi(options: ServerOptions = {}) {
         const route = mapRoute(rawRoute);
         const vehicles = s.vehicles.filter((v) => v.route_id === route.id).map(mapVehicle);
         const reserve = options.official ? 0 : dispatch.publicState().reserve;
+        const currentWeather = req.method === "POST" && gigachat.configured && yandexWeather.configured
+          ? await yandexWeather.current().catch(() => null)
+          : null;
         return json(res, 200, req.method === "POST"
-          ? await gigachat.analyze(route, vehicles, reserve)
+          ? await gigachat.analyze(route, vehicles, reserve, currentWeather)
           : ruleAdvice(route, vehicles, reserve, gigachat.configured));
       }
       if (

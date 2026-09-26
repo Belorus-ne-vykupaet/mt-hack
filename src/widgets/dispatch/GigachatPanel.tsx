@@ -62,7 +62,7 @@ export function GigachatPanel({ route, vehicles, reserve, onContact, onReserve }
           : card.vehicleId && <button onClick={() => onContact({ vehicleId: card.vehicleId!, kind: card.kind as ContactKind, message: card.kind === "message" ? card.message || undefined : undefined })}>Подготовить для водителя <ArrowRight size={14}/></button>}
       </article>)}
       {!shown.cards.length && <p className="gigachat-empty">Недостаточно данных для конкретного действия.</p>}</div>
-      <div className="gigachat-footer"><p>{shown.note} При запросе GigaChat сводка выбранного архивного маршрута передаётся внешнему сервису.</p><button disabled={!shown.configured || loading} onClick={() => void analyze()}><Sparkles size={15}/>{loading ? "Анализируем…" : "Спросить GigaChat"}</button></div>
+      <div className="gigachat-footer"><p>{shown.note} При запросе GigaChat сводка архивного маршрута и доступная текущая погода передаются внешнему сервису отдельно. Сегодняшняя погода не объясняет задержки в архиве.</p><button disabled={!shown.configured || loading} onClick={() => void analyze()}><Sparkles size={15}/>{loading ? "Анализируем…" : "Спросить GigaChat"}</button></div>
       {!shown.configured && <small className="gigachat-key-note">Для включения задайте <code>GIGACHAT_AUTH_KEY</code> в <code>server/.env</code> и перезапустите сервер.</small>}
     </> : <p className="gigachat-empty">{error || "Собираем данные маршрута…"}</p>}
     {error && shown && <p className="dispatch-error" role="alert">{error}</p>}

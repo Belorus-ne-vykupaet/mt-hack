@@ -54,6 +54,7 @@ import {
 import { VehicleBoard } from "./dispatch/VehicleBoard";
 import type { ContactTarget } from "./dispatch/VehicleBoard";
 import { GigachatPanel } from "./dispatch/GigachatPanel";
+import { YandexWeatherBrief } from "./dispatch/YandexWeatherBrief";
 import { DispatchSettingsPanel } from "./dispatch/DispatchSettingsPanel";
 import { usePlanSubmit } from "./dispatch/usePlanSubmit";
 /** Targeting of a plan (one bus, several stops), taken from a suggestion or an applied plan. */
@@ -299,6 +300,7 @@ export default function DispatchCenter({
           {online ? "Данные обновляются" : "Нет свежего потока"}
         </span>
       </div>
+      <YandexWeatherBrief />
       <div className="dispatch-brief" aria-label="Сводка диспетчера">
         <button
           className={queueFilter === "suggested" ? "selected" : ""}
