@@ -1,8 +1,8 @@
-"""Rewrite a downloaded archive without its single top-level folder, if it has one.
+"""Turn the downloaded public folder into the dataset ZIP the jury command expects.
 
-The jury command expects README.md etc. at the root of the ZIP. When the
-download wraps everything in one folder, the audit records that and continues
-with the same files at the root.
+The public link is a folder «Предиктор задержек транспорта» holding one file,
+dataset.zip; the Yandex Disk API returns that folder zipped. The audit records
+the failure of the documented command and continues with the inner archive.
 
     python flatten_archive.py ARCHIVE.zip
 """
@@ -16,21 +16,29 @@ import zipfile
 def main(path):
     with zipfile.ZipFile(path) as archive:
         names = [n for n in archive.namelist() if not n.endswith("/")]
-        roots = {n.split("/", 1)[0] for n in names}
-        if "README.md" in names or len(roots) != 1 or all("/" not in n for n in names):
-            print("archive layout left as is")
+        if "README.md" in names:
+            print("archive already has the dataset layout")
             return
-        root = roots.pop() + "/"
-        flat = path + ".flat"
-        with zipfile.ZipFile(flat, "w", allowZip64=True) as out:
-            for info in archive.infolist():
-                if info.filename.endswith("/"):
-                    continue
-                entry = zipfile.ZipInfo(info.filename[len(root):], info.date_time)
-                with archive.open(info) as src, out.open(entry, "w", force_zip64=True) as dst:
-                    shutil.copyfileobj(src, dst, 1 << 20)
-    os.replace(flat, path)
-    print(f"removed the top folder {root!r}")
+        if len(names) == 1 and names[0].endswith(".zip"):
+            inner = path + ".inner"
+            with archive.open(names[0]) as src, open(inner, "wb") as dst:
+                shutil.copyfileobj(src, dst, 1 << 20)
+            print(f"extracted the nested {names[0]!r}")
+        else:
+            roots = {n.split("/", 1)[0] for n in names}
+            if len(roots) != 1:
+                raise SystemExit(f"unexpected archive layout: {names[:10]}")
+            root = roots.pop() + "/"
+            inner = path + ".inner"
+            with zipfile.ZipFile(inner, "w", allowZip64=True) as out:
+                for info in archive.infolist():
+                    if info.filename.endswith("/"):
+                        continue
+                    entry = zipfile.ZipInfo(info.filename[len(root):], info.date_time)
+                    with archive.open(info) as src, out.open(entry, "w", force_zip64=True) as dst:
+                        shutil.copyfileobj(src, dst, 1 << 20)
+            print(f"removed the top folder {root!r}")
+    os.replace(inner, path)
 
 
 if __name__ == "__main__":

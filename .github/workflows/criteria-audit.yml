@@ -62,6 +62,8 @@ jobs:
           sha256sum ml/data/official-dataset.zip | tee reports/criteria/dataset-sha256.txt
           unzip -l ml/data/official-dataset.zip | head -25 | tee reports/criteria/archive-listing.txt
           python3 tests/criteria/flatten_archive.py ml/data/official-dataset.zip
+          sha256sum ml/data/official-dataset.zip | tee -a reports/criteria/dataset-sha256.txt
+          python3 -c "import json,hashlib; m=json.load(open('ml/artifacts/data-manifest.json')); h=hashlib.sha256(open('ml/data/official-dataset.zip','rb').read()).hexdigest(); print(json.dumps({'matches_team_manifest': h == m['archiveSha256']}))" | tee reports/criteria/dataset-manifest-check.json
           python3 scripts/prepare-official-data.py --archive ml/data/official-dataset.zip
 
       - name: The project's own Python tests
