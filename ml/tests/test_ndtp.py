@@ -146,3 +146,33 @@ def test_unmapped_unit_is_counted_without_consuming_history_capacity():
         assert len(received) == 1
 
     asyncio.run(run())
+
+
+def test_sparse_history_expires_by_time_and_last_position_survives_reconnect():
+    async def run():
+        receiver = Receiver()
+        received = asyncio.Event()
+        receiver.on_packet = lambda _: received.set() if receiver.frames >= 33 else None
+        server = await asyncio.start_server(receiver.handle, "127.0.0.1", 0)
+        current = int(time.time())
+        async with server:
+            port = server.sockets[0].getsockname()[1]
+            _, writer = await asyncio.open_connection("127.0.0.1", port)
+            # Sparse one-minute data never reaches the 1500-packet count cap.
+            writer.write(b"".join(frame(nav(current - 1860 + i * 60)) for i in range(32)))
+            await writer.drain()
+            writer.close()
+            await writer.wait_closed()
+            _, writer = await asyncio.open_connection("127.0.0.1", port)
+            writer.write(frame(nav(current + 1)))
+            await writer.drain()
+            await asyncio.wait_for(received.wait(), 1)
+            writer.close()
+            await writer.wait_closed()
+        history = receiver.histories[123]
+        assert history[0]["ts"] >= current + 1 - 1800
+        assert history[-1]["ts"] == current + 1
+        assert receiver.frames == 33 and receiver.errors == 0
+        assert receiver.status()["historyPackets"] == 31
+
+    asyncio.run(run())

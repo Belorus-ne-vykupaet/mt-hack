@@ -1,0 +1,21 @@
+{
+  "passed": true,
+  "checks": {
+    "full_30_minutes": true,
+    "unchanged_measured_sources": true,
+    "15_reading_clients": true,
+    "all_100_vehicles_reach_clients": true,
+    "no_http_errors": true,
+    "no_ml_fallback_or_stale_api": true,
+    "no_unexpected_ws_closes": true,
+    "no_corrupt_or_unmapped_frames": true,
+    "sustained_20_frames_per_second": true,
+    "pipeline_p95_below_2_seconds": true,
+    "inference_p95_below_2_seconds": true,
+    "no_pending_calculation_at_samples": true,
+    "bounded_30_minute_histories": true,
+    "gps_loss_marks_one_vehicle_stale": true,
+    "gps_recovery_restores_fleet": true,
+    "rss_measured_for_all_services": true
+  }
+}

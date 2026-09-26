@@ -1,0 +1,1133 @@
+{
+  "scope": "Synthetic fleet; vehicle-900000 REST observation every 10 seconds around GPS outage and TCP reconnect. This is recovery evidence, not an accuracy benchmark.",
+  "commit": "87e5175b4897aa72dee9a031f8a99136a0f80aeb",
+  "endpoint": "GET /api/v1/vehicles/vehicle-900000",
+  "scenario": {
+    "gpsPauseStartSec": 600,
+    "gpsPauseDurationSec": 210,
+    "tcpReconnectStartSec": 1200,
+    "tcpReconnectCompletedSec": 1202
+  },
+  "checks": {
+    "all_requests_succeeded": true,
+    "stale_gps_has_no_prediction": true,
+    "last_position_and_timestamp_retained": true,
+    "recovered_with_new_telemetry": true,
+    "tcp_reconnected": true
+  },
+  "staleObservations": 4,
+  "observations": [
+    {
+      "observedAt": "2026-09-26T15:08:32.650949+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6359636
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:08:24Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 37.84375,
+      "telemetry_age_sec": 4.1
+    },
+    {
+      "observedAt": "2026-09-26T15:08:42.707368+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6363273
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:08:39Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 35.9,
+      "telemetry_age_sec": 0.3
+    },
+    {
+      "observedAt": "2026-09-26T15:08:52.741141+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6364485
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:08:44Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 35.6325,
+      "telemetry_age_sec": 0.6
+    },
+    {
+      "observedAt": "2026-09-26T15:09:02.800693+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6366909
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:08:54Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 37.5675,
+      "telemetry_age_sec": 4.2
+    },
+    {
+      "observedAt": "2026-09-26T15:09:12.862161+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6370545
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:09:09Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 37.2075,
+      "telemetry_age_sec": 0.3
+    },
+    {
+      "observedAt": "2026-09-26T15:09:22.897550+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6371758
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:09:14Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 37.4025,
+      "telemetry_age_sec": 0.8
+    },
+    {
+      "observedAt": "2026-09-26T15:09:32.961028+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6374182
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:09:24Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 40.98875,
+      "telemetry_age_sec": 4.2
+    },
+    {
+      "observedAt": "2026-09-26T15:09:43.022428+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6377818
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:09:39Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 39.46625,
+      "telemetry_age_sec": 0.3
+    },
+    {
+      "observedAt": "2026-09-26T15:09:53.046965+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6377818
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:09:39Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 41.84875,
+      "telemetry_age_sec": 5.9
+    },
+    {
+      "observedAt": "2026-09-26T15:10:03.097677+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6377818
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:09:39Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 44.09125,
+      "telemetry_age_sec": 19.3
+    },
+    {
+      "observedAt": "2026-09-26T15:10:13.160612+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6377818
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:09:39Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 42.785,
+      "telemetry_age_sec": 30.3
+    },
+    {
+      "observedAt": "2026-09-26T15:10:23.220609+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6377818
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:09:39Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 40.41875,
+      "telemetry_age_sec": 42.4
+    },
+    {
+      "observedAt": "2026-09-26T15:10:33.250177+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6377818
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:09:39Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 39.65625,
+      "telemetry_age_sec": 45.3
+    },
+    {
+      "observedAt": "2026-09-26T15:10:43.311351+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6377818
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:09:39Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 41.625,
+      "telemetry_age_sec": 59.5
+    },
+    {
+      "observedAt": "2026-09-26T15:10:53.372225+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6377818
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:09:39Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 41.6425,
+      "telemetry_age_sec": 70.3
+    },
+    {
+      "observedAt": "2026-09-26T15:11:03.434469+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6377818
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:09:39Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 41.7675,
+      "telemetry_age_sec": 80.3
+    },
+    {
+      "observedAt": "2026-09-26T15:11:13.494481+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6377818
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:09:39Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 42.17625,
+      "telemetry_age_sec": 92.5
+    },
+    {
+      "observedAt": "2026-09-26T15:11:23.556989+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6377818
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:09:39Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 40.915,
+      "telemetry_age_sec": 98.8
+    },
+    {
+      "observedAt": "2026-09-26T15:11:33.620005+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6377818
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:09:39Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 40.18875,
+      "telemetry_age_sec": 110.3
+    },
+    {
+      "observedAt": "2026-09-26T15:11:43.689953+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6377818
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:09:39Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 39.495,
+      "telemetry_age_sec": 120.3
+    },
+    {
+      "observedAt": "2026-09-26T15:11:53.723410+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6377818
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:09:39Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 39.53875,
+      "telemetry_age_sec": 127.9
+    },
+    {
+      "observedAt": "2026-09-26T15:12:03.788224+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6377818
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:09:39Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 36.1425,
+      "telemetry_age_sec": 140
+    },
+    {
+      "observedAt": "2026-09-26T15:12:13.849596+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6377818
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:09:39Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 35.78375,
+      "telemetry_age_sec": 150.3
+    },
+    {
+      "observedAt": "2026-09-26T15:12:23.884973+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6377818
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:09:39Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 35.93625,
+      "telemetry_age_sec": 158
+    },
+    {
+      "observedAt": "2026-09-26T15:12:33.945850+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6377818
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:09:39Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 36.14625,
+      "telemetry_age_sec": 170
+    },
+    {
+      "observedAt": "2026-09-26T15:12:44.004062+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6377818
+      },
+      "status": "stale",
+      "updated_at": "2026-09-26T15:09:39Z",
+      "forecast_status": "stale_gps",
+      "predicted_delay_sec": null,
+      "telemetry_age_sec": 180.3
+    },
+    {
+      "observedAt": "2026-09-26T15:12:54.035124+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6377818
+      },
+      "status": "stale",
+      "updated_at": "2026-09-26T15:09:39Z",
+      "forecast_status": "stale_gps",
+      "predicted_delay_sec": null,
+      "telemetry_age_sec": 188
+    },
+    {
+      "observedAt": "2026-09-26T15:13:03.916987+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6377818
+      },
+      "status": "stale",
+      "updated_at": "2026-09-26T15:09:39Z",
+      "forecast_status": "stale_gps",
+      "predicted_delay_sec": null,
+      "telemetry_age_sec": 200
+    },
+    {
+      "observedAt": "2026-09-26T15:13:13.978769+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6377818
+      },
+      "status": "stale",
+      "updated_at": "2026-09-26T15:09:39Z",
+      "forecast_status": "stale_gps",
+      "predicted_delay_sec": null,
+      "telemetry_age_sec": 210.1
+    },
+    {
+      "observedAt": "2026-09-26T15:13:24.005196+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6422667
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:13:14Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 38.985,
+      "telemetry_age_sec": 2.9
+    },
+    {
+      "observedAt": "2026-09-26T15:13:34.069707+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6426303
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:13:29Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 39.1825,
+      "telemetry_age_sec": 2.7
+    },
+    {
+      "observedAt": "2026-09-26T15:13:44.133658+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6428727
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:13:39Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 41.11125,
+      "telemetry_age_sec": 0.1
+    },
+    {
+      "observedAt": "2026-09-26T15:13:54.167991+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6429939
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:13:44Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 41.49125,
+      "telemetry_age_sec": 2.9
+    },
+    {
+      "observedAt": "2026-09-26T15:14:04.202909+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6432364
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:13:54Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 40.7825,
+      "telemetry_age_sec": 5
+    },
+    {
+      "observedAt": "2026-09-26T15:14:14.236340+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6436
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:14:09Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 39.57125,
+      "telemetry_age_sec": 0.1
+    },
+    {
+      "observedAt": "2026-09-26T15:14:24.268709+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6438424
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:14:19Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 39.16625,
+      "telemetry_age_sec": 4
+    },
+    {
+      "observedAt": "2026-09-26T15:14:34.304918+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6439636
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:14:24Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 39.95625,
+      "telemetry_age_sec": 5
+    },
+    {
+      "observedAt": "2026-09-26T15:14:44.339677+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6443273
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:14:39Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 38.0875,
+      "telemetry_age_sec": 2
+    },
+    {
+      "observedAt": "2026-09-26T15:14:54.368549+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6445697
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:14:49Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 38.71625,
+      "telemetry_age_sec": 4.1
+    },
+    {
+      "observedAt": "2026-09-26T15:15:04.407339+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6448121
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:14:59Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 39.10625,
+      "telemetry_age_sec": 0.1
+    },
+    {
+      "observedAt": "2026-09-26T15:15:14.439818+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6450545
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:15:09Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 39.27125,
+      "telemetry_age_sec": 2.1
+    },
+    {
+      "observedAt": "2026-09-26T15:15:24.480968+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.645297
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:15:19Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 39.9775,
+      "telemetry_age_sec": 4.1
+    },
+    {
+      "observedAt": "2026-09-26T15:15:34.507725+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6455394
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:15:29Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 39.66375,
+      "telemetry_age_sec": 0.1
+    },
+    {
+      "observedAt": "2026-09-26T15:15:44.533584+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6457818
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:15:39Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 38.66,
+      "telemetry_age_sec": 2.1
+    },
+    {
+      "observedAt": "2026-09-26T15:15:54.567337+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.646
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:15:49Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 35.185,
+      "telemetry_age_sec": 4.2
+    },
+    {
+      "observedAt": "2026-09-26T15:16:04.595110+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.646
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:15:59Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 34.32875,
+      "telemetry_age_sec": 0.1
+    },
+    {
+      "observedAt": "2026-09-26T15:16:14.624151+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6461455
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:16:09Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 34.34875,
+      "telemetry_age_sec": 2.2
+    },
+    {
+      "observedAt": "2026-09-26T15:16:24.656867+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6463879
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:16:19Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 36.325,
+      "telemetry_age_sec": 4.2
+    },
+    {
+      "observedAt": "2026-09-26T15:16:34.691636+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6466303
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:16:29Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 36.06875,
+      "telemetry_age_sec": 0.1
+    },
+    {
+      "observedAt": "2026-09-26T15:16:44.725065+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6468727
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:16:39Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 37.09875,
+      "telemetry_age_sec": 2.3
+    },
+    {
+      "observedAt": "2026-09-26T15:16:54.759442+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6471152
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:16:49Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 37.0175,
+      "telemetry_age_sec": 4.3
+    },
+    {
+      "observedAt": "2026-09-26T15:17:04.785729+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6473576
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:16:59Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 33.84,
+      "telemetry_age_sec": 0.1
+    },
+    {
+      "observedAt": "2026-09-26T15:17:14.831266+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6476
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:17:09Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 33.8175,
+      "telemetry_age_sec": 2.3
+    },
+    {
+      "observedAt": "2026-09-26T15:17:24.871586+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6478424
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:17:19Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 36.135,
+      "telemetry_age_sec": 4.3
+    },
+    {
+      "observedAt": "2026-09-26T15:17:34.905670+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6480848
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:17:29Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 35.02125,
+      "telemetry_age_sec": 0.1
+    },
+    {
+      "observedAt": "2026-09-26T15:17:44.941331+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6483273
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:17:39Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 35.5725,
+      "telemetry_age_sec": 2.4
+    },
+    {
+      "observedAt": "2026-09-26T15:17:54.999358+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6485697
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:17:49Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 34.3425,
+      "telemetry_age_sec": 4.4
+    },
+    {
+      "observedAt": "2026-09-26T15:18:05.033080+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6488121
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:17:59Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 33.30625,
+      "telemetry_age_sec": 0.1
+    },
+    {
+      "observedAt": "2026-09-26T15:18:15.065220+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6490545
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:18:09Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 34.2875,
+      "telemetry_age_sec": 2.4
+    },
+    {
+      "observedAt": "2026-09-26T15:18:25.125461+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.649297
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:18:19Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 37.2125,
+      "telemetry_age_sec": 4.4
+    },
+    {
+      "observedAt": "2026-09-26T15:18:35.185519+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6495394
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:18:29Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 36.4125,
+      "telemetry_age_sec": 0.1
+    },
+    {
+      "observedAt": "2026-09-26T15:18:45.257931+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6497818
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:18:39Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 35.77125,
+      "telemetry_age_sec": 2.5
+    },
+    {
+      "observedAt": "2026-09-26T15:18:55.323231+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.65
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:18:49Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 37.3875,
+      "telemetry_age_sec": 3.3
+    },
+    {
+      "observedAt": "2026-09-26T15:19:05.357983+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.65
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:18:54Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 37.39875,
+      "telemetry_age_sec": 4.6
+    },
+    {
+      "observedAt": "2026-09-26T15:19:15.393906+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6501455
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:19:09Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 37.5775,
+      "telemetry_age_sec": 0.1
+    },
+    {
+      "observedAt": "2026-09-26T15:19:25.433737+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6503879
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:19:19Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 37.205,
+      "telemetry_age_sec": 3.4
+    },
+    {
+      "observedAt": "2026-09-26T15:19:35.462335+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6507515
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:19:34Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 35.74875,
+      "telemetry_age_sec": 0.1
+    },
+    {
+      "observedAt": "2026-09-26T15:19:45.496467+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6508727
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:19:39Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 36.2375,
+      "telemetry_age_sec": 0.1
+    },
+    {
+      "observedAt": "2026-09-26T15:19:55.535962+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6511152
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:19:49Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 36.655,
+      "telemetry_age_sec": 3.4
+    },
+    {
+      "observedAt": "2026-09-26T15:20:05.563248+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6513576
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:19:59Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 34.295,
+      "telemetry_age_sec": 4
+    },
+    {
+      "observedAt": "2026-09-26T15:20:15.597517+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6516
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:20:09Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 33.1175,
+      "telemetry_age_sec": 0.1
+    },
+    {
+      "observedAt": "2026-09-26T15:20:25.622048+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6519636
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:20:24Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 34.48125,
+      "telemetry_age_sec": 0.3
+    },
+    {
+      "observedAt": "2026-09-26T15:20:35.681160+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6522061
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:20:34Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 35.15125,
+      "telemetry_age_sec": 0.1
+    },
+    {
+      "observedAt": "2026-09-26T15:20:45.715635+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6524485
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:20:44Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 36.07625,
+      "telemetry_age_sec": 0.1
+    },
+    {
+      "observedAt": "2026-09-26T15:20:55.750247+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6526909
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:20:54Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 35.6,
+      "telemetry_age_sec": 0.4
+    },
+    {
+      "observedAt": "2026-09-26T15:21:05.806830+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6529333
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:21:04Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 36.3275,
+      "telemetry_age_sec": 0.1
+    },
+    {
+      "observedAt": "2026-09-26T15:21:15.860287+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6531758
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:21:14Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 37.1875,
+      "telemetry_age_sec": 0.1
+    },
+    {
+      "observedAt": "2026-09-26T15:21:25.917776+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6534182
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:21:24Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 39.03125,
+      "telemetry_age_sec": 0.4
+    },
+    {
+      "observedAt": "2026-09-26T15:21:35.975385+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6536606
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:21:34Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 38.96375,
+      "telemetry_age_sec": 0.1
+    },
+    {
+      "observedAt": "2026-09-26T15:21:46.017500+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.653903
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:21:44Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 38.89125,
+      "telemetry_age_sec": 0.1
+    },
+    {
+      "observedAt": "2026-09-26T15:21:56.074773+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.654
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:21:54Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 39.54875,
+      "telemetry_age_sec": 0.4
+    },
+    {
+      "observedAt": "2026-09-26T15:22:06.134812+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6540242
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:22:04Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 37.8575,
+      "telemetry_age_sec": 0.1
+    },
+    {
+      "observedAt": "2026-09-26T15:22:16.198256+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6542667
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:22:14Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 37.18125,
+      "telemetry_age_sec": 0.1
+    },
+    {
+      "observedAt": "2026-09-26T15:22:26.253027+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6545091
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:22:24Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 36.32125,
+      "telemetry_age_sec": 0.4
+    },
+    {
+      "observedAt": "2026-09-26T15:22:36.309268+00:00",
+      "id": "vehicle-900000",
+      "position": {
+        "lat": 55.7,
+        "lon": 37.6547515
+      },
+      "status": "active",
+      "updated_at": "2026-09-26T15:22:34Z",
+      "forecast_status": "ready",
+      "predicted_delay_sec": 35.96125,
+      "telemetry_age_sec": 0.1
+    }
+  ],
+  "syntheticPlan": {
+    "synthetic": true,
+    "vehicles": 100,
+    "intervalSec": 5,
+    "createdAt": 1790433828,
+    "firstPlannedAt": 1790431428
+  }
+}
