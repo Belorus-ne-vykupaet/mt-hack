@@ -17,14 +17,15 @@
 
 <tr><td class="decor pkg-content-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
 <td class="singlecolumn"><table><tr><td class="multicolumn"><a href="asyncio.html">asyncio</a><br>
+<a href="hashlib.html">hashlib</a><br>
 <a href="httpx.html">httpx</a><br>
 </td><td class="multicolumn"><a href="json.html">json</a><br>
 <a href="math.html">math</a><br>
-</td><td class="multicolumn"><a href="numpy.html">numpy</a><br>
-<a href="os.html">os</a><br>
-</td><td class="multicolumn"><a href="pandas.html">pandas</a><br>
+<a href="numpy.html">numpy</a><br>
+</td><td class="multicolumn"><a href="os.html">os</a><br>
+<a href="pandas.html">pandas</a><br>
 <a href="time.html">time</a><br>
-</td></tr></table></td></tr></table><p>
+</td><td class="multicolumn"></td></tr></table></td></tr></table><p>
 <table class="section">
 <tr class="decor index-decor heading-text">
 <td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Classes</strong></td></tr>
@@ -43,11 +44,15 @@
 <tr class="decor title-decor heading-text">
 <td class="section-title" colspan=3>&nbsp;<br><a name="Engine">class <strong>Engine</strong></a>(<a href="builtins.html#object">builtins.object</a>)</td></tr>
 
-<tr><td class="decor title-decor"><span class="code">&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<tr><td class="decor title-decor" rowspan=2><span class="code">&nbsp;&nbsp;&nbsp;</span></td>
+<td class="decor title-decor" colspan=2><span class="code"><a href="#Engine">Engine</a>(journal_path=None)<br>
+&nbsp;<br>
+<br>&nbsp;</span></td></tr>
+<tr><td>&nbsp;</td>
 <td class="singlecolumn">Methods defined here:<br>
-<dl><dt><a name="Engine-__init__"><strong>__init__</strong></a>(self)</dt><dd><span class="code">Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</span></dd></dl>
+<dl><dt><a name="Engine-__init__"><strong>__init__</strong></a>(self, journal_path=None)</dt><dd><span class="code">Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</span></dd></dl>
 
-<dl><dt><a name="Engine-observe_warning_outcomes"><strong>observe_warning_outcomes</strong></a>(self, cutoff, segment_matches)</dt><dd><span class="code">Close&nbsp;pending&nbsp;warnings&nbsp;from&nbsp;past&nbsp;facts,&nbsp;independently&nbsp;of&nbsp;inference.</span></dd></dl>
+<dl><dt><a name="Engine-observe_warning_outcomes"><strong>observe_warning_outcomes</strong></a>(self, cutoff, segment_matches)</dt><dd><span class="code">Close&nbsp;warnings&nbsp;and&nbsp;model&nbsp;forecasts&nbsp;from&nbsp;past&nbsp;observations,&nbsp;independently&nbsp;of&nbsp;inference.</span></dd></dl>
 
 <dl><dt>async <a name="Engine-snapshot"><strong>snapshot</strong></a>(self)</dt></dl>
 
@@ -70,6 +75,7 @@ Data descriptors defined here:<br>
 <td class="singlecolumn"><dl><dt><a name="-catalog"><strong>catalog</strong></a>()</dt></dl>
  <dl><dt><a name="-finite"><strong>finite</strong></a>(record)</dt></dl>
  <dl><dt><a name="-finite_number"><strong>finite_number</strong></a>(value)</dt><dd><span class="code">Keep&nbsp;missing&nbsp;NDTP&nbsp;fields&nbsp;nullable&nbsp;in&nbsp;JSON&nbsp;instead&nbsp;of&nbsp;emitting&nbsp;NaN.</span></dd></dl>
+ <dl><dt>async <a name="-forecast_evaluation"><strong>forecast_evaluation</strong></a>(route_id: list[str] = Query([]), limit: int = Query(200))</dt><dd><span class="code">First&nbsp;model&nbsp;forecasts&nbsp;paired&nbsp;with&nbsp;observed&nbsp;arrivals;&nbsp;unknown&nbsp;outcomes&nbsp;are&nbsp;never&nbsp;zero.</span></dd></dl>
  <dl><dt><a name="-iso"><strong>iso</strong></a>(ts)</dt></dl>
  <dl><dt><a name="-lifespan"><strong>lifespan</strong></a>(app)</dt></dl>
  <dl><dt><a name="-observed_arrival"><strong>observed_arrival</strong></a>(target, observed_actual, history, cutoff, live=False)</dt><dd><span class="code">Exclude&nbsp;an&nbsp;event&nbsp;already&nbsp;observed&nbsp;at&nbsp;T,&nbsp;never&nbsp;inspect&nbsp;its&nbsp;future&nbsp;outcome.</span></dd></dl>

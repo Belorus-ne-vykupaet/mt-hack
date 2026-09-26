@@ -136,6 +136,11 @@ class Receiver:
                     self.out_of_order_frames += 1
                     continue
                 history.append(row)
+                # Neither ML nor the segment matcher reads beyond 30 minutes.
+                # Keep one last position during outages, but do not accumulate
+                # hours of sparse telemetry just to reach the packet-count cap.
+                while len(history) > 1 and history[0]["ts"] < row["ts"] - 1800:
+                    history.popleft()
                 self.frames += 1
                 self.stale_frames += row["ts"] < received_at - 180
                 self.last_packet_at = received_at
@@ -159,6 +164,8 @@ class Receiver:
             "errors": self.errors,
             "connections": self.connections,
             "units": len(self.histories),
+            "historyPackets": sum(len(h) for h in self.histories.values()),
+            "maxHistoryPacketsPerUnit": max((len(h) for h in self.histories.values()), default=0),
             "lastPacketAt": self.last_packet_at,
             "lastPacketAgeSec": round(max(0, time.time() - self.last_packet_at), 1)
             if self.last_packet_at is not None else None,

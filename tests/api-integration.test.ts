@@ -46,6 +46,18 @@ const post = (url: string, body: unknown, key = "key-one", headers = {}) =>
     body: JSON.stringify(body),
   });
 describe("real HTTP integration API", () => {
+  it("forwards filtered forecast evaluation without substituting synthetic observations", async () => {
+    const read = vi.fn().mockResolvedValue({ summary: { total: 1, observed: 0, maeSec: null }, items: [] });
+    const official = { read, snapshot: vi.fn() } as unknown as OfficialSource;
+    const api = await start({ official });
+    const response = await fetch(api.url + "/analytics/forecast-evaluation?route_id=duty-1&route_id=duty-2");
+    expect(response.status).toBe(200);
+    expect((await response.json()).summary.maeSec).toBeNull();
+    expect(read).toHaveBeenCalledWith("/analytics/forecast-evaluation?route_id=duty-1&route_id=duty-2");
+    expect(official.snapshot).not.toHaveBeenCalled();
+    const demo = await start();
+    expect((await fetch(demo.url + "/analytics/forecast-evaluation")).status).toBe(404);
+  });
   it("allows local Docker dashboard reads but keeps dispatch writes authenticated", async () => {
     const api = await start({
       token: "local-demo-key-1234567890123456",

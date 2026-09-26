@@ -16,7 +16,7 @@ import { riskFromDelay } from "../src/entities/forecast";
 import { DispatchService, ApiError } from "./dispatch-service";
 import { Providers } from "./providers";
 import { ModelProvider } from "./model";
-import { sendStreamEvent } from "./stream";
+import { sendStreamBatch, sendStreamEvent } from "./stream";
 import { DriverOutbox } from "./driver-outbox";
 import { GigachatAdvisor } from "./gigachat";
 import { DailyReports } from "./daily-reports";
@@ -482,6 +482,12 @@ export function createApi(options: ServerOptions = {}) {
         );
       if (req.method !== "GET")
         throw new ApiError(405, "Метод не поддерживается.");
+      if (path === "/analytics/forecast-evaluation") {
+        if (!options.official) throw new ApiError(404, "Журнал доступен в официальном потоке.");
+        const params = new URLSearchParams();
+        for (const id of url.searchParams.getAll("route_id").slice(0, 1000)) params.append("route_id", id);
+        return json(res, 200, await options.official.read(`/analytics/forecast-evaluation?${params}`));
+      }
       const s = await snapshot();
       if (path === "/dispatch/recommendations")
         return json(res, 200, {
@@ -638,7 +644,7 @@ export function createApi(options: ServerOptions = {}) {
     segmentVersion = "",
     lastDataBroadcast = 0;
   const timer = setInterval(async () => {
-    if (!wss.clients.size) return;
+    if (!wss.clients.size || busy) return;
     // The 10–15 minute forecast is still recomputed by the Python service.
     // Broadcasting each full UI tick every second needlessly rebuilds the 3D map.
     if (options.official && Date.now() - lastDataBroadcast < 5000) {
@@ -646,7 +652,6 @@ export function createApi(options: ServerOptions = {}) {
         send(ws, "system.heartbeat", { stale: options.official.stale });
       return;
     }
-    if (busy) return;
     busy = true;
     try {
       const s = await snapshot();
@@ -701,8 +706,9 @@ export function createApi(options: ServerOptions = {}) {
         ["alerts.snapshot", { items: s.alerts }],
         ["analytics.snapshot", { points: s.points }],
       );
-      for (const [type, payload] of events)
-        for (const ws of wss.clients) send(ws, type, payload);
+      await Promise.all([...wss.clients].map(async (ws) => {
+        sequences.set(ws, await sendStreamBatch(ws, sequences.get(ws) || 0, events));
+      }));
     } catch {
       for (const ws of wss.clients) ws.close(1011, "Snapshot unavailable");
     } finally {

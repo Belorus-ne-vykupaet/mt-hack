@@ -29,7 +29,7 @@ right-closed;&nbsp;invalid&nbsp;GPS&nbsp;never&nbsp;becomes&nbsp;a&nbsp;valid&nb
 <td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Functions</strong></td></tr>
 
 <tr><td class="decor functions-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
-<td class="singlecolumn"><dl><dt><a name="-build_features"><strong>build_features</strong></a>(points, traffic, plan)</dt><dd><span class="code">Return&nbsp;numeric&nbsp;table&nbsp;and&nbsp;30&nbsp;x&nbsp;8&nbsp;past-telemetry&nbsp;tensors&nbsp;for&nbsp;each&nbsp;point.</span></dd></dl>
+<td class="singlecolumn"><dl><dt><a name="-build_features"><strong>build_features</strong></a>(points, traffic, plan, *, include_sequence=True)</dt><dd><span class="code">Return&nbsp;numeric&nbsp;features&nbsp;and&nbsp;optional&nbsp;GRU&nbsp;tensors;&nbsp;tree&nbsp;inference&nbsp;skips&nbsp;unused&nbsp;bins.</span></dd></dl>
  <dl><dt><a name="-load_split"><strong>load_split</strong></a>(root, split)</dt></dl>
  <dl><dt><a name="-main"><strong>main</strong></a>()</dt></dl>
  <dl><dt><a name="-seconds"><strong>seconds</strong></a>(values)</dt></dl>

@@ -183,6 +183,7 @@ def predict_raw(body: RawBatch):
             pd.DataFrame(points),
             pd.DataFrame(telemetry, columns=TRAFFIC_COLUMNS),
             pd.DataFrame(schedule, columns=PLAN_COLUMNS),
+            include_sequence=False,  # Selected ExtraTrees uses numeric features only.
         )
         if sequence.shape != (len(body.items), 30, 8):
             raise ValueError("Invalid causal telemetry sequence shape")

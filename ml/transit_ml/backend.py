@@ -1,6 +1,7 @@
 """Python orchestration: official CSV replay / NDTP reception -> causal features -> ML API."""
 
 import asyncio
+import hashlib
 import json
 import math
 import os
@@ -12,12 +13,13 @@ from pathlib import Path
 import httpx
 import numpy as np
 import pandas as pd
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 
 from .features import Dataset, distance, seconds
 from .ndtp import Receiver
 from .segments import SegmentMatcher
 from .outcomes import OUTCOME_FIELDS, arrival_outcome, visible_outcome
+from .evaluation import ForecastJournal
 from .warnings import LATENESS_THRESHOLD_SEC, warning_timing
 
 
@@ -131,7 +133,7 @@ def observed_paths(gps, cutoff):
 
 
 class Engine:
-    def __init__(self):
+    def __init__(self, journal_path=None):
         self.mode = os.getenv("TELEMETRY_MODE", "replay")
         if self.mode not in ("replay", "ndtp"):
             raise ValueError("TELEMETRY_MODE must be replay or ndtp")
@@ -177,6 +179,12 @@ class Engine:
         self.last_error = None
         self.metrics = json.loads(
             Path(os.getenv("ML_ARTIFACTS", "ml/artifacts"), "metrics.json").read_text()
+        )
+        plan_digest = hashlib.sha256(self.dataset.schedule[
+            ["tr_id", "tt_action_item_id", "ts", "lon", "lat"]
+        ].to_csv(index=False).encode()).hexdigest()[:20]
+        self.journal = ForecastJournal(
+            f"{self.mode}:{self.metrics['modelVersion']}:{plan_digest}", journal_path,
         )
         self.ml_url = os.getenv("ML_URL", "http://127.0.0.1:8092")
         self.last_ml_ms = None
@@ -268,14 +276,16 @@ class Engine:
                 self.last_error = type(error).__name__
 
     def observe_warning_outcomes(self, cutoff, segment_matches):
-        """Close pending warnings from past facts, independently of inference."""
+        """Close warnings and model forecasts from past observations, independently of inference."""
         pending = [row for row in self.warning_audit if "outcome_observed_at" not in row]
+        keys = {(row["vehicle_id"], row["target_stop_id"]) for row in pending}
+        keys.update((row["vehicle_id"], row["target_id"]) for row in self.journal.pending(cutoff))
         arrivals = {}
         if self.mode == "replay":
             target_ids = {}
-            for row in pending:
-                tr = int(row["vehicle_id"].removeprefix("vehicle-"))
-                target_ids.setdefault(tr, set()).add(int(row["target_stop_id"]))
+            for vehicle, target in keys:
+                tr = int(vehicle.removeprefix("vehicle-"))
+                target_ids.setdefault(tr, set()).add(int(target))
             for tr, ids in target_ids.items():
                 actual = self.actual.get(tr)
                 if actual is None:
@@ -304,6 +314,7 @@ class Engine:
             )
             if outcome is not None:
                 row.update(outcome)
+        self.journal.observe({(f"vehicle-{tr}", target): at for (tr, target), at in arrivals.items()}, cutoff, source)
 
     async def snapshot(self):
         async with self.lock:
@@ -557,6 +568,13 @@ class Engine:
                 v["observed_factor"] = observed_factor(
                     features[v["id"]], v["current_delay_sec"]
                 )
+            self.journal.issue([
+                {"vehicle_id": v["id"], "target_id": v["next_stop"]["id"],
+                 "stop_name": v["next_stop"]["name"], "issued_at": cutoff,
+                 "planned_at": float(targets[v["id"]]["ts"]),
+                 "predicted": v["predicted_delay_sec"], "model": v["forecast_model"]}
+                for v in vehicles if v["forecast_status"] == "ready"
+            ])
             segments = []
             for v in vehicles:
                 match = segment_matches[v["id"]]
@@ -735,7 +753,7 @@ class Engine:
 
 @asynccontextmanager
 async def lifespan(app):
-    engine = Engine()
+    engine = Engine(journal_path=os.getenv("PREDICTION_JOURNAL", "ml/data/predictions.sqlite3"))
     app.state.engine = engine
     async with httpx.AsyncClient(timeout=1.5) as client:
         engine.client = client
@@ -753,6 +771,7 @@ async def lifespan(app):
                 pump.cancel()
                 with suppress(asyncio.CancelledError):
                     await pump
+            engine.journal.close()
 
 
 app = FastAPI(
@@ -855,3 +874,11 @@ async def warning_audit():
         result.update(visible_outcome(entry, e.last_cutoff))
         items.append(result)
     return {"asOf": iso(e.last_cutoff), "items": items}
+
+
+@app.get("/analytics/forecast-evaluation")
+async def forecast_evaluation(route_id: list[str] = Query(default=[]), limit: int = Query(default=200, ge=1, le=500)):
+    """First model forecasts paired with observed arrivals; unknown outcomes are never zero."""
+    e = app.state.engine
+    await e.snapshot()
+    return e.journal.report(e.last_cutoff, route_id, limit)

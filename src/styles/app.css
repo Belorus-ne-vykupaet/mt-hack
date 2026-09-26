@@ -3159,3 +3159,13 @@ h1 {
 .android-download {
   text-decoration: none;
 }
+.forecast-evaluation { min-width: 0; }
+.evaluation-summary { display: flex; flex-wrap: wrap; gap: 10px 20px; font-size: 12px; margin: 6px 0 14px; }
+.evaluation-summary strong { font-variant-numeric: tabular-nums; }
+.evaluation-empty { min-height: 120px; display: flex; align-items: center; line-height: 1.6; }
+.evaluation-table-scroll { max-height: 280px; overflow: auto; }
+.evaluation-table { width: 100%; border-collapse: collapse; font-size: 11px; font-variant-numeric: tabular-nums; }
+.evaluation-table caption { text-align: left; padding: 10px 0; }
+.evaluation-table th, .evaluation-table td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--border, #cbd2ce); white-space: nowrap; }
+.evaluation-table th small { display: block; max-width: 160px; overflow: hidden; text-overflow: ellipsis; font-weight: 400; }
+.evaluation-note { font-size: 11px; line-height: 1.6; opacity: .8; margin: 12px 0 0; }

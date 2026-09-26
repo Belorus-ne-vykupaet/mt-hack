@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Python: module transit_ml.evaluation</title>
+</head><body>
+
+<table class="heading">
+<tr class="heading-text decor">
+<td class="title">&nbsp;<br><strong class="title"><a href="transit_ml.html" class="white">transit_ml</a>.evaluation</strong></td>
+<td class="extra"><a href=".">index</a><br><a href="https://github.com/Belorus-ne-vykupaet/mt-hack/blob/main/ml/transit_ml/evaluation.py">Исходный код</a></td></tr></table>
+    <p><span class="code">Bounded,&nbsp;durable&nbsp;first&nbsp;forecasts&nbsp;paired&nbsp;only&nbsp;with&nbsp;causally&nbsp;observed&nbsp;arrivals.</span></p>
+<p>
+<table class="section">
+<tr class="decor pkg-content-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Modules</strong></td></tr>
+
+<tr><td class="decor pkg-content-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><table><tr><td class="multicolumn"><a href="math.html">math</a><br>
+</td><td class="multicolumn"><a href="sqlite3.html">sqlite3</a><br>
+</td><td class="multicolumn"></td><td class="multicolumn"></td></tr></table></td></tr></table><p>
+<table class="section">
+<tr class="decor index-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Classes</strong></td></tr>
+
+<tr><td class="decor index-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><dl>
+<dt class="heading-text"><a href="builtins.html#object">builtins.object</a>
+</dt><dd>
+<dl>
+<dt class="heading-text"><a href="transit_ml.evaluation.html#ForecastJournal">ForecastJournal</a>
+</dt></dl>
+</dd>
+</dl>
+ <p>
+<table class="section">
+<tr class="decor title-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><a name="ForecastJournal">class <strong>ForecastJournal</strong></a>(<a href="builtins.html#object">builtins.object</a>)</td></tr>
+
+<tr><td class="decor title-decor" rowspan=2><span class="code">&nbsp;&nbsp;&nbsp;</span></td>
+<td class="decor title-decor" colspan=2><span class="code"><a href="#ForecastJournal">ForecastJournal</a>(namespace,&nbsp;path=None,&nbsp;limit=20000)<br>
+&nbsp;<br>
+<br>&nbsp;</span></td></tr>
+<tr><td>&nbsp;</td>
+<td class="singlecolumn">Methods defined here:<br>
+<dl><dt><a name="ForecastJournal-__init__"><strong>__init__</strong></a>(self, namespace, path=None, limit=20000)</dt><dd><span class="code">Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</span></dd></dl>
+
+<dl><dt><a name="ForecastJournal-close"><strong>close</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="ForecastJournal-issue"><strong>issue</strong></a>(self, rows)</dt><dd><span class="code">The&nbsp;first&nbsp;successful&nbsp;model&nbsp;forecast&nbsp;is&nbsp;immutable,&nbsp;including&nbsp;after&nbsp;restart.</span></dd></dl>
+
+<dl><dt><a name="ForecastJournal-observe"><strong>observe</strong></a>(self, arrivals, cutoff, source)</dt></dl>
+
+<dl><dt><a name="ForecastJournal-pending"><strong>pending</strong></a>(self, cutoff)</dt></dl>
+
+<dl><dt><a name="ForecastJournal-report"><strong>report</strong></a>(self, cutoff, route_ids=(), limit=200)</dt></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><span class="code">dictionary&nbsp;for&nbsp;instance&nbsp;variables</span></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><span class="code">list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object</span></dd>
+</dl>
+</td></tr></table></td></tr></table><p>
+<table class="section">
+<tr class="decor functions-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Functions</strong></td></tr>
+
+<tr><td class="decor functions-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><dl><dt><a name="-iso"><strong>iso</strong></a>(ts)</dt></dl>
+</td></tr></table>
+</body></html>

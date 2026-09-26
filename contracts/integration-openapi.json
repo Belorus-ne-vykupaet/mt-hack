@@ -6,6 +6,19 @@
     "description": "REST + WebSocket /api/v1/stream. Network source is synthetic CSV replay. Dispatch commands execute only in the sandbox. See server/README.md for provider and ML integration."
   },
   "paths": {
+    "/api/v1/analytics/forecast-evaluation": {
+      "get": {
+        "operationId": "getForecastEvaluation",
+        "summary": "First successful forecasts paired with causally observed arrivals",
+        "description": "Official mode only. Persistent bounded journal keyed by plan, model, vehicle and target. Repeated predictions cannot replace the first. Future/unobserved arrivals are null; fallback predictions are excluded. MAE covers all retained observed pairs in the selected plans, while items are limited to 200, completed pairs first.",
+        "parameters": [{ "name": "route_id", "in": "query", "style": "form", "explode": true, "schema": { "type": "array", "items": { "type": "string" } } }],
+        "responses": {
+          "200": { "description": "Forecast evaluation", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ForecastEvaluation" } } } },
+          "404": { "description": "Official source is not configured" },
+          "500": { "description": "Upstream journal unavailable" }
+        }
+      }
+    },
     "/api/v1/dispatch/reports": {
       "get": {
         "operationId": "listDailyReports",
@@ -2074,6 +2087,164 @@
   },
   "components": {
     "schemas": {
+      "ForecastEvaluation": {
+        "type": "object",
+        "required": [
+          "asOf",
+          "namespace",
+          "scope",
+          "retentionLimit",
+          "returned",
+          "summary",
+          "items"
+        ],
+        "properties": {
+          "asOf": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "namespace": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "retentionLimit": {
+            "type": "integer"
+          },
+          "returned": {
+            "type": "integer"
+          },
+          "summary": {
+            "type": "object",
+            "required": [
+              "total",
+              "observed",
+              "pending",
+              "awaitingObservation",
+              "maeSec",
+              "biasSec"
+            ],
+            "properties": {
+              "total": {
+                "type": "integer"
+              },
+              "observed": {
+                "type": "integer"
+              },
+              "pending": {
+                "type": "integer"
+              },
+              "awaitingObservation": {
+                "type": "integer"
+              },
+              "maeSec": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "biasSec": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              }
+            }
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "vehicleId": {
+                  "type": "string"
+                },
+                "routeId": {
+                  "type": "string"
+                },
+                "targetStopId": {
+                  "type": "string"
+                },
+                "stopName": {
+                  "type": "string"
+                },
+                "modelVersion": {
+                  "type": "string"
+                },
+                "issuedAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "plannedAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "actualArrivalAt": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "observedAt": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "outcomeSource": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "horizonSec": {
+                  "type": "number"
+                },
+                "predictedDelaySec": {
+                  "type": "number"
+                },
+                "actualDelaySec": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "absoluteErrorSec": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "status": {
+                  "enum": [
+                    "observed",
+                    "pending",
+                    "awaiting_observation"
+                  ]
+                }
+              },
+              "required": [
+                "vehicleId",
+                "routeId",
+                "targetStopId",
+                "stopName",
+                "modelVersion",
+                "issuedAt",
+                "plannedAt",
+                "actualArrivalAt",
+                "observedAt",
+                "outcomeSource",
+                "horizonSec",
+                "predictedDelaySec",
+                "actualDelaySec",
+                "absoluteErrorSec",
+                "status"
+              ]
+            }
+          }
+        }
+      },
       "DailyReport": {
         "type": "object",
         "required": ["date", "archive", "firstAsOf", "lastAsOf", "samples", "metrics", "source", "summary", "highlights", "coverageNote"],
