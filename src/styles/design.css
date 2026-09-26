@@ -88,14 +88,16 @@
   letter-spacing: .1em;
 }
 .header-status { gap: 16px; }
-.header-status .theme-toggle {
+.header-status .theme-toggle,
+.header-status .header-action {
   border-color: #526a6d;
   color: #e6eee8;
   background: transparent;
   border-radius: 2px;
   min-height: 36px;
 }
-.header-status .theme-toggle:hover { background: #28444a; border-color: #8bc5c9; }
+.header-status .theme-toggle:hover,
+.header-status .header-action:hover { background: #28444a; border-color: #8bc5c9; }
 .header-status .connection strong { color: #b7e1d5; font-size: 11px; }
 .header-status .connection small { color: #b6c9c7; }
 .clock { border-left-color: #526a6d; }
@@ -567,8 +569,10 @@
   .header-status .connection > div,
   .demo-badge { display: none; }
   .connection > i { width: 9px; height: 9px; }
-  .header-status .theme-toggle { width: 36px; height: 36px; padding: 0; }
-  .header-status .theme-toggle span { display: none; }
+  .header-status .theme-toggle,
+  .header-status .header-action { width: 36px; height: 36px; padding: 0; }
+  .header-status .theme-toggle span,
+  .header-status .header-action span { display: none; }
   .mode-switch {
     grid-column: 1 / -1;
     grid-row: 2;

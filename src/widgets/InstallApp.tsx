@@ -10,7 +10,7 @@ export function InstallApp() {
   return (
     <div className="install-app">
       <button
-        className="theme-toggle"
+        className="header-action"
         title="Установить Transit Hub как приложение"
         aria-expanded={state === "ios" ? hint : undefined}
         onClick={() => (state === "ios" ? setHint(!hint) : void installApp())}

@@ -11,7 +11,7 @@ export function AndroidDownload() {
   if (native()) return null;
   return (
     <a
-      className="theme-toggle android-download"
+      className="header-action android-download"
       href="/downloads/transit-hub.apk"
       download="transit-hub.apk"
       title="Скачать приложение для Android (APK)"
