@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, Bot, RefreshCw, Sparkles } from "lucide-react";
+import { Link } from "react-router-dom";
 import { integrationRequest } from "../../shared/api/integrations";
 import { busLabel } from "../../entities/dispatch-decisions";
 import { ruleAdvice } from "../../entities/dispatch-advice";
@@ -50,7 +51,7 @@ export function GigachatPanel({ route, vehicles, reserve, onContact, onReserve }
     finally { setLoadingRoute((current) => current === routeId ? "" : current); }
   };
   return <section className="gigachat-panel" aria-label="Советник GigaChat">
-    <div className="gigachat-heading"><span className="gigachat-mark"><Bot size={22}/></span><div><span className="dispatch-eyebrow">ПОМОЩНИК ДИСПЕТЧЕРА</span><h3>Предложения по маршруту</h3></div><span className={`gigachat-source ${shown?.source || "rules"}`}>{shown?.source === "gigachat" ? "GigaChat" : "Правила"}</span></div>
+    <div className="gigachat-heading"><span className="gigachat-mark"><Bot size={22}/></span><div><span className="dispatch-eyebrow">ПОМОЩНИК ДИСПЕТЧЕРА</span><h3>Предложения по маршруту</h3></div><span className={`gigachat-source ${shown?.source || "rules"}`}>{shown?.source === "gigachat" ? shown.model || "GigaChat" : "Правила"}</span></div>
     {shown ? <>
       <p className="gigachat-summary">{shown.summary}</p>
       <div className="gigachat-cards">{shown.cards.map((card, index) => <article key={`${card.kind}-${card.vehicleId}-${index}`}>
@@ -63,6 +64,7 @@ export function GigachatPanel({ route, vehicles, reserve, onContact, onReserve }
       </article>)}
       {!shown.cards.length && <p className="gigachat-empty">Недостаточно данных для конкретного действия.</p>}</div>
       <div className="gigachat-footer"><p>{shown.note} При запросе GigaChat сводка архивного маршрута и доступная текущая погода передаются внешнему сервису отдельно. Сегодняшняя погода не объясняет задержки в архиве.</p><button disabled={!shown.configured || loading} onClick={() => void analyze()}><Sparkles size={15}/>{loading ? "Анализируем…" : "Спросить GigaChat"}</button></div>
+      <Link className="gigachat-reports-link" to="/reports">Ежедневный отчёт и прошлые дни <ArrowRight size={14}/></Link>
       {!shown.configured && <small className="gigachat-key-note">Для включения задайте <code>GIGACHAT_AUTH_KEY</code> в <code>server/.env</code> и перезапустите сервер.</small>}
     </> : <p className="gigachat-empty">{error || "Собираем данные маршрута…"}</p>}
     {error && shown && <p className="dispatch-error" role="alert">{error}</p>}

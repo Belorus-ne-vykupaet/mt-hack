@@ -13,6 +13,7 @@ export default function Root() {
           <Route path="/overview" element={<Dashboard />} />
           <Route path="/analytics" element={<Dashboard />} />
           <Route path="/dispatch" element={<Dashboard />} />
+          <Route path="/reports" element={<Dashboard />} />
           <Route path="/integrations" element={<Dashboard />} />
           <Route path="/flow" element={<Dashboard />} />
           <Route path="*" element={<Navigate to="/" replace />} />

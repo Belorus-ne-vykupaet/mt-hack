@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { resolve } from "node:path";
 const children = [];
 let stopping = false;
 function stop(code = 0) {
@@ -25,7 +26,12 @@ for (const args of [
     "--strictPort",
   ],
 ]) {
-  const child = spawn(process.execPath, args, { stdio: "inherit" });
+  const child = spawn(process.execPath, args, {
+    stdio: "inherit",
+    env: args.at(-1) === "server/index.ts"
+      ? { ...process.env, NODE_EXTRA_CA_CERTS: resolve("server/certs/russian-trusted-root-ca.pem") }
+      : process.env,
+  });
   children.push(child);
   child.on("error", () => stop(1));
   child.on("exit", (code) => stop(code || 0));

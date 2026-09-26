@@ -21,7 +21,7 @@
     "data:check": "node scripts/import-csv.mjs --check",
     "data:import": "node scripts/import-csv.mjs",
     "test:csv": "playwright test --config playwright.csv.config.ts",
-    "api:serve": "tsx --env-file-if-exists=server/weather-demo.env --env-file-if-exists=server/.env server/index.ts",
+    "api:serve": "NODE_EXTRA_CA_CERTS=server/certs/russian-trusted-root-ca.pem tsx --env-file-if-exists=server/weather-demo.env --env-file-if-exists=server/.env server/index.ts",
     "api:typecheck": "tsc -p tsconfig.server.json --noEmit",
     "demo": "pnpm build && node scripts/start-demo.mjs",
     "test:api": "playwright test --config playwright.api.config.ts",

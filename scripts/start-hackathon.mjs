@@ -1,5 +1,6 @@
 import { spawn } from "node:child_process";
 import { existsSync } from "node:fs";
+import { resolve } from "node:path";
 const python = process.env.TRANSIT_PYTHON || "ml/.venv/bin/python";
 if (
   !existsSync(python) ||
@@ -83,6 +84,7 @@ try {
     {
       OFFICIAL_BACKEND_URL: "http://127.0.0.1:8093",
       API_JOURNAL: "server/data/official-commands.json",
+      NODE_EXTRA_CA_CERTS: resolve("server/certs/russian-trusted-root-ca.pem"),
     },
   );
   await ready("http://127.0.0.1:8081/api/v1/health");

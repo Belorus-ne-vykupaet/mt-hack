@@ -721,6 +721,7 @@
 .gigachat-footer p { margin: 0; max-width: 550px; color: var(--muted); font-size: 10px; line-height: 1.5; }
 .gigachat-footer button { display: inline-flex; align-items: center; gap: 6px; flex: none; padding: 8px 11px; border: 1px solid #8b78e755; border-radius: 7px; background: #8b78e717; color: #8b78e7; font-size: 11px; cursor: pointer; }
 .gigachat-footer button:disabled { opacity: .55; cursor: not-allowed; }
+.gigachat-reports-link { display: inline-flex; align-items: center; gap: 7px; margin-top: 14px; color: var(--blue); font-size: 11px; text-decoration: none; }
 .gigachat-key-note, .gigachat-generated { display: flex; align-items: center; gap: 5px; margin-top: 9px; color: var(--muted); font-size: 10px; }
 .gigachat-key-note code { color: var(--secondary); }
 @media (max-width: 1250px) {

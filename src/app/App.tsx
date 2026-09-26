@@ -22,6 +22,7 @@ import {
   Sun,
   Moon,
   Orbit,
+  FileText,
 } from "lucide-react";
 import { useNetwork, useGeometries, queryClient } from "../entities/queries";
 import { useUi } from "./store";
@@ -46,6 +47,7 @@ import { InstallApp } from "../widgets/InstallApp";
 import { installWebMcp } from "./webmcp";
 const Integrations = lazy(() => import("../widgets/Integrations"));
 const DispatchCenter = lazy(() => import("../widgets/DispatchCenter"));
+const ReportsPage = lazy(() => import("../widgets/ReportsPage"));
 const Analytics = lazy(() => import("../widgets/Analytics"));
 const EMPTY_ROUTES: import("../entities/models").Route[] = [];
 const EMPTY_VEHICLES: import("../entities/models").Vehicle[] = [];
@@ -67,6 +69,8 @@ export default function App() {
       ? "integrations"
       : location.pathname === "/dispatch"
         ? "dispatch"
+        : location.pathname === "/reports"
+          ? "reports"
         : location.pathname === "/analytics"
           ? "analytics"
           : "overview";
@@ -183,6 +187,10 @@ export default function App() {
             <SlidersHorizontal size={17} />
             <span>Диспетчер</span>
           </NavLink>
+          <NavLink to="/reports">
+            <FileText size={17} />
+            <span>Отчёты</span>
+          </NavLink>
           <NavLink to="/integrations">
             <Orbit size={17} />
             <span>Интеграции</span>
@@ -269,6 +277,8 @@ export default function App() {
                       ? "02"
                       : mode === "integrations"
                         ? "04"
+                        : mode === "reports"
+                          ? "05"
                         : "03"}
                 </span>
                 {mode === "overview"
@@ -277,12 +287,14 @@ export default function App() {
                     ? "Аналитика движения"
                     : mode === "integrations"
                       ? "Интеграции и API"
+                      : mode === "reports"
+                        ? "Отчёты по дням"
                       : "Диспетчерская"}
               </h1>
               <p
                 className="page-description"
                 style={
-                  mode === "dispatch" || mode === "integrations"
+                  mode === "dispatch" || mode === "integrations" || mode === "reports"
                     ? { display: "none" }
                     : undefined
                 }
@@ -301,7 +313,7 @@ export default function App() {
             <div
               className="search-container"
               style={
-                mode === "dispatch" || mode === "integrations"
+                mode === "dispatch" || mode === "integrations" || mode === "reports"
                   ? { display: "none" }
                   : undefined
               }
@@ -440,7 +452,7 @@ export default function App() {
           <div
             className="filter-bar"
             style={
-              mode === "dispatch" || mode === "integrations"
+              mode === "dispatch" || mode === "integrations" || mode === "reports"
                 ? { display: "none" }
                 : undefined
             }
@@ -508,6 +520,12 @@ export default function App() {
                 fallback={<div className="loading-workspace">Подключения…</div>}
               >
                 <Integrations routes={routes} />
+              </Suspense>
+            </Boundary>
+          ) : mode === "reports" ? (
+            <Boundary name="Отчёты">
+              <Suspense fallback={<div className="loading-workspace">Загрузка отчётов…</div>}>
+                <ReportsPage />
               </Suspense>
             </Boundary>
           ) : !summary ? (

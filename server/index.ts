@@ -19,6 +19,7 @@ const { server, close } = createApi({
   official,
   journal: process.env.API_JOURNAL || "server/data/commands.json",
   driverOutbox: process.env.DRIVER_OUTBOX || "server/data/driver-messages.json",
+  reportStore: process.env.DAILY_REPORT_STORE || "server/data/daily-reports.json",
   token: process.env.API_TOKEN,
   publicRead: process.env.API_PUBLIC_READ === "true" && !!official,
   origins: process.env.API_ORIGINS?.split(","),

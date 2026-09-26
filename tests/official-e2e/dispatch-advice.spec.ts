@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { WEATHER_LOCATIONS } from "../../src/entities/weather-current";
 
-test("dispatcher shows per-bus delays, contact drafts and explicit AI fallback", async ({ page, request }) => {
+test("dispatcher shows per-bus delays, contact drafts and optional AI", async ({ page, request }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   const routes = (await (await request.get("/api/v1/routes")).json()).items as { id: string }[];
@@ -45,7 +45,9 @@ test("dispatcher shows per-bus delays, contact drafts and explicit AI fallback",
   await expect(board.getByLabel("Стоянка, секунд")).toBeVisible();
   const assistant = page.getByRole("region", { name: "Советник GigaChat" });
   await expect(assistant).toBeVisible();
-  await expect(assistant.getByRole("button", { name: "Спросить GigaChat" })).toBeDisabled();
+  const advice = await (await request.get(`/api/v1/dispatch/advice?route_id=${route!.id}`)).json() as { configured: boolean };
+  if (advice.configured) await expect(assistant.getByRole("button", { name: "Спросить GigaChat" })).toBeEnabled();
+  else await expect(assistant.getByRole("button", { name: "Спросить GigaChat" })).toBeDisabled();
   await expect(assistant).toContainText("Правила");
   const noForecast = routes.find((r) => fleet.some((v) => v.route_id === r.id && v.predicted_delay_sec === null));
   if (noForecast) {

@@ -11,6 +11,7 @@ export interface AdviceCard {
 export interface DispatchAdvice {
   configured: boolean;
   source: "rules" | "gigachat";
+  model?: string;
   generatedAt: string;
   summary: string;
   cards: AdviceCard[];

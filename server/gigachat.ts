@@ -4,6 +4,7 @@ import { hasBusForecast, ruleAdvice } from "../src/entities/dispatch-advice";
 import type { AdviceKind, DispatchAdvice } from "../src/entities/dispatch-advice";
 import { isRaining } from "../src/entities/weather-current";
 import type { CurrentWeatherSnapshot } from "../src/entities/weather-current";
+import type { DailyReport } from "../src/entities/daily-report";
 export { ruleAdvice } from "../src/entities/dispatch-advice";
 const clipped = (value: unknown, max: number) => typeof value === "string" ? value.trim().slice(0, max) : "";
 
@@ -15,12 +16,13 @@ export class GigachatAdvisor {
   constructor(
     private readonly authKey?: string,
     private readonly scope = "GIGACHAT_API_PERS",
-    private readonly model = "GigaChat",
+    private readonly model = "GigaChat-3-Ultra",
     private readonly fetcher: typeof fetch = fetch,
     private readonly oauthUrl = "https://ngw.devices.sberbank.ru:9443/api/v2/oauth",
     private readonly chatUrl = "https://api.giga.chat/v1/chat/completions",
   ) {}
   get configured() { return !!this.authKey?.trim(); }
+  get modelName() { return this.model; }
   private async accessToken() {
     if (this.token && Date.now() < this.tokenUntil) return this.token;
     const key = this.authKey!.trim().replace(/^Basic\s+/i, "");
@@ -112,12 +114,53 @@ export class GigachatAdvisor {
         });
       if (!cards.length) throw new Error("No usable advice");
       return {
-        configured: true, source: "gigachat", generatedAt: new Date().toISOString(),
+        configured: true, source: "gigachat", model: this.model, generatedAt: new Date().toISOString(),
         summary: clipped(parsed.summary, 400) || fallback.summary,
         cards, note: "Текст GigaChat — гипотеза для проверки диспетчером, не расчёт эффекта и не команда водителю.",
       };
     } catch {
       return ruleAdvice(route, vehicles, reserve, true, "GigaChat недоступен либо его расчёт не прошёл проверку. Показаны подсказки по правилам.");
     }
+  }
+  async dailyReport(report: DailyReport) {
+    if (!this.configured) throw new Error("GigaChat is not configured");
+    const token = await this.accessToken();
+    const response = await this.fetcher(this.chatUrl, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: this.model, temperature: 0.1,
+        messages: [
+          { role: "system", content: "Ты аналитик автобусной диспетчерской. Создай короткую качественную сводку только по перечисленным признакам сохранённых срезов потока. Это архив, не текущая обстановка и не полный день. Числа и даты уже выводятся интерфейсом; у тебя их нет. Не упоминай количества, доли, большинство, рост, причины задержек или погоду. Скажи, что охват неполный. Не утверждай, что действия выполнены. Дай проверяемые действия для диспетчера. Верни строго JSON {\"summary\":\"одно короткое предложение\",\"highlights\":[\"действие\",\"действие\"]}." },
+          { role: "user", content: JSON.stringify({
+            archive: report.archive,
+            coverage: "Неполный: наблюдались лишь отдельные сохранённые срезы",
+            forecastCoverage: report.metrics.vehiclesWithForecast === 0
+              ? "Прогноз по наблюдённым автобусам недоступен"
+              : report.metrics.vehiclesWithForecast < report.metrics.vehiclesObserved
+                ? "Прогноз есть не у всех наблюдённых автобусов"
+                : "Прогноз есть у всех наблюдённых автобусов",
+            delayRisk: report.metrics.peakDelayedVehicles > 0
+              ? "Среди автобусов с прогнозом отмечены задержки"
+              : "Задержки среди автобусов с прогнозом не отмечены",
+            reportType: "Обзор автобусного потока",
+          }) },
+        ],
+      }),
+      signal: AbortSignal.timeout(30000),
+    });
+    if (!response.ok) throw new Error(`Daily report API ${response.status}`);
+    const data = await response.json() as { choices?: { message?: { content?: string } }[] };
+    const match = (data.choices?.[0]?.message?.content || "").match(/\{[\s\S]*\}/);
+    if (!match) throw new Error("Daily report is not JSON");
+    const parsed = JSON.parse(match[0]) as { summary?: unknown; highlights?: unknown };
+    const summary = clipped(parsed.summary, 450);
+    const highlights = (Array.isArray(parsed.highlights) ? parsed.highlights : [])
+      .map((item: unknown) => clipped(item, 180)).filter(Boolean).slice(0, 3);
+    if (!summary || !highlights.length) throw new Error("Daily report is incomplete");
+    if (/\d/.test([summary, ...highlights].join(" "))) throw new Error("Daily report repeats unverified numbers");
+    if (/большинств|меньшинств|массов|значительн/i.test([summary, ...highlights].join(" ")))
+      throw new Error("Daily report overstates limited observations");
+    return { summary, highlights };
   }
 }

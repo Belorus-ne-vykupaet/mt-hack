@@ -43,6 +43,12 @@ const weatherKey = process.env.YANDEX_WEATHER_KEY
 const gigachatKey = process.env.GIGACHAT_AUTH_KEY
   ?? keyFrom("server/.env", "GIGACHAT_AUTH_KEY")
   ?? "";
+const gigachatScope = process.env.GIGACHAT_SCOPE
+  ?? keyFrom("server/.env", "GIGACHAT_SCOPE")
+  ?? "GIGACHAT_API_PERS";
+const gigachatModel = process.env.GIGACHAT_MODEL
+  ?? keyFrom("server/.env", "GIGACHAT_MODEL")
+  ?? "GigaChat-3-Ultra";
 console.log(`Локальный ключ для команд диспетчера: ${apiToken}`);
 const child = spawn(
   "docker",
@@ -54,6 +60,8 @@ const child = spawn(
       API_TOKEN: apiToken,
       YANDEX_WEATHER_KEY: weatherKey,
       GIGACHAT_AUTH_KEY: gigachatKey,
+      GIGACHAT_SCOPE: gigachatScope,
+      GIGACHAT_MODEL: gigachatModel,
     },
   },
 );

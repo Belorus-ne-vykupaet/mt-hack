@@ -29,7 +29,8 @@ services:
       YANDEX_WEATHER_KEY: ${YANDEX_WEATHER_KEY:-}
       GIGACHAT_AUTH_KEY: ${GIGACHAT_AUTH_KEY:-}
       GIGACHAT_SCOPE: ${GIGACHAT_SCOPE:-GIGACHAT_API_PERS}
-      GIGACHAT_MODEL: ${GIGACHAT_MODEL:-GigaChat}
+      GIGACHAT_MODEL: ${GIGACHAT_MODEL:-GigaChat-3-Ultra}
+      NODE_EXTRA_CA_CERTS: /app/server/certs/russian-trusted-root-ca.pem
     volumes:
       - dispatch-journal:/app/server/data
     ports:

@@ -19,6 +19,7 @@ import { ModelProvider } from "./model";
 import { sendStreamEvent } from "./stream";
 import { DriverOutbox } from "./driver-outbox";
 import { GigachatAdvisor, ruleAdvice } from "./gigachat";
+import { DailyReports } from "./daily-reports";
 export interface ServerOptions {
   official?: OfficialSource;
   journal?: string;
@@ -37,6 +38,7 @@ export interface ServerOptions {
   gigachatScope?: string;
   gigachatModel?: string;
   gigachatFetcher?: typeof fetch;
+  reportStore?: string;
 }
 export function createApi(options: ServerOptions = {}) {
   const started = Date.now(),
@@ -47,6 +49,7 @@ export function createApi(options: ServerOptions = {}) {
     geometries = csvGeometries.map(mapGeometry),
     dispatch = new DispatchService(options.journal, base.routes);
   const driverOutbox = new DriverOutbox(options.driverOutbox);
+  const dailyReports = new DailyReports(options.reportStore);
   const gigachat = new GigachatAdvisor(
     options.gigachatKey,
     options.gigachatScope,
@@ -111,7 +114,11 @@ export function createApi(options: ServerOptions = {}) {
     res.end(JSON.stringify(body));
   };
   const snapshot = async () => {
-    if (options.official) return options.official.snapshot();
+    if (options.official) {
+      const raw = await options.official.snapshot();
+      dailyReports.observe(raw.summary.timestamp, raw.vehicles, true);
+      return raw;
+    }
     const raw = csvSnapshot(
       900 + (options.frozen ? 0 : Math.floor((Date.now() - started) / 1000)),
     );
@@ -190,7 +197,9 @@ export function createApi(options: ServerOptions = {}) {
           created_at: raw.summary.timestamp,
         }));
     }
-    return simulateDispatch(raw, dispatch.plans);
+    const result = simulateDispatch(raw, dispatch.plans);
+    dailyReports.observe(result.summary.timestamp, result.vehicles, false);
+    return result;
   };
   const server = createServer(async (req, res) => {
     try {
@@ -403,6 +412,30 @@ export function createApi(options: ServerOptions = {}) {
         return json(res, 200, req.method === "POST"
           ? await gigachat.analyze(route, vehicles, reserve, currentWeather)
           : ruleAdvice(route, vehicles, reserve, gigachat.configured));
+      }
+      if (path === "/dispatch/reports" && req.method === "GET") {
+        await snapshot();
+        return json(res, 200, {
+          items: dailyReports.list(), modelConfigured: gigachat.configured, model: gigachat.modelName,
+        });
+      }
+      const dailyReportPath = path.match(/^\/dispatch\/reports\/(\d{4}-\d{2}-\d{2})(\/generate)?$/);
+      if (dailyReportPath && (req.method === "GET" || req.method === "POST")) {
+        await snapshot();
+        const date = dailyReportPath[1];
+        const report = dailyReports.get(date);
+        if (!report) throw new ApiError(404, "Для этой даты нет наблюдений.");
+        if (req.method === "GET" && !dailyReportPath[2]) return json(res, 200, report);
+        if (req.method === "POST" && dailyReportPath[2]) {
+          if (!gigachat.configured) throw new ApiError(503, "GigaChat не подключён.");
+          if (report.source === "gigachat" && !report.needsRefresh) return json(res, 200, report);
+          try {
+            const generated = await gigachat.dailyReport(report);
+            return json(res, 200, dailyReports.saveNarrative(date, generated.summary, generated.highlights, gigachat.modelName));
+          } catch {
+            throw new ApiError(502, "GigaChat не смог сформировать отчёт. Сводка по данным сохранена; попробуйте позже.");
+          }
+        }
       }
       if (
         path === "/dispatch/commands" &&
