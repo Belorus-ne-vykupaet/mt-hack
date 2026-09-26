@@ -17,6 +17,8 @@ import { DispatchService, ApiError } from "./dispatch-service";
 import { Providers } from "./providers";
 import { ModelProvider } from "./model";
 import { sendStreamEvent } from "./stream";
+import { DriverOutbox } from "./driver-outbox";
+import { GigachatAdvisor, ruleAdvice } from "./gigachat";
 export interface ServerOptions {
   official?: OfficialSource;
   journal?: string;
@@ -30,6 +32,11 @@ export interface ServerOptions {
   modelKey?: string;
   frozen?: boolean;
   fetcher?: typeof fetch;
+  driverOutbox?: string;
+  gigachatKey?: string;
+  gigachatScope?: string;
+  gigachatModel?: string;
+  gigachatFetcher?: typeof fetch;
 }
 export function createApi(options: ServerOptions = {}) {
   const started = Date.now(),
@@ -39,6 +46,13 @@ export function createApi(options: ServerOptions = {}) {
     },
     geometries = csvGeometries.map(mapGeometry),
     dispatch = new DispatchService(options.journal, base.routes);
+  const driverOutbox = new DriverOutbox(options.driverOutbox);
+  const gigachat = new GigachatAdvisor(
+    options.gigachatKey,
+    options.gigachatScope,
+    options.gigachatModel,
+    options.gigachatFetcher || options.fetcher,
+  );
   const providers = new Providers(
     options.trafficKey,
     options.weather !== false,
@@ -361,6 +375,32 @@ export function createApi(options: ServerOptions = {}) {
       }
       if (path === "/dispatch/commands" && req.method === "GET")
         return json(res, 200, dispatch.publicState());
+      if (path === "/dispatch/driver-messages" && req.method === "GET") {
+        if (!authorized(req)) throw new ApiError(401, "Нужен вход для просмотра сообщений водителям.");
+        return json(res, 200, { items: driverOutbox.list(url.searchParams.get("route_id") || undefined) });
+      }
+      if (path === "/dispatch/driver-messages" && req.method === "POST") {
+        const body = await readBody(req) as Record<string, unknown>;
+        const s = await snapshot();
+        const route = s.routes.find((r) => r.id === body.routeId);
+        const vehicle = s.vehicles.find((v) => v.id === body.vehicleId);
+        if (!route || !vehicle) throw new ApiError(404, "Маршрут или автобус не найден.");
+        return json(res, 201, driverOutbox.save(body, mapRoute(route), mapVehicle(vehicle)));
+      }
+      if (path === "/dispatch/advice" && (req.method === "GET" || req.method === "POST")) {
+        const routeId = req.method === "GET"
+          ? url.searchParams.get("route_id")
+          : (await readBody(req) as { routeId?: unknown }).routeId;
+        const s = await snapshot();
+        const rawRoute = s.routes.find((r) => r.id === routeId);
+        if (!rawRoute) throw new ApiError(404, "Маршрут не найден.");
+        const route = mapRoute(rawRoute);
+        const vehicles = s.vehicles.filter((v) => v.route_id === route.id).map(mapVehicle);
+        const reserve = options.official ? 0 : dispatch.publicState().reserve;
+        return json(res, 200, req.method === "POST"
+          ? await gigachat.analyze(route, vehicles, reserve)
+          : ruleAdvice(route, vehicles, reserve, gigachat.configured));
+      }
       if (
         path === "/dispatch/commands" &&
         req.method === "POST" &&

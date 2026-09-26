@@ -649,6 +649,102 @@
   }
 }
 
+.vehicle-board, .gigachat-panel {
+  margin: 0 0 16px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  box-shadow: 0 8px 28px #00000008;
+}
+.vehicle-board-heading, .gigachat-heading, .driver-composer-top {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 14px;
+}
+.vehicle-board-heading h3, .gigachat-heading h3 { margin: 4px 0 5px; font-size: 19px; color: var(--text); }
+.vehicle-board-heading p { margin: 0 0 16px; max-width: 520px; font-size: 12px; line-height: 1.5; color: var(--secondary); }
+.vehicle-board-count { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; padding: 7px 10px; border: 1px solid var(--border); border-radius: 7px; font-size: 11px; color: var(--secondary); }
+.vehicle-board-count svg { color: var(--blue); }
+.vehicle-board-labels, .vehicle-board-row { display: grid; grid-template-columns: minmax(180px, 1.25fr) minmax(78px, .55fr) minmax(90px, .6fr) minmax(245px, 1.5fr); gap: 12px; align-items: center; }
+.vehicle-board-labels { padding: 0 13px 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; font-size: 9px; font-weight: 700; }
+.vehicle-board-list { display: grid; gap: 6px; max-height: 575px; overflow: auto; padding-right: 3px; }
+.vehicle-board-row { min-height: 72px; padding: 11px 13px; border: 1px solid var(--border); border-radius: 9px; background: var(--bg); transition: border-color .2s, transform .2s; }
+.vehicle-board-row:hover { border-color: var(--blue); transform: translateY(-1px); }
+.vehicle-board-identity { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.vehicle-board-identity > div { min-width: 0; }
+.vehicle-board-identity strong { display: block; font-size: 13px; white-space: nowrap; }
+.vehicle-board-identity small { display: block; margin-top: 3px; color: var(--secondary); font-size: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vehicle-board-icon { display: grid; place-items: center; flex: none; width: 36px; height: 36px; border-radius: 9px; color: var(--blue); background: #40a9e91a; }
+.vehicle-board-icon.risk-high, .vehicle-board-icon.risk-critical { color: var(--risk-high); background: #f57b6420; }
+.vehicle-board-value { display: grid; gap: 3px; font-variant-numeric: tabular-nums; }
+.vehicle-board-value small { display: none; font-size: 9px; color: var(--muted); }
+.vehicle-board-value strong { font: 600 15px "IBM Plex Mono", monospace; color: var(--text); }
+.vehicle-board-value.risk-high strong, .vehicle-board-value.risk-critical strong { color: var(--risk-high); }
+.vehicle-board-value.risk-elevated strong { color: var(--risk-elevated); }
+.vehicle-board-value.unknown strong { color: var(--muted); }
+.vehicle-board-actions { display: flex; flex-wrap: wrap; gap: 5px; }
+.vehicle-board-actions button { display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-height: 31px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); font-size: 10px; cursor: pointer; }
+.vehicle-board-actions button:hover, .vehicle-board-actions button:focus-visible { color: var(--blue); border-color: var(--blue); }
+.vehicle-board-empty { padding: 18px; color: var(--muted); font-size: 12px; }
+.driver-composer { margin-top: 14px; padding: 17px; border: 1px solid var(--blue); border-radius: 9px; background: var(--bg); }
+.driver-composer h4 { margin: 4px 0 16px; font-size: 16px; }
+.driver-close { display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); color: var(--secondary); cursor: pointer; }
+.driver-field { display: grid; gap: 5px; margin: 0 0 12px; font-size: 11px; font-weight: 600; color: var(--secondary); }
+.driver-field-row { display: grid; grid-template-columns: minmax(0, 1fr) 145px 145px; gap: 12px; }
+.driver-field input, .driver-field select, .driver-field textarea { width: 100%; min-height: 37px; padding: 9px 11px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); font: 12px "IBM Plex Sans", sans-serif; }
+.driver-field textarea { resize: vertical; min-height: 85px; line-height: 1.5; }
+.driver-field small { color: var(--muted); font-weight: 400; }
+.driver-composer-foot { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.driver-composer-foot p { flex: 1; min-width: 0; margin: 0; max-width: 380px; font-size: 10px; line-height: 1.45; color: var(--muted); }
+.driver-composer-foot button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex: none; width: auto; min-width: 175px; }
+.driver-drafts { margin-top: 12px; border-top: 1px solid var(--border); }
+.driver-drafts summary { display: flex; align-items: center; gap: 7px; padding: 13px 0 0; color: var(--secondary); font-size: 11px; cursor: pointer; }
+.driver-drafts ul { display: grid; gap: 8px; padding: 0; list-style: none; }
+.driver-drafts li { display: grid; grid-template-columns: 115px 1fr; gap: 4px 10px; padding: 10px; border: 1px solid var(--border); border-radius: 7px; background: var(--bg); font-size: 11px; }
+.driver-drafts li span { min-width: 0; overflow-wrap: anywhere; }
+.driver-drafts li small { grid-column: 2; color: var(--muted); }
+.gigachat-heading { align-items: center; }
+.gigachat-mark { display: grid; place-items: center; width: 42px; height: 42px; flex: none; border: 1px solid #8b78e755; border-radius: 11px; background: #8b78e718; color: #8b78e7; }
+.gigachat-heading > div { margin-right: auto; }
+.gigachat-source { padding: 6px 9px; border: 1px solid var(--border); border-radius: 6px; color: var(--secondary); font-size: 10px; }
+.gigachat-source.gigachat { color: #8b78e7; border-color: #8b78e755; }
+.gigachat-summary { margin: 14px 0; color: var(--text); font-size: 13px; line-height: 1.5; }
+.gigachat-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+.gigachat-cards article { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; min-width: 0; padding: 14px; border: 1px solid var(--border); border-radius: 9px; background: var(--bg); }
+.gigachat-card-top { display: flex; align-items: center; gap: 8px; }
+.gigachat-card-top span { font: 600 11px "IBM Plex Mono", monospace; color: #8b78e7; }
+.gigachat-card-top strong { font-size: 12px; }
+.gigachat-cards article p { margin: 0; color: var(--secondary); font-size: 11px; line-height: 1.5; }
+.gigachat-cards article small { color: var(--muted); font-size: 10px; }
+.gigachat-cards article button { display: inline-flex; align-items: center; gap: 5px; margin-top: auto; padding: 5px 0 0; border: 0; background: none; color: var(--blue); font-size: 11px; cursor: pointer; }
+.gigachat-empty { color: var(--muted); font-size: 12px; }
+.gigachat-footer { display: flex; justify-content: space-between; align-items: center; gap: 15px; margin-top: 14px; padding-top: 13px; border-top: 1px solid var(--border); }
+.gigachat-footer p { margin: 0; max-width: 550px; color: var(--muted); font-size: 10px; line-height: 1.5; }
+.gigachat-footer button { display: inline-flex; align-items: center; gap: 6px; flex: none; padding: 8px 11px; border: 1px solid #8b78e755; border-radius: 7px; background: #8b78e717; color: #8b78e7; font-size: 11px; cursor: pointer; }
+.gigachat-footer button:disabled { opacity: .55; cursor: not-allowed; }
+.gigachat-key-note, .gigachat-generated { display: flex; align-items: center; gap: 5px; margin-top: 9px; color: var(--muted); font-size: 10px; }
+.gigachat-key-note code { color: var(--secondary); }
+@media (max-width: 1250px) {
+  .vehicle-board-labels, .vehicle-board-row { grid-template-columns: minmax(145px, 1fr) 74px 83px; }
+  .vehicle-board-labels span:last-child { display: none; }
+  .vehicle-board-actions { grid-column: 1 / -1; border-top: 1px solid var(--border); padding-top: 8px; }
+}
+@media (max-width: 700px) {
+  .vehicle-board, .gigachat-panel { padding: 14px; }
+  .vehicle-board-heading { display: block; }
+  .vehicle-board-count { margin-bottom: 12px; }
+  .vehicle-board-labels { display: none; }
+  .vehicle-board-row { grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; }
+  .vehicle-board-value small { display: block; }
+  .vehicle-board-value strong { font-size: 12px; }
+  .vehicle-board-identity strong { font-size: 11px; }
+  .vehicle-board-actions { flex-wrap: nowrap; }
+  .vehicle-board-actions button { flex: 1; padding: 6px 4px; font-size: 9px; }
+  .driver-field-row, .gigachat-cards { grid-template-columns: 1fr; }
+  .driver-composer-foot, .gigachat-footer { align-items: stretch; flex-direction: column; }
+  .driver-drafts li { grid-template-columns: 1fr; }
+  .driver-drafts li small { grid-column: 1; }
+}
+
 /* The first viewport is an operational queue and a focused plan. */
 .dispatch-center { margin-top: 16px; }
 .dispatch-toolbar { margin-bottom: 18px; }
@@ -965,28 +1061,6 @@
 .decision-actions .primary-button,
 .decision-actions .dispatch-secondary { min-height: 42px; }
 .decision-note { color: var(--muted); font-size: 11px; }
-.route-timeline {
-  margin: 0 0 16px;
-  padding: 12px 14px 10px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-panel);
-  background: var(--surface);
-}
-.route-timeline figcaption {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 16px;
-  align-items: center;
-  font-size: 11px;
-  color: var(--secondary);
-}
-.legend-line { display: inline-flex; gap: 6px; align-items: center; }
-.legend-line::before { content: ""; width: 22px; border-top: 2px solid var(--secondary); }
-.legend-line.dashed::before { border-top-style: dashed; }
-.legend-line.dotted::before { border-top-style: dotted; }
-.legend-line.action::before { border-top: 3px dashed var(--risk-normal); }
-.legend-note { flex-basis: 100%; color: var(--muted); font-size: 10px; }
-.route-timeline-empty { margin: 0 0 16px; font-size: 12px; color: var(--muted); }
 .dispatch-manual { padding-top: 6px; }
 .dispatch-manual-heading { margin-bottom: 10px; }
 .dispatch-manual-heading p { margin: 4px 0 0; font-size: 12px; color: var(--secondary); }
@@ -1010,5 +1084,4 @@
   .decision-actions { grid-template-columns: 1fr; }
   .decision-effects > div { grid-template-columns: 1fr; gap: 3px; }
   .decision-effects dd { white-space: normal; }
-  .route-timeline { padding: 10px 8px 8px; }
 }

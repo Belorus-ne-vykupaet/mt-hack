@@ -6,6 +6,34 @@
     "description": "REST + WebSocket /api/v1/stream. Network source is synthetic CSV replay. Dispatch commands execute only in the sandbox. See server/README.md for provider and ML integration."
   },
   "paths": {
+    "/api/v1/dispatch/advice": {
+      "get": {
+        "operationId": "getRuleDispatchAdvice",
+        "summary": "Правила для выбранного маршрута; не вызывает GigaChat",
+        "parameters": [{ "name": "route_id", "in": "query", "required": true, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Advice with source=rules", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DispatchAdvice" } } } } }
+      },
+      "post": {
+        "operationId": "requestGigachatDispatchAdvice",
+        "summary": "Запрос GigaChat по серверной сводке; при отсутствии ключа — явные правила",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["routeId"], "properties": { "routeId": { "type": "string" } } } } } },
+        "responses": { "200": { "description": "Advice for operator review", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DispatchAdvice" } } } } }
+      }
+    },
+    "/api/v1/dispatch/driver-messages": {
+      "get": {
+        "operationId": "getDriverDrafts",
+        "summary": "Черновики для водителей; требуется авторизация даже в режиме publicRead",
+        "parameters": [{ "name": "route_id", "in": "query", "required": false, "schema": { "type": "string" } }],
+        "responses": { "200": { "description": "Draft journal", "content": { "application/json": { "schema": { "type": "object", "properties": { "items": { "type": "array", "items": { "$ref": "#/components/schemas/DriverDraft" } } } } } } } }
+      },
+      "post": {
+        "operationId": "saveDriverDraft",
+        "summary": "Сохранить черновик: доставки водителю нет",
+        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["routeId", "vehicleId", "kind", "text"], "properties": { "routeId": { "type": "string" }, "vehicleId": { "type": "string" }, "kind": { "type": "string", "enum": ["message", "speed", "dwell"] }, "text": { "type": "string", "maxLength": 500 }, "speedKmh": { "type": "integer", "minimum": 5, "maximum": 60 }, "dwellSec": { "type": "integer", "minimum": 10, "maximum": 300 }, "dwellStops": { "type": "integer", "minimum": 1, "maximum": 5 }, "stopId": { "type": "string" } } } } } },
+        "responses": { "201": { "description": "Saved draft, not delivered", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DriverDraft" } } } } }
+      }
+    },
     "/api/v1/network/summary": {
       "get": {
         "operationId": "getNetworkSummary",
@@ -2024,6 +2052,18 @@
   },
   "components": {
     "schemas": {
+      "DispatchAdvice": {
+        "type": "object", "required": ["configured", "source", "generatedAt", "summary", "cards", "note"],
+        "properties": {
+          "configured": { "type": "boolean" }, "source": { "type": "string", "enum": ["rules", "gigachat"] },
+          "generatedAt": { "type": "string", "format": "date-time" }, "summary": { "type": "string" }, "note": { "type": "string" },
+          "cards": { "type": "array", "items": { "type": "object", "required": ["kind", "title", "reason"], "properties": { "kind": { "type": "string", "enum": ["message", "speed", "dwell", "reserve"] }, "title": { "type": "string" }, "reason": { "type": "string" }, "vehicleId": { "type": ["string", "null"] }, "message": { "type": ["string", "null"] } } } }
+        }
+      },
+      "DriverDraft": {
+        "type": "object", "required": ["id", "routeId", "vehicleId", "kind", "text", "createdAt", "status"],
+        "properties": { "id": { "type": "string" }, "routeId": { "type": "string" }, "vehicleId": { "type": "string" }, "kind": { "type": "string", "enum": ["message", "speed", "dwell"] }, "text": { "type": "string" }, "speedKmh": { "type": ["integer", "null"] }, "dwellSec": { "type": ["integer", "null"] }, "dwellStops": { "type": ["integer", "null"] }, "stopId": { "type": ["string", "null"] }, "createdAt": { "type": "string", "format": "date-time" }, "status": { "type": "string", "const": "draft" } }
+      },
       "PositionDto": {
         "type": "object",
         "properties": {

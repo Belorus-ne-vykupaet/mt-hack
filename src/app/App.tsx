@@ -44,8 +44,6 @@ import { NetworkStatus } from "../widgets/NetworkStatus";
 import { HeaderStatus } from "../widgets/HeaderStatus";
 import { InstallApp } from "../widgets/InstallApp";
 import { installWebMcp } from "./webmcp";
-import { recordTrail } from "../entities/vehicle-trail";
-import { prepareRoutePaths } from "../entities/vehicle-motion";
 const Integrations = lazy(() => import("../widgets/Integrations"));
 const DispatchCenter = lazy(() => import("../widgets/DispatchCenter"));
 const Analytics = lazy(() => import("../widgets/Analytics"));
@@ -84,15 +82,6 @@ export default function App() {
   const summary = net.summary.data;
   const points = net.series.data || [];
   const geometry = useGeometries(routes.map((r) => r.id));
-  const trailPaths = useMemo(
-    () => prepareRoutePaths(geometry.data || []),
-    [geometry.data],
-  );
-  // Positions observed while the dashboard is open feed the dispatcher's timetable chart.
-  useEffect(
-    () => recordTrail(vehicles, Date.parse(summary?.timestamp || ""), trailPaths),
-    [vehicles, summary?.timestamp, trailPaths],
-  );
   const visibleRoutes = useMemo(
     () =>
       routes.filter(
@@ -111,17 +100,18 @@ export default function App() {
     [vehicles, visibleIds],
   );
   const visibleRouteIdsKey = visibleRoutes.map((route) => route.id).join("|");
+  const geometryTimestamp = summary?.timestamp;
   const visibleGeo = useMemo(
     () => {
       const ids = new Set(visibleRouteIdsKey.split("|"));
-      const asOf = summary?.timestamp ? Date.parse(summary.timestamp) : null;
+      const asOf = geometryTimestamp ? Date.parse(geometryTimestamp) : null;
       return (geometry.data || []).filter(
         (g) => ids.has(g.routeId) &&
           (asOf === null || !g.validFrom ||
             (Date.parse(g.validFrom) <= asOf && asOf <= Date.parse(g.validUntil || g.validFrom))),
       );
     },
-    [geometry.data, visibleRouteIdsKey, summary?.timestamp],
+    [geometry.data, visibleRouteIdsKey, geometryTimestamp],
   );
   const visibleSegments = useMemo(
     () => (net.segments.data || []).filter((segment) => visibleIds.has(segment.routeId)),

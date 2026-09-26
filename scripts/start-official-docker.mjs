@@ -2,11 +2,11 @@ import { spawn } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 
-function weatherKeyFrom(file) {
+function keyFrom(file, name) {
   if (!existsSync(file)) return undefined;
   const line = readFileSync(file, "utf8")
     .split(/\r?\n/)
-    .find((entry) => /^\s*YANDEX_WEATHER_KEY\s*=/.test(entry));
+    .find((entry) => entry.trimStart().startsWith(`${name}=`));
   if (!line) return undefined;
   return line.slice(line.indexOf("=") + 1).trim().replace(/^("|')(.*)\1$/, "$2");
 }
@@ -37,8 +37,11 @@ if (process.env.TELEMETRY_MODE === "ndtp") {
 
 const apiToken = process.env.API_TOKEN || randomBytes(32).toString("hex");
 const weatherKey = process.env.YANDEX_WEATHER_KEY
-  ?? weatherKeyFrom("server/.env")
-  ?? weatherKeyFrom("server/weather-demo.env")
+  ?? keyFrom("server/.env", "YANDEX_WEATHER_KEY")
+  ?? keyFrom("server/weather-demo.env", "YANDEX_WEATHER_KEY")
+  ?? "";
+const gigachatKey = process.env.GIGACHAT_AUTH_KEY
+  ?? keyFrom("server/.env", "GIGACHAT_AUTH_KEY")
   ?? "";
 console.log(`Локальный ключ для команд диспетчера: ${apiToken}`);
 const child = spawn(
@@ -50,6 +53,7 @@ const child = spawn(
       ...process.env,
       API_TOKEN: apiToken,
       YANDEX_WEATHER_KEY: weatherKey,
+      GIGACHAT_AUTH_KEY: gigachatKey,
     },
   },
 );

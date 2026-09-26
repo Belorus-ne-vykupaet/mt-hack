@@ -22,11 +22,8 @@ test("an early bus gets a concrete hold with a deadline and effect, applied to t
     "Отклонение ТС 852 от графика через 15 мин",
   );
   await expect(card.locator(".decision-effects .better").first()).toBeVisible();
-  await expect(page.locator(".route-timeline")).toHaveAttribute(
-    "data-what-if",
-    "hold_early",
-  );
-  await expect(page.locator(".route-timeline canvas")).toBeVisible();
+  await expect(page.locator(".vehicle-board")).toContainText("ТС 852");
+  await expect(page.locator(".vehicle-board")).toContainText("Прогноз");
   await page
     .getByRole("button", { name: "Применить решение", exact: true })
     .click();
@@ -62,10 +59,7 @@ test("the most urgent route comes first; its reserve option can be prefilled wit
   );
   await page.getByRole("tab", { name: /Резерв/ }).click();
   await expect(card).toHaveAttribute("data-decision", "add_bus");
-  await expect(page.locator(".route-timeline")).toHaveAttribute(
-    "data-what-if",
-    "add_bus",
-  );
+  await expect(page.locator(".vehicle-board")).toBeVisible();
   await page
     .getByRole("button", { name: "Подставить в форму", exact: true })
     .click();
@@ -99,4 +93,13 @@ test("rule parameters recalculate the suggestions, persist and can be reset", as
     .getByRole("button", { name: "Вернуть значения по умолчанию" })
     .click();
   await expect(title).toContainText(" 120 с");
+});
+
+test("reserve advice opens a prefilled plan without applying it", async ({ page }) => {
+  await page.goto("/dispatch?visual-test=1");
+  const assistant = page.getByRole("region", { name: "Советник GigaChat" });
+  await expect(assistant).toContainText("3 с ожидаемой задержкой");
+  await assistant.getByRole("button", { name: "Открыть план выпуска" }).click();
+  await expect(page.getByLabel("Плановое количество автобусов")).toHaveValue("9");
+  await expect(page.locator(".dispatch-journal")).not.toContainText("Применён");
 });

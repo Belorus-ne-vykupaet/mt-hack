@@ -1,5 +1,5 @@
 import { matchesSearch } from "../shared/lib/search";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   BusFront,
   Clock3,
@@ -39,7 +39,6 @@ import DispatchRecommendations, {
 } from "./DispatchRecommendations";
 import { useDispatchSettings } from "../app/dispatch-settings-store";
 import type { DispatchSettings } from "../entities/dispatch-settings";
-import { buildRouteLines } from "../entities/route-line";
 import {
   busLabel,
   planFromDecision,
@@ -52,7 +51,9 @@ import {
   decisionKindLabel,
   urgency,
 } from "./dispatch/decision-format";
-import { RouteTimeline } from "./dispatch/RouteTimeline";
+import { VehicleBoard } from "./dispatch/VehicleBoard";
+import type { ContactTarget } from "./dispatch/VehicleBoard";
+import { GigachatPanel } from "./dispatch/GigachatPanel";
 import { DispatchSettingsPanel } from "./dispatch/DispatchSettingsPanel";
 import { usePlanSubmit } from "./dispatch/usePlanSubmit";
 /** Targeting of a plan (one bus, several stops), taken from a suggestion or an applied plan. */
@@ -149,28 +150,19 @@ export default function DispatchCenter({
     );
   });
   const [decisionId, setDecisionId] = useState<string>();
+  const [contact, setContact] = useState<ContactTarget | null>(null);
   const decisionSubmit = usePlanSubmit(setNotice);
   const decisions = recommendation?.decisions || [];
   const decision = decisions.find((d) => d.id === decisionId) || decisions[0];
   const urgentCount = recommendations.filter(
     (r) => r.decisions?.[0] && urgency(r.decisions[0]) === "urgent",
   ).length;
-  const line = useMemo(
-    () =>
-      route && geometries?.length
-        ? buildRouteLines(
-            [route],
-            vehicles,
-            geometries.filter((g) => g.routeId === route.id),
-          )[0]
-        : undefined,
-    [route, vehicles, geometries],
-  );
   const focusRoute = (id: string) => {
     setRouteId(id);
     setPrepared(null);
     setNotice("");
     setDecisionId(undefined);
+    setContact(null);
     decisionSubmit.setError("");
     useUi.getState().selectRoute(id);
   };
@@ -296,10 +288,10 @@ export default function DispatchCenter({
       <div className="dispatch-toolbar">
         <div>
           <span className="dispatch-eyebrow">РАБОЧЕЕ МЕСТО ДИСПЕТЧЕРА</span>
-          <h2>Приоритеты на ближайшие 15 минут</h2>
+          <h2>Автобусы и решения на ближайшие 15 минут</h2>
           <p>
-            Выберите маршрут, проверьте предложение и сравните сценарий до
-            применения.
+            Выберите маршрут, проверьте прогноз каждого автобуса и подготовьте
+            действие для водителя.
           </p>
         </div>
         <span className={`dispatch-live ${online ? "online" : "offline"}`}>
@@ -469,7 +461,7 @@ export default function DispatchCenter({
               </select>
             </label>
             <RouteBadge number={route.number} risk={route.riskLevel} />
-            <span>{route.activeVehicleCount} на линии</span>
+            <span>{vehicles.filter((v) => v.routeId === route.id).length} на линии</span>
           </div>
           <DecisionFeed
             routeNumber={route.number}
@@ -494,19 +486,31 @@ export default function DispatchCenter({
             status={recommendation?.status || "unavailable"}
             statusText={
               recommendation?.status === "active"
-                ? "Решение по маршруту уже применено. Оцените результат на графике или отмените его в журнале."
+                ? "Решение по маршруту уже применено. Проверьте автобусы ниже или отмените его в журнале."
                 : recommendation?.reasons.join(" ") ||
                   "Нет свежих данных для подсказок."
             }
           />
-          {line && (
-            <RouteTimeline
-              line={line}
-              decision={decision}
-              asOf={asOf}
-              settings={settings}
-            />
-          )}
+          <VehicleBoard
+            key={route.id}
+            route={route}
+            vehicles={vehicles}
+            contact={contact}
+            onCloseContact={() => setContact(null)}
+          />
+          <GigachatPanel
+            route={route}
+            vehicles={vehicles}
+            reserve={canApply ? reserveRemaining(plans) : 0}
+            onContact={setContact}
+            onReserve={() => {
+              const extra = decisions.find((item) => item.kind === "add_bus");
+              if (extra) prefillDecision(extra);
+              else if (recommendation && canApply && reserveRemaining(plans) > 0)
+                choose({ ...recommendation, status: "suggested", targetFleet: route.activeVehicleCount + 1 });
+              else plannerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+            }}
+          />
           <div ref={plannerRef} className="dispatch-manual">
             <div className="dispatch-manual-heading">
               <span className="dispatch-eyebrow">РУЧНАЯ НАСТРОЙКА</span>
