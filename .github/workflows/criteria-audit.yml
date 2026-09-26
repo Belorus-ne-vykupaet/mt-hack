@@ -3,6 +3,7 @@ name: Criteria audit
 # Checks the main-stage criteria (PDF, criteria 1–5) the way the jury would:
 # official archive → project tests → four containers from JURY_QUICKSTART →
 # dashboard in a browser → container faults and the organizers' NDTP emulator.
+# The audited code is the branch head: zhenya = main + these tests.
 on:
   workflow_dispatch:
   push:
