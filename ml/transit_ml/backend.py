@@ -17,6 +17,7 @@ from fastapi import FastAPI
 from .features import Dataset, distance, seconds
 from .ndtp import Receiver
 from .segments import SegmentMatcher
+from .outcomes import OUTCOME_FIELDS, arrival_outcome, visible_outcome
 from .warnings import LATENESS_THRESHOLD_SEC, warning_timing
 
 
@@ -265,6 +266,44 @@ class Engine:
                 await self.snapshot()
             except Exception as error:
                 self.last_error = type(error).__name__
+
+    def observe_warning_outcomes(self, cutoff, segment_matches):
+        """Close pending warnings from past facts, independently of inference."""
+        pending = [row for row in self.warning_audit if "outcome_observed_at" not in row]
+        arrivals = {}
+        if self.mode == "replay":
+            target_ids = {}
+            for row in pending:
+                tr = int(row["vehicle_id"].removeprefix("vehicle-"))
+                target_ids.setdefault(tr, set()).add(int(row["target_stop_id"]))
+            for tr, ids in target_ids.items():
+                actual = self.actual.get(tr)
+                if actual is None:
+                    continue
+                observed = actual[actual.actual_ts.le(cutoff)
+                                  & actual.tt_action_item_id.isin(ids)]
+                for row in observed.itertuples():
+                    arrivals.setdefault((tr, str(int(row.tt_action_item_id))), float(row.actual_ts))
+            source = "schedule_actual"
+        else:
+            source = "ndtp_ordered_stop_visit"
+            for vehicle_id, match in segment_matches.items():
+                tr = int(vehicle_id.removeprefix("vehicle-"))
+                for visit in match.get("stop_visits", []):
+                    if visit["observed_at"] <= cutoff:
+                        arrivals.setdefault((tr, visit["stop_id"]), visit["observed_at"])
+        for row in pending:
+            key = (int(row["vehicle_id"].removeprefix("vehicle-")), row["target_stop_id"])
+            arrived = arrivals.get(key)
+            if arrived is None:
+                continue
+            outcome = arrival_outcome(
+                planned_at=pd.Timestamp(row["target_time"]).timestamp(),
+                issued_at=pd.Timestamp(row["issued_at"]).timestamp(),
+                arrival_at=arrived, observed_at=cutoff, cutoff=cutoff, source=source,
+            )
+            if outcome is not None:
+                row.update(outcome)
 
     async def snapshot(self):
         async with self.lock:
@@ -609,6 +648,11 @@ class Engine:
                         "lead_time_sec": round(target["ts"] - first_issue, 1),
                         "model_status": v["forecast_status"],
                         "source": self.mode,
+                        "current_delay_sec_at_issue": v["current_delay_sec"],
+                        "predicted_delay_sec_at_issue": v["predicted_delay_sec"],
+                        "risk_probability_at_issue": v["risk_probability"],
+                        "telemetry_age_sec_at_issue": v["telemetry_age_sec"],
+                        "observed_factor_at_issue": reason,
                     })
                 lead_time = target["ts"] - cutoff
                 assert 600 < lead_time <= 900
@@ -642,6 +686,9 @@ class Engine:
                         "model_status": v["forecast_status"],
                     }
                 )
+            # Keep observing issued warnings after their ML target leaves the
+            # prediction window. Missing GPS is unknown, never a confirmed delay.
+            self.observe_warning_outcomes(cutoff, segment_matches)
             summary = {
                 "timestamp": timestamp,
                 "vehicles_total": len(self.catalog),
@@ -796,25 +843,15 @@ async def status():
 
 @app.get("/warnings/audit")
 async def warning_audit():
-    """First publication only; future actual arrival is never used to issue a warning."""
+    """Immutable first publication plus causally observed arrival/outcome evidence."""
     e = app.state.engine
     await e.snapshot()
     items = []
     for entry in e.warning_audit:
-        result = dict(entry)
-        if e.mode == "replay":
-            actual = e.actual.get(int(entry["vehicle_id"].removeprefix("vehicle-")))
-            if actual is not None:
-                arrived = actual[
-                    actual.tt_action_item_id.eq(int(entry["target_stop_id"]))
-                    & actual.actual_ts.le(e.last_cutoff)
-                ]
-                if not arrived.empty:
-                    row = arrived.iloc[0]
-                    result["actual_arrival_at"] = iso(row.actual_ts)
-                    result["actual_delay_sec"] = round(float(row.actual_ts - row.plan_ts), 1)
-                    result["lead_to_actual_sec"] = round(
-                        float(row.actual_ts - pd.Timestamp(entry["issued_at"]).timestamp()), 1
-                    )
+        if pd.Timestamp(entry["issued_at"]).timestamp() > e.last_cutoff:
+            continue
+        result = {key: value for key, value in entry.items()
+                  if not key.startswith("outcome_") and key not in OUTCOME_FIELDS}
+        result.update(visible_outcome(entry, e.last_cutoff))
         items.append(result)
     return {"asOf": iso(e.last_cutoff), "items": items}

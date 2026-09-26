@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Python: module transit_ml.outcomes</title>
+</head><body>
+
+<table class="heading">
+<tr class="heading-text decor">
+<td class="title">&nbsp;<br><strong class="title"><a href="transit_ml.html" class="white">transit_ml</a>.outcomes</strong></td>
+<td class="extra"><a href=".">index</a><br><a href="https://github.com/Belorus-ne-vykupaet/mt-hack/blob/main/ml/transit_ml/outcomes.py">Исходный код</a></td></tr></table>
+    <p><span class="code">Confirm&nbsp;a&nbsp;warning&nbsp;only&nbsp;from&nbsp;an&nbsp;arrival&nbsp;observation&nbsp;available&nbsp;at&nbsp;the&nbsp;cutoff.<br>
+&nbsp;<br>
+A&nbsp;missed&nbsp;scheduled&nbsp;arrival&nbsp;starts&nbsp;at&nbsp;its&nbsp;planned&nbsp;deadline,&nbsp;if&nbsp;arrival&nbsp;is&nbsp;later.<br>
+The&nbsp;fact&nbsp;is&nbsp;confirmed&nbsp;when&nbsp;arrival&nbsp;is&nbsp;observed;&nbsp;these&nbsp;are&nbsp;deliberately&nbsp;different<br>
+timestamps.&nbsp;The&nbsp;&gt;120-second&nbsp;risk&nbsp;outcome&nbsp;remains&nbsp;separate&nbsp;from&nbsp;any&nbsp;lateness.<br>
+No&nbsp;function&nbsp;in&nbsp;this&nbsp;module&nbsp;chooses&nbsp;a&nbsp;target&nbsp;or&nbsp;issues&nbsp;a&nbsp;prediction.</span></p>
+<p>
+<table class="section">
+<tr class="decor functions-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Functions</strong></td></tr>
+
+<tr><td class="decor functions-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><dl><dt><a name="-arrival_outcome"><strong>arrival_outcome</strong></a>(*, planned_at, issued_at, arrival_at, observed_at, cutoff, source)</dt><dd><span class="code">Return&nbsp;retrospective&nbsp;facts&nbsp;only&nbsp;when&nbsp;this&nbsp;arrival&nbsp;has&nbsp;become&nbsp;observable.<br>
+&nbsp;<br>
+Never&nbsp;treat&nbsp;absence&nbsp;of&nbsp;telemetry&nbsp;as&nbsp;evidence&nbsp;of&nbsp;lateness.&nbsp;In&nbsp;replay&nbsp;the&nbsp;source<br>
+is&nbsp;an&nbsp;actual&nbsp;arrival&nbsp;row&nbsp;whose&nbsp;timestamp&nbsp;has&nbsp;passed;&nbsp;in&nbsp;NDTP&nbsp;it&nbsp;is&nbsp;a&nbsp;matched,<br>
+ordered&nbsp;stop&nbsp;visit.&nbsp;A&nbsp;false&nbsp;risk&nbsp;alert&nbsp;stays&nbsp;false&nbsp;even&nbsp;if&nbsp;lateness&nbsp;is&nbsp;1–120&nbsp;s.</span></dd></dl>
+ <dl><dt><a name="-isfinite"><strong>isfinite</strong></a>(x, /)</dt><dd><span class="code">Return&nbsp;True&nbsp;if&nbsp;x&nbsp;is&nbsp;neither&nbsp;an&nbsp;infinity&nbsp;nor&nbsp;a&nbsp;NaN,&nbsp;and&nbsp;False&nbsp;otherwise.</span></dd></dl>
+ <dl><dt><a name="-visible_outcome"><strong>visible_outcome</strong></a>(record, cutoff)</dt><dd><span class="code">Do&nbsp;not&nbsp;expose&nbsp;a&nbsp;previously&nbsp;observed&nbsp;outcome&nbsp;if&nbsp;a&nbsp;replay&nbsp;clock&nbsp;is&nbsp;rewound.</span></dd></dl>
+</td></tr></table><p>
+<table class="section">
+<tr class="decor data-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Data</strong></td></tr>
+
+<tr><td class="decor data-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><strong>LATENESS_THRESHOLD_SEC</strong> = 120<br>
+<strong>MAX_LEAD_SEC</strong> = 900<br>
+<strong>MIN_LEAD_SEC</strong> = 600<br>
+<strong>ONSET_DEFINITION</strong> = 'missed_scheduled_arrival'<br>
+<strong>OUTCOME_FIELDS</strong> = frozenset({'actual_arrival_at', 'actual_delay_sec', 'delay_onset_at', 'delay_onset_basis', 'delay_onset_definition', 'lead_to_actual_sec', ...})</td></tr></table>
+</body></html>

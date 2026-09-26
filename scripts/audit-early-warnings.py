@@ -15,7 +15,7 @@ import httpx
 import numpy as np
 import pandas as pd
 
-from transit_ml.backend import Engine
+from transit_ml.backend import Engine, app as backend_app, warning_audit
 from transit_ml.inference import app as ml_app
 from transit_ml.warnings import EVENT_TYPE, LATENESS_THRESHOLD_SEC
 
@@ -34,6 +34,28 @@ async def audit():
     forecast_horizon_violations = []
     first_issue_mutations = []
     first_issue_by_id = {}
+    backend_app.state.engine = engine
+    outcome_trace = []
+    outcome_states = {}
+    observed_outcome_leaks = []
+
+    async def capture_outcomes(allowed_ids=None):
+        response = await warning_audit()
+        observed_cutoff = pd.Timestamp(response["asOf"]).timestamp()
+        for row in response["items"]:
+            if allowed_ids is not None and row["id"] not in allowed_ids:
+                continue
+            if row.get("outcome_status") == "observed":
+                if (pd.Timestamp(row["actual_arrival_at"]).timestamp() > observed_cutoff
+                        or pd.Timestamp(row["outcome_observed_at"]).timestamp() > observed_cutoff):
+                    observed_outcome_leaks.append(row["id"])
+            state = row["outcome_status"]
+            if outcome_states.get(row["id"]) != state:
+                outcome_states[row["id"]] = state
+                outcome_trace.append({"id": row["id"], "as_of": response["asOf"],
+                                      "state": state})
+        return response["items"]
+
     async with ml_app.router.lifespan_context(ml_app):
         async with httpx.AsyncClient(
             transport=httpx.ASGITransport(app=ml_app), base_url="http://model"
@@ -44,6 +66,7 @@ async def audit():
                 engine.start = cutoff
                 engine.cache_at = 0
                 snapshot = await engine.snapshot()
+                await capture_outcomes()
                 snapshots += 1
                 ready_snapshots += engine.status == "connected"
                 active_alerts += len(snapshot["alerts"])
@@ -72,7 +95,33 @@ async def audit():
                     and vehicle["next_stop"] is not None
                 )
 
-    records = list(engine.warning_audit)
+            # Continue the stream until the already issued warnings have an
+            # observed arrival. This tail does not change the forecast cohort,
+            # its denominator, or the number of evaluated prediction slices.
+            cohort = {row["id"]: dict(row) for row in engine.warning_audit}
+            arrivals = []
+            for row in cohort.values():
+                tr = int(row["vehicle_id"].removeprefix("vehicle-"))
+                actual = engine.actual.get(tr)
+                if actual is not None:
+                    match = actual[actual.tt_action_item_id.eq(int(row["target_stop_id"]))]
+                    if not match.empty:
+                        arrivals.append(float(match.iloc[0].actual_ts))
+            settle_until = max([end, *arrivals])
+            settlement_snapshots = 0
+            for cutoff in range(int(end) + step, int(np.ceil(settle_until / step) * step) + 1, step):
+                engine.start = cutoff
+                engine.cache_at = 0
+                await engine.snapshot()
+                await capture_outcomes(cohort)
+                settlement_snapshots += 1
+            observed_outcomes = [row for row in await capture_outcomes(cohort)
+                                 if row["id"] in cohort]
+            for row in observed_outcomes:
+                if any(row.get(key) != value for key, value in cohort[row["id"]].items()):
+                    first_issue_mutations.append(row["id"])
+
+    records = [row for row in engine.warning_audit if row["id"] in cohort]
     retrospective = []
     event_window_violations = []
     event_metadata_violations = []
@@ -170,6 +219,35 @@ async def audit():
     leads = [row["lead_time_sec"] for row in records]
     declared_event_leads = [row["event_lead_time_sec"] for row in records
                             if row.get("event_lead_time_sec") is not None]
+    confirmed = [row for row in observed_outcomes if row["outcome_status"] == "observed"]
+    observed_late = [row for row in confirmed if row["delay_onset_at"] is not None]
+    onset_violations = [
+        row["id"] for row in observed_late
+        if not 600 < (pd.Timestamp(row["delay_onset_at"]) - pd.Timestamp(row["issued_at"])).total_seconds() <= 900
+    ]
+    pending_outcomes = [row["id"] for row in observed_outcomes if row["outcome_status"] != "observed"]
+    truth_by_id = {row["id"]: row for row in warning_rows}
+    outcome_mismatches = []
+    for row in confirmed:
+        truth = truth_by_id[row["id"]]
+        plan_ts = pd.Timestamp(row["target_time"]).timestamp()
+        issued_ts = pd.Timestamp(row["issued_at"]).timestamp()
+        late = truth["actual_delay_sec"] > 0
+        onset_ts = pd.Timestamp(row["delay_onset_at"]).timestamp() if row["delay_onset_at"] else None
+        expected_lead = round(plan_ts - issued_ts, 3) if late else None
+        expected_window = 600 < plan_ts - issued_ts <= 900 if late else None
+        if (pd.Timestamp(row["actual_arrival_at"]) != pd.Timestamp(truth["actual_arrival_at"])
+                or row["actual_delay_sec"] != truth["actual_delay_sec"]
+                or onset_ts != (plan_ts if late else None)
+                or row["lead_to_delay_onset_sec"] != expected_lead
+                or row["warning_in_onset_window"] != expected_window
+                or pd.Timestamp(row["outcome_observed_at"]) < pd.Timestamp(row["actual_arrival_at"])
+                or row["risk_outcome"] != ("confirmed" if truth["actual_delay_sec"] > 120 else "false_positive")):
+            outcome_mismatches.append(row["id"])
+    proactive = [row for row in confirmed
+                 if row["risk_outcome"] == "confirmed"
+                 and row.get("current_delay_sec_at_issue") is not None
+                 and row["current_delay_sec_at_issue"] <= 0]
     def distribution(values):
         return {
             "min": round(float(min(values)), 1),
@@ -225,13 +303,39 @@ async def audit():
         "lead_to_actual_sec": distribution(actual_leads),
         "lead_to_declared_event_sec": distribution(declared_event_leads),
         "lead_to_late_threshold_sec": distribution(threshold_leads),
+        "observed_onset_evidence": {
+            "definition": "missed scheduled arrival: planned deadline crossed before actual arrival; confirmed only once that arrival has been observed",
+            "onset_is_arrival_time": False,
+            "lateness_tolerance_sec": 0,
+            "risk_threshold_sec": LATENESS_THRESHOLD_SEC,
+            "settlement_snapshots": settlement_snapshots,
+            "settlement_until": pd.Timestamp(settle_until, unit="s", tz="UTC").isoformat(),
+            "same_original_warning_cohort": len(cohort),
+            "observed_outcomes": len(confirmed),
+            "pending_outcomes": pending_outcomes,
+            "late_arrivals": len(observed_late),
+            "on_time_or_early_arrivals": len(confirmed) - len(observed_late),
+            "all_scheduled_targets": len(scored_events),
+            "all_positive_delay_targets": sum(row["actual_delay_sec"] > 0 for row in scored_events),
+            "warnings_in_observed_onset_window": sum(row["warning_in_onset_window"] for row in observed_late),
+            "onset_window_violations": onset_violations,
+            "future_observation_leaks": observed_outcome_leaks,
+            "outcome_mismatches": outcome_mismatches,
+            "lead_to_observed_onset_sec": distribution([row["lead_to_delay_onset_sec"] for row in observed_late]),
+            "confirmed_risk_without_existing_delay_at_issue": len(proactive),
+            "example_before_existing_delay": proactive[0] if proactive else None,
+            "risk_false_alerts_preserved": sum(row["risk_outcome"] == "false_positive" for row in confirmed),
+        },
+        "observed_outcomes": observed_outcomes,
+        "outcome_state_transitions": outcome_trace,
         "events": scored_events,
         "warnings": warning_rows,
     }
     print(json.dumps(report, ensure_ascii=False, indent=2))
     if (retrospective or event_window_violations or event_metadata_violations
             or forecast_horizon_violations or first_issue_mutations
-            or actual_before_issue or not records):
+            or actual_before_issue or not records or onset_violations
+            or observed_outcome_leaks or outcome_mismatches or pending_outcomes):
         raise SystemExit("Horizon audit failed")
 
 

@@ -1,5 +1,7 @@
 # Документация Transit Control
 
+Проверка последнего балла за раннее предупреждение: [страница завершённых эпизодов](../public/docs/early-warning/index.html) (**/docs/early-warning/** на сайте), [методика](21-early-warning-evidence.md), [наблюдаемые исходы](24-observed-warning-outcomes.md).
+
 Для основного этапа хакатона начните с [инструкции для жюри](../JURY_QUICKSTART.md) и [матрицы доказательств по критериям](22-criteria-evidence.md). [HTML PyDoc](../public/docs/python/index.html) собран из текущих Python-модулей командой `PYTHONPATH=ml:src ml/.venv/bin/python scripts/build-python-docs.py`; после запуска сайта он доступен по `/docs/python/`. [Причинный аудит предупреждений](21-early-warning-evidence.md) и [замеры устойчивости](20-reliability-benchmark.md) отделяют измеренные результаты от непроверенных предположений.
 
 Текущая визуальная редакция: **v2 / 21 сентября 2026**.
