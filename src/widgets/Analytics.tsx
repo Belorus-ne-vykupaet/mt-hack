@@ -20,6 +20,7 @@ import {
 } from "../shared/ui/format";
 import { config } from "../shared/config/env";
 import { useUi } from "../app/store";
+import { ForecastEvaluation } from "./ForecastEvaluation";
 export default function Analytics({
   summary,
   routes,
@@ -219,7 +220,7 @@ export default function Analytics({
             </div>
           </div>
         </Panel>
-        <Panel
+        {config.officialMode ? <ForecastEvaluation /> : <Panel
           title="Факт и прогноз"
           action={
             <div className="chart-key">
@@ -235,10 +236,10 @@ export default function Analytics({
           }
         >
           <DelayChart points={points} height={250} />
-        </Panel>
+        </Panel>}
         <Panel
           title="Маршруты с наибольшей задержкой"
-          action={<span className="muted">Прогноз +15 мин</span>}
+          action={<span className="muted">{config.officialMode ? "К остановке через 10–15 мин" : "Прогноз +15 мин"}</span>}
         >
           <div className="analytics-ranking">
             {routes.filter(r => r.hasForecast !== false)

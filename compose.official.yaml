@@ -51,6 +51,7 @@ services:
     environment:
       OFFICIAL_DATA_DIR: /app/ml/data/official
       ML_URL: http://ml:8092
+      PREDICTION_JOURNAL: /app/journal/predictions.sqlite3
       TELEMETRY_MODE: ${TELEMETRY_MODE:-replay}
       LIVE_PLAN_DIR: /app/ml/data/live
       NDTP_HOST: 0.0.0.0
@@ -58,6 +59,7 @@ services:
       REPLAY_SPEED: ${REPLAY_SPEED:-0.25}
     volumes:
       - ./docker/local-data/live:/app/ml/data/live:ro
+      - forecast-journal:/app/journal
     ports:
       - "127.0.0.1:${OFFICIAL_BACKEND_PORT:-8093}:8093"
       - "127.0.0.1:${OFFICIAL_NDTP_PORT:-9201}:9201"
@@ -83,3 +85,4 @@ services:
       retries: 12
 volumes:
   dispatch-journal:
+  forecast-journal:

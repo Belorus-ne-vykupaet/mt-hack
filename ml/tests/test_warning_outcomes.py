@@ -17,6 +17,35 @@ from transit_ml.outcomes import arrival_outcome, visible_outcome
 NOW = pd.Timestamp("2026-01-06T12:00:00Z").timestamp()
 
 
+def test_non_alert_forecasts_are_paired_after_the_prediction_window(engine, monkeypatch):
+    """Evaluation covers every successful target, including missed risks, not only alerts."""
+    def predict(request):
+        body = json.loads(request.content)
+        return httpx.Response(200, json={"asOf": body["asOf"], "latencyMs": 1,
+            "predictions": [{"vehicleId": i["vehicleId"], "delaySec": 100,
+                             "lateProbability": .1} for i in body["items"]]})
+    monkeypatch.setattr(app.state, "engine", engine, raising=False)
+    async def run():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(predict)) as model:
+            engine.client = model
+            async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as api:
+                first = (await api.get("/analytics/forecast-evaluation")).json()
+                assert not engine.cache["alerts"]
+                assert first["summary"]["total"] == 1
+                assert first["summary"]["maeSec"] is None
+                engine.start, engine.cache_at = NOW + 900, 0
+                waiting = (await api.get("/analytics/forecast-evaluation")).json()
+                assert waiting["items"][0]["status"] == "awaiting_observation"
+                engine.start, engine.cache_at = NOW + 970, 0
+                complete = (await api.get("/analytics/forecast-evaluation")).json()
+                assert complete["summary"]["observed"] == 1
+                assert complete["summary"]["maeSec"] == 140
+                assert complete["items"][0]["issuedAt"] == first["items"][0]["issuedAt"]
+                assert complete["items"][0]["actualDelaySec"] == 240
+                assert (await api.get("/analytics/forecast-evaluation?route_id=duty-2")).json()["items"] == []
+    asyncio.run(run())
+
+
 @pytest.mark.parametrize("delay,late,risk", [
     (-5, False, "false_positive"), (0, False, "false_positive"),
     (107, True, "false_positive"), (120, True, "false_positive"),

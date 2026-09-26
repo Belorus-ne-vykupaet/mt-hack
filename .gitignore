@@ -42,7 +42,7 @@ server/data/
 test-results-api/
 
 # Local Python runtimes and official hackathon data
-ml/.venv/
+ml/.venv
 __pycache__/
 .pytest_cache/
 ml/data/
