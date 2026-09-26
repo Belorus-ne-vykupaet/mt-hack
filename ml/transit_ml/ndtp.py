@@ -90,14 +90,18 @@ def parse_frame(frame: bytes):
 class Receiver:
     """Bounded per-unit histories and idle timeout; reconnecting clients retain last known state."""
 
-    def __init__(self, max_units=1000, on_packet=None):
+    def __init__(self, max_units=1000, on_packet=None, allowed_units=None):
         self.histories = {}
         self.max_units = max_units
         self.on_packet = on_packet
+        self.allowed_units = allowed_units
         self.frames = 0
         self.errors = 0
         self.connections = 0
         self.last_packet_at = None
+        self.out_of_order_frames = 0
+        self.stale_frames = 0
+        self.ignored_units = 0
 
     async def handle(self, reader, writer):
         self.connections += 1
@@ -112,14 +116,29 @@ class Receiver:
                 if row.get("handshake"):
                     continue
                 unit = row["unit_id"]
+                received_at = time.time()
+                if row["ts"] > received_at + 60:
+                    raise ValueError("Future telemetry timestamp")
+                if self.allowed_units is not None and unit not in self.allowed_units:
+                    # Count a valid but unmapped frame without letting arbitrary
+                    # devices exhaust the bounded histories for mapped vehicles.
+                    self.frames += 1
+                    self.ignored_units += 1
+                    self.last_packet_at = received_at
+                    if self.on_packet is not None:
+                        self.on_packet(row)
+                    continue
                 if unit not in self.histories and len(self.histories) >= self.max_units:
                     raise ValueError("Unit limit reached")
                 history = self.histories.setdefault(unit, deque(maxlen=1500))
-                if row["ts"] > time.time() + 60:
-                    raise ValueError("Future telemetry timestamp")
+                if history and row["ts"] < history[-1]["ts"]:
+                    # An old packet must not replace a newer live observation.
+                    self.out_of_order_frames += 1
+                    continue
                 history.append(row)
                 self.frames += 1
-                self.last_packet_at = time.time()
+                self.stale_frames += row["ts"] < received_at - 180
+                self.last_packet_at = received_at
                 if self.on_packet is not None:
                     self.on_packet(row)
         except (asyncio.IncompleteReadError, ConnectionError):
@@ -141,4 +160,9 @@ class Receiver:
             "connections": self.connections,
             "units": len(self.histories),
             "lastPacketAt": self.last_packet_at,
+            "lastPacketAgeSec": round(max(0, time.time() - self.last_packet_at), 1)
+            if self.last_packet_at is not None else None,
+            "outOfOrderFrames": self.out_of_order_frames,
+            "staleFrames": self.stale_frames,
+            "ignoredUnits": self.ignored_units,
         }

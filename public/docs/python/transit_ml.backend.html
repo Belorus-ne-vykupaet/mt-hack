@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Python: module transit_ml.backend</title>
+</head><body>
+
+<table class="heading">
+<tr class="heading-text decor">
+<td class="title">&nbsp;<br><strong class="title"><a href="transit_ml.html" class="white">transit_ml</a>.backend</strong></td>
+<td class="extra"><a href=".">index</a><br><a href="https://github.com/Belorus-ne-vykupaet/mt-hack/blob/main/ml/transit_ml/backend.py">Исходный код</a></td></tr></table>
+    <p><span class="code">Python&nbsp;orchestration:&nbsp;official&nbsp;CSV&nbsp;replay&nbsp;/&nbsp;NDTP&nbsp;reception&nbsp;-&gt;&nbsp;causal&nbsp;features&nbsp;-&gt;&nbsp;ML&nbsp;API.</span></p>
+<p>
+<table class="section">
+<tr class="decor pkg-content-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Modules</strong></td></tr>
+
+<tr><td class="decor pkg-content-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><table><tr><td class="multicolumn"><a href="asyncio.html">asyncio</a><br>
+<a href="httpx.html">httpx</a><br>
+</td><td class="multicolumn"><a href="json.html">json</a><br>
+<a href="math.html">math</a><br>
+</td><td class="multicolumn"><a href="numpy.html">numpy</a><br>
+<a href="os.html">os</a><br>
+</td><td class="multicolumn"><a href="pandas.html">pandas</a><br>
+<a href="time.html">time</a><br>
+</td></tr></table></td></tr></table><p>
+<table class="section">
+<tr class="decor index-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Classes</strong></td></tr>
+
+<tr><td class="decor index-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><dl>
+<dt class="heading-text"><a href="builtins.html#object">builtins.object</a>
+</dt><dd>
+<dl>
+<dt class="heading-text"><a href="transit_ml.backend.html#Engine">Engine</a>
+</dt></dl>
+</dd>
+</dl>
+ <p>
+<table class="section">
+<tr class="decor title-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><a name="Engine">class <strong>Engine</strong></a>(<a href="builtins.html#object">builtins.object</a>)</td></tr>
+
+<tr><td class="decor title-decor"><span class="code">&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn">Methods defined here:<br>
+<dl><dt><a name="Engine-__init__"><strong>__init__</strong></a>(self)</dt><dd><span class="code">Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</span></dd></dl>
+
+<dl><dt>async <a name="Engine-snapshot"><strong>snapshot</strong></a>(self)</dt></dl>
+
+<dl><dt>async <a name="Engine-stream_forecasts"><strong>stream_forecasts</strong></a>(self)</dt><dd><span class="code">Coalesce&nbsp;live&nbsp;NDTP&nbsp;frames&nbsp;into&nbsp;at&nbsp;most&nbsp;one&nbsp;forecast&nbsp;per&nbsp;second.</span></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><span class="code">dictionary&nbsp;for&nbsp;instance&nbsp;variables</span></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><span class="code">list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object</span></dd>
+</dl>
+</td></tr></table></td></tr></table><p>
+<table class="section">
+<tr class="decor functions-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Functions</strong></td></tr>
+
+<tr><td class="decor functions-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><dl><dt><a name="-catalog"><strong>catalog</strong></a>()</dt></dl>
+ <dl><dt><a name="-finite"><strong>finite</strong></a>(record)</dt></dl>
+ <dl><dt><a name="-finite_number"><strong>finite_number</strong></a>(value)</dt><dd><span class="code">Keep&nbsp;missing&nbsp;NDTP&nbsp;fields&nbsp;nullable&nbsp;in&nbsp;JSON&nbsp;instead&nbsp;of&nbsp;emitting&nbsp;NaN.</span></dd></dl>
+ <dl><dt><a name="-iso"><strong>iso</strong></a>(ts)</dt></dl>
+ <dl><dt><a name="-lifespan"><strong>lifespan</strong></a>(app)</dt></dl>
+ <dl><dt><a name="-observed_arrival"><strong>observed_arrival</strong></a>(target, observed_actual, history, cutoff, live=False)</dt><dd><span class="code">Exclude&nbsp;an&nbsp;event&nbsp;already&nbsp;observed&nbsp;at&nbsp;T,&nbsp;never&nbsp;inspect&nbsp;its&nbsp;future&nbsp;outcome.</span></dd></dl>
+ <dl><dt><a name="-observed_factor"><strong>observed_factor</strong></a>(features, current_delay)</dt><dd><span class="code">Describe&nbsp;only&nbsp;signals&nbsp;observed&nbsp;by&nbsp;T;&nbsp;never&nbsp;claim&nbsp;a&nbsp;causal&nbsp;ML&nbsp;explanation.</span></dd></dl>
+ <dl><dt><a name="-observed_paths"><strong>observed_paths</strong></a>(gps, cutoff)</dt><dd><span class="code">Causal&nbsp;GPS&nbsp;trails;&nbsp;split&nbsp;gaps&nbsp;and&nbsp;jumps&nbsp;instead&nbsp;of&nbsp;drawing&nbsp;across&nbsp;streets.</span></dd></dl>
+ <dl><dt><a name="-risk"><strong>risk</strong></a>(delay)</dt></dl>
+ <dl><dt>async <a name="-snapshot"><strong>snapshot</strong></a>()</dt></dl>
+ <dl><dt>async <a name="-status"><strong>status</strong></a>()</dt></dl>
+ <dl><dt><a name="-stop"><strong>stop</strong></a>(row, sequence=0)</dt></dl>
+ <dl><dt>async <a name="-warning_audit"><strong>warning_audit</strong></a>()</dt><dd><span class="code">First&nbsp;publication&nbsp;only;&nbsp;future&nbsp;actual&nbsp;arrival&nbsp;is&nbsp;never&nbsp;used&nbsp;to&nbsp;issue&nbsp;a&nbsp;warning.</span></dd></dl>
+</td></tr></table><p>
+<table class="section">
+<tr class="decor data-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Data</strong></td></tr>
+
+<tr><td class="decor data-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><strong>app</strong> = &lt;fastapi.applications.FastAPI object&gt;</td></tr></table>
+</body></html>

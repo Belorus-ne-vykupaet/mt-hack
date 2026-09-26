@@ -145,12 +145,10 @@ def test_live_ndtp_features_to_real_sasha_model(tmp_path, monkeypatch):
             }
         ]
     ).to_csv(tmp_path / "schedule_plan.csv", index=False)
-    (tmp_path / "traffic.csv").write_text(
-        "tr_id,event_time,location_valid,lon,lat,speed,heading\n"
-    )
     (tmp_path / "unit-map.json").write_text('{"123":1}')
     monkeypatch.setenv("TELEMETRY_MODE", "ndtp")
     monkeypatch.setenv("LIVE_PLAN_DIR", str(tmp_path))
+    monkeypatch.setenv("OFFICIAL_DATA_DIR", str(tmp_path / "absent-archive"))
     payload = (
         struct.pack("<HHHI", 1, 101, 1, 1)
         + bytes([0, 0])

@@ -40,6 +40,7 @@ test("official Sasha predictions, archive clock, map and themes", async ({
   await expect(
     page.getByText("ExtraTrees · официальный датасет", { exact: true }),
   ).toBeVisible();
+  await expect(page.locator(".demo-badge")).toHaveText("EXTRATREES · АРХИВ");
   await expect(page.getByText("58.1 с", { exact: true })).toBeVisible();
   await expect(page.getByLabel("Горизонт прогноза в минутах")).toHaveCount(0);
   await page
@@ -75,6 +76,32 @@ test("official Sasha predictions, archive clock, map and themes", async ({
     page.getByText("sasha-extra-trees-v2", { exact: false }),
   ).toBeVisible({timeout: 20000});
   expect(errors).toEqual([]);
+});
+
+test("official header and forecast controls show the actual model and fallback", async ({ page, request }) => {
+  const live = await (await request.get("/api/v1/ml/status")).json();
+  await page.route("**/api/v1/ml/status", (route) => route.fulfill({
+    json: {
+      ...live,
+      status: "connected",
+      stale: false,
+      modelVersion: "candidate-v3",
+      metrics: { ...live.metrics, modelFamily: "CandidateRegressor" },
+    },
+  }));
+  await page.goto("/overview?source=official");
+  await expect(page.locator(".demo-badge")).toHaveText("CANDIDATE · АРХИВ");
+  await expect(page.getByText("Candidate · официальный датасет", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Прогноз Candidate", exact: true })).toBeVisible();
+
+  await page.unroute("**/api/v1/ml/status");
+  await page.route("**/api/v1/ml/status", (route) => route.fulfill({
+    json: { ...live, status: "fallback", stale: false },
+  }));
+  await page.reload();
+  await expect(page.locator(".demo-badge")).toHaveText("РЕЗЕРВНЫЙ ПРОГНОЗ");
+  await expect(page.getByText("Резервный прогноз · модель недоступна", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Резервная оценка", exact: true })).toBeVisible();
 });
 
 

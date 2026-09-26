@@ -62,6 +62,13 @@ def test_future_telemetry_cannot_change_features(dataset):
     assert "time_fact_begin" not in dataset.schedule.columns
 
 
+def test_live_plan_ignores_traffic_csv_even_when_present(dataset, tmp_path):
+    live = Dataset(tmp_path, allow_empty_traffic=True)
+    assert live.groups == {}
+    assert live.traffic.empty
+    assert 101 in live.stops
+
+
 def test_future_injected_history_is_also_excluded(dataset):
     assert dataset.feature(point(), dataset.groups[1]) == dataset.feature(point())
 

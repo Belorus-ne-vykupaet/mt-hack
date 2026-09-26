@@ -2,8 +2,19 @@ import { config } from "../shared/config/env";
 import { Radio, Activity } from "lucide-react";
 import { useUi } from "../app/store";
 import { horizonLabel } from "../shared/ui/format";
+import { activeModel, modelDisplayName, useOfficialModelStatus } from "../entities/official-model-status";
 export function Timeline({ compact = false }: { compact?: boolean }) {
   const ui = useUi();
+  const model = useOfficialModelStatus();
+  const forecastLabel = model.isError || model.data?.stale
+    ? "Данные устарели"
+    : model.data?.status === "fallback"
+      ? "Резервная оценка"
+      : model.data?.status === "no_targets"
+        ? "Нет цели прогноза"
+        : activeModel(model.data, model.isError)
+          ? `Прогноз ${modelDisplayName(model.data)}`
+          : "Ожидание прогноза";
   if (config.officialMode)
     return (
       <footer className="timeline official-timeline">
@@ -26,7 +37,7 @@ export function Timeline({ compact = false }: { compact?: boolean }) {
             className={ui.forecastOffsetMin !== 0 ? "active" : ""}
             onClick={() => ui.set({ forecastOffsetMin: 15 })}
           >
-            Прогноз ExtraTrees
+            {forecastLabel}
           </button>
         </div>
         <span className="forecast-live">

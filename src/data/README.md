@@ -2,6 +2,8 @@
 
 Геометрия дорог и остановки: © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright), [ODbL 1.0](https://opendatacommons.org/licenses/odbl/1-0/). Производная база данных OSM; сохраняйте атрибуцию и условия ODbL. Дата снимка записана в `moscow-buses.json`.
 
+Фоновая карта в браузере использует публичные стили и тайлы [OpenFreeMap](https://openfreemap.org/quick_start/) через MapLibre; сервис публикует [условия использования и требования к атрибуции](https://openfreemap.org/tos/). Атрибуция OpenMapTiles и OpenStreetMap отображается непосредственно на карте. Работа фона требует интернет-доступа; это не источник признаков ML.
+
 - Автобус м3: Проспект Будённого — Серебряный Бор — [OSM 3132036](https://www.openstreetmap.org/relation/3132036).
 - Автобус с344: Метро «Охотный Ряд» — 1-й Силикатный проезд — [OSM 3187416](https://www.openstreetmap.org/relation/3187416).
 - Автобус е70: Волгоградский проспект, МКАД — Метро «Китай-город» — [OSM 1807493](https://www.openstreetmap.org/relation/1807493).

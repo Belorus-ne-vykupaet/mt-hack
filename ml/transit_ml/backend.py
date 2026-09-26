@@ -129,27 +129,39 @@ def observed_paths(gps, cutoff):
 
 class Engine:
     def __init__(self):
+        self.mode = os.getenv("TELEMETRY_MODE", "replay")
+        if self.mode not in ("replay", "ndtp"):
+            raise ValueError("TELEMETRY_MODE must be replay or ndtp")
         self.root = Path(os.getenv("OFFICIAL_DATA_DIR", "ml/data/official"))
-        self.dataset = Dataset(self.root / "test")
-        # Only already observed actual arrivals <= T are used to derive current deviation in replay.
-        actual = pd.read_csv(self.root / "test/schedule.csv")
-        actual["actual_ts"] = seconds(actual.time_fact_begin)
-        actual["plan_ts"] = seconds(actual.time_begin)
-        self.actual = {
-            int(k): v.sort_values("actual_ts").dropna(subset=["actual_ts"])
-            for k, v in actual.groupby("tr_id")
-        }
+        live_plan = os.getenv("LIVE_PLAN_DIR") if self.mode == "ndtp" else None
+        if self.mode == "ndtp" and not live_plan:
+            raise ValueError("LIVE_PLAN_DIR is required for NDTP; archived plans are not current")
+        self.dataset = (
+            Dataset(Path(live_plan), allow_empty_traffic=True)
+            if live_plan else Dataset(self.root / "test")
+        )
+        self.actual = {}
+        if self.mode == "replay":
+            # Future actual arrivals are kept for retrospective audit only.
+            actual = pd.read_csv(self.root / "test/schedule.csv")
+            actual["actual_ts"] = seconds(actual.time_fact_begin)
+            actual["plan_ts"] = seconds(actual.time_begin)
+            self.actual = {
+                int(k): v.sort_values("actual_ts").dropna(subset=["actual_ts"])
+                for k, v in actual.groupby("tr_id")
+            }
         self.plans = {int(k): v for k, v in self.dataset.schedule.groupby("tr_id")}
         self.started = time.monotonic()
         self.start = pd.Timestamp(
             os.getenv("REPLAY_START", "2026-01-06 07:27:00"), tz="UTC"
         ).timestamp()
         self.speed = float(os.getenv("REPLAY_SPEED", "0.25"))
-        self.mode = os.getenv("TELEMETRY_MODE", "replay")
-        if self.mode not in ("replay", "ndtp"):
-            raise ValueError("TELEMETRY_MODE must be replay or ndtp")
         self.packet_event = asyncio.Event()
         self.receiver = Receiver(on_packet=self._on_packet)
+        self.unmapped_packets = 0
+        self.mapped_packets = 0
+        self.coalesced_packets = 0
+        self.pipeline_samples_ms = deque(maxlen=256)
         self.cache = None
         self.cache_at = 0.0
         self.lock = asyncio.Lock()
@@ -169,14 +181,12 @@ class Engine:
             .itertuples()
         }
         # Live data requires a matching current plan; no silent shifting of historical schedules.
-        if self.mode == "ndtp" and os.getenv("LIVE_PLAN_DIR"):
-            live = Path(os.environ["LIVE_PLAN_DIR"])
-            self.dataset = Dataset(live)
-            self.plans = {int(k): v for k, v in self.dataset.schedule.groupby("tr_id")}
+        if live_plan:
             self.unit_map = {
                 int(k): int(v)
-                for k, v in json.loads((live / "unit-map.json").read_text()).items()
+                for k, v in json.loads((Path(live_plan) / "unit-map.json").read_text()).items()
             }
+        self.receiver.allowed_units = set(self.unit_map)
         self.model_plans = {
             tr: [
                 {
@@ -205,7 +215,10 @@ class Engine:
                 {
                     "id": f"duty-{tr}",
                     "number": str(tr),
-                    "name": f"План ТС {tr} · официальный CSV" if tr in self.plans else f"ТС {tr} · расписание отсутствует",
+                    "name": (
+                        f"План ТС {tr} · {'текущий план NDTP' if self.mode == 'ndtp' else 'официальный CSV'}"
+                        if tr in self.plans else f"ТС {tr} · расписание отсутствует"
+                    ),
                     "transport_type": "bus",
                     "stops": stops,
                     "vehicle_count": 0,
@@ -226,7 +239,12 @@ class Engine:
 
     def _on_packet(self, row):
         if row["unit_id"] in self.unit_map:
+            self.mapped_packets += 1
+            if self.packet_event.is_set():
+                self.coalesced_packets += 1
             self.packet_event.set()
+        else:
+            self.unmapped_packets += 1
 
     async def stream_forecasts(self):
         """Coalesce live NDTP frames into at most one forecast per second."""
@@ -265,21 +283,27 @@ class Engine:
             targets = {}
             features = {}
             geometries = []
+            live_histories = {}
+            if self.mode == "ndtp":
+                # Index packets once per snapshot. Scanning every unit history for
+                # every route becomes expensive as the live fleet grows.
+                for unit, history in self.receiver.histories.items():
+                    tr = self.unit_map.get(unit)
+                    if tr is None:
+                        continue
+                    rows = [row for row in history if row["ts"] <= cutoff]
+                    if rows:
+                        live_histories.setdefault(tr, []).extend(rows)
             for route in self.catalog:
                 tr = int(route["number"])
                 plan = self.plans.get(tr, self.dataset.schedule.iloc[:0])
-                h = self.dataset.history(tr, cutoff)
                 if self.mode == "ndtp":
-                    rows = [
-                        r
-                        for unit, rows in self.receiver.histories.items()
-                        if self.unit_map.get(unit) == tr
-                        for r in rows
-                        if r["ts"] <= cutoff
-                    ]
+                    rows = live_histories.get(tr)
                     if not rows:
                         continue
                     h = pd.DataFrame(rows).sort_values("ts")
+                else:
+                    h = self.dataset.history(tr, cutoff)
                 gps = h[
                     h.location_valid.eq(True)
                     & h.lat.between(-90, 90)
@@ -343,13 +367,16 @@ class Engine:
                         )
                 vehicle_id = f"vehicle-{tr}"
                 if forecast_status == "pending":
+                    # The model uses only the last 30 minutes; avoid uploading
+                    # older map-trail packets on every packet-triggered forecast.
+                    model_history = h[h.ts >= cutoff - 1800]
                     point = {
                         "tr_id": tr, "T": cutoff,
                         "target_stop_id": target["tt_action_item_id"],
                         "target_time_begin": target["time_begin"],
                         "cur_dev_s": cur if cur is not None else float("nan"),
                     }
-                    feature = self.dataset.feature(point, h)
+                    feature = self.dataset.feature(point, model_history)
                     targets[vehicle_id] = target
                     features[vehicle_id] = feature
                     items.append({
@@ -373,7 +400,7 @@ class Engine:
                                 "speed": finite_number(row.speed),
                                 "heading": finite_number(row.heading),
                             }
-                            for row in h.itertuples()
+                            for row in model_history.itertuples()
                         ],
                         "schedule": self.model_plans[tr],
                     })
@@ -454,6 +481,13 @@ class Engine:
                         v["predicted_delay_sec"] = p["delaySec"]
                         v["risk_probability"] = p["lateProbability"]
                         v["risk_level"] = risk(p["delaySec"])
+                        # The classifier can warn about >120 s lateness even when
+                        # the regression point estimate is below that threshold.
+                        # Keep the route badge and attention list consistent with
+                        # the alert, without treating uncalibrated probability as
+                        # evidence for a high/critical severity.
+                        if p["lateProbability"] >= 0.5 and v["risk_level"] == "normal":
+                            v["risk_level"] = "elevated"
                     self.status = "connected"
                     self.last_ml_ms = result["latencyMs"]
                     self.last_error = None
@@ -503,7 +537,7 @@ class Engine:
             at_risk = sum(
                 v["current_delay_sec"] < -60
                 or (-60 <= v["current_delay_sec"] <= 120 and
-                    (v["predicted_delay_sec"] > 120 or v["predicted_delay_sec"] < -60))
+                    v["risk_level"] not in ("normal", "unknown"))
                 for v in assessed
             )
             def avg(key):
@@ -550,7 +584,7 @@ class Engine:
                         if v["risk_level"] == "high"
                         else "warning",
                         "title": f"ТС {v['id'].removeprefix('vehicle-')} · {v['next_stop']['name']}",
-                        "description": f"Остановка через {lead_time / 60:.1f} мин · план {iso(target['ts'])[11:16]}, ожидается {iso(eta)[11:16]} (часы CSV). Наблюдаемый фактор: {reason}. "
+                        "description": f"Остановка через {lead_time / 60:.1f} мин · план {iso(target['ts'])[11:16]}, ожидается {iso(eta)[11:16]} ({'часы текущего плана' if self.mode == 'ndtp' else 'часы CSV'}). Наблюдаемый фактор: {reason}. "
                         + (
                             "ExtraTrees; вероятность опоздания >120 с по отдельному классификатору."
                             if self.status == "connected"
@@ -606,6 +640,7 @@ class Engine:
             }
             self.cache_at = time.monotonic()
             self.last_ms = round((time.perf_counter() - begin) * 1000, 2)
+            self.pipeline_samples_ms.append(self.last_ms)
             return self.cache
 
 
@@ -668,9 +703,28 @@ async def status():
         "metrics": e.metrics,
         "pipelineMs": e.last_ms,
         "inferenceMs": e.last_ml_ms,
-        "ndtp": e.receiver.status(),
+        "ndtp": {
+            **e.receiver.status(),
+            "mappedPackets": e.mapped_packets,
+            "unmappedPackets": e.unmapped_packets,
+            "coalescedPackets": e.coalesced_packets,
+            "forecastPending": e.packet_event.is_set(),
+        },
+        "pipelineLatencyMs": {
+            "samples": len(e.pipeline_samples_ms),
+            "p50": round(float(np.percentile(e.pipeline_samples_ms, 50)), 2)
+            if e.pipeline_samples_ms else None,
+            "p95": round(float(np.percentile(e.pipeline_samples_ms, 95)), 2)
+            if e.pipeline_samples_ms else None,
+            "p99": round(float(np.percentile(e.pipeline_samples_ms, 99)), 2)
+            if e.pipeline_samples_ms else None,
+        },
         "lastError": e.last_error,
-        "clockNote": "Время исходного CSV без указанной временной зоны; часы не переводятся в МСК.",
+        "clockNote": (
+            "Время NDTP и текущего плана сравнивается в UTC; требуется согласованная временная шкала."
+            if e.mode == "ndtp" else
+            "Время исходного CSV без указанной временной зоны; часы не переводятся в МСК."
+        ),
         "predictedVehicles": e.cache["summary"]["vehicles_predicted"],
         "locatedVehicles": e.cache["summary"]["vehicles_located"],
         "freshVehicles": e.cache["summary"]["vehicles_active"],

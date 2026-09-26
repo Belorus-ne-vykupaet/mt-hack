@@ -9,4 +9,5 @@ COPY contracts ./contracts
 RUN mkdir -p server/data && chown -R node:node server/data
 USER node
 EXPOSE 8081
-CMD ["pnpm", "api:serve"]
+ENV NODE_EXTRA_CA_CERTS=/app/server/certs/russian-trusted-root-ca.pem
+CMD ["./node_modules/.bin/tsx", "--env-file-if-exists=server/weather-demo.env", "--env-file-if-exists=server/.env", "server/index.ts"]

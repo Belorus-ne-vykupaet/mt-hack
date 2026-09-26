@@ -7,7 +7,7 @@ import httpx
 import pandas as pd
 import pytest
 
-from transit_ml.backend import Engine
+from transit_ml.backend import Engine, app, status
 
 T = pd.Timestamp("2026-01-06T17:50:00Z")
 
@@ -122,6 +122,35 @@ def test_ndtp_loss_keeps_last_position_and_new_packet_recovers(fleet, monkeypatc
     assert s['vehicles'][0]['position']['lon'] == 37.64
 
 
+def test_ndtp_indexes_shared_route_and_sends_only_recent_model_history(fleet, monkeypatch):
+    fleet.mode = 'ndtp'
+    fleet.unit_map[101] = 1
+    monkeypatch.setattr('transit_ml.backend.time.time', lambda: T.timestamp())
+    row = dict(lat=55.75, lon=37.63, location_valid=True,
+               speed=20, heading=90)
+    fleet.receiver.histories[1] = deque([
+        {**row, 'ts': T.timestamp() - 3600},
+        {**row, 'ts': T.timestamp() - 20},
+    ], maxlen=1500)
+    fleet.receiver.histories[101] = deque([
+        {**row, 'ts': T.timestamp() - 10, 'lon': 37.631},
+    ], maxlen=1500)
+    fleet.receiver.histories[999] = deque([
+        {**row, 'ts': T.timestamp()},
+    ], maxlen=1500)
+    requests = []
+    def model(request):
+        requests.append(json.loads(request.content))
+        return reply(request)
+    result = snapshot(fleet, model)
+    item = requests[0]['items'][0]
+    assert len(result['vehicles']) == 1
+    assert item['vehicleId'] == 'vehicle-1'
+    assert [pd.Timestamp(point['event_time']).timestamp()
+            for point in item['telemetry']] == [T.timestamp() - 20, T.timestamp() - 10]
+    assert result['vehicles'][0]['position']['lon'] == 37.631
+
+
 def test_target_window_closes_but_vehicle_remains(fleet):
     before = snapshot(fleet)
     assert next(v for v in before['vehicles'] if v['id'] == 'vehicle-1')['forecast_status'] == 'ready'
@@ -133,6 +162,21 @@ def test_target_window_closes_but_vehicle_remains(fleet):
     assert vehicle['forecast_horizon_sec'] is None
     assert vehicle['predicted_delay_sec'] is None
     assert len(after['vehicles']) == len(before['vehicles'])
+
+
+@pytest.mark.parametrize('seconds,expected', [(600, False), (601, True),
+                                               (900, True), (901, False)])
+def test_backend_uses_strict_horizon_edges(fleet, seconds, expected):
+    future = fleet.plans[1].ts > T.timestamp()
+    target_id = int(fleet.plans[1].loc[future, 'tt_action_item_id'].iloc[0])
+    target_time = (T + pd.Timedelta(seconds=seconds)).isoformat()
+    fleet.plans[1].loc[future, ['ts', 'time_begin']] = [T.timestamp() + seconds, target_time]
+    fleet.dataset.stops[target_id]['ts'] = T.timestamp() + seconds
+    fleet.dataset.stops[target_id]['time_begin'] = target_time
+    result = snapshot(fleet)
+    vehicle = next(v for v in result['vehicles'] if v['id'] == 'vehicle-1')
+    assert (vehicle['forecast_status'] == 'ready') is expected
+    assert (vehicle['forecast_horizon_sec'] == seconds) is expected
 
 
 def test_warning_is_first_published_in_window_and_never_backdated(fleet):
@@ -159,6 +203,24 @@ def test_warning_is_first_published_in_window_and_never_backdated(fleet):
     late = snapshot(fleet)
     assert warning['id'] not in {a['id'] for a in late['alerts']}
     assert all(600 < a['lead_time_sec'] <= 900 for a in late['alerts'])
+
+
+def test_classifier_warning_is_visible_in_route_attention_list(fleet):
+    def uncertain_late(request):
+        body = json.loads(request.content)
+        return httpx.Response(200, json={
+            "asOf": body["asOf"], "latencyMs": 1,
+            "predictions": [{"vehicleId": item["vehicleId"], "delaySec": 105,
+                             "lateProbability": .67} for item in body["items"]],
+        })
+
+    s = snapshot(fleet, uncertain_late)
+    warned_ids = {alert["route_id"] for alert in s["alerts"]}
+    assert warned_ids
+    assert all(route["risk_level"] == "elevated"
+               for route in s["routes"] if route["id"] in warned_ids)
+    assert s["summary"]["at_risk_percent"] == 100
+    assert s["summary"]["on_time_percent"] == 0
 
 
 def test_early_actual_arrival_is_not_forecast_after_event(fleet):
@@ -230,6 +292,36 @@ def test_ndtp_packet_publishes_warning_without_ui_poll(fleet, monkeypatch):
                     pass
 
     asyncio.run(run())
+
+
+def test_ndtp_status_counts_unmapped_packets_and_bounded_latency(fleet, monkeypatch):
+    fleet.mode = 'ndtp'
+    monkeypatch.setattr('transit_ml.backend.time.time', lambda: T.timestamp())
+    unknown = dict(unit_id=999, ts=T.timestamp(), lat=55.75, lon=37.63,
+                   location_valid=True, speed=20, heading=90)
+    fleet._on_packet(unknown)
+    assert fleet.unmapped_packets == 1
+    assert not fleet.packet_event.is_set()
+    fleet.receiver.histories[999] = deque([unknown], maxlen=1500)
+    fleet._on_packet({**unknown, 'unit_id': 1})
+    fleet._on_packet({**unknown, 'unit_id': 1})
+    assert fleet.mapped_packets == 2 and fleet.coalesced_packets == 1
+    assert fleet.packet_event.is_set()
+    snapshot(fleet)
+    app.state.engine = fleet
+    report = asyncio.run(status())
+    assert report['ndtp']['unmappedPackets'] == 1
+    assert report['ndtp']['forecastPending']
+    assert report['pipelineLatencyMs']['samples'] == 1
+    assert report['pipelineLatencyMs']['p95'] >= 0
+
+
+def test_ndtp_requires_current_plan(monkeypatch, tmp_path):
+    monkeypatch.setenv('TELEMETRY_MODE', 'ndtp')
+    monkeypatch.delenv('LIVE_PLAN_DIR', raising=False)
+    monkeypatch.setenv('OFFICIAL_DATA_DIR', str(tmp_path))
+    with pytest.raises(ValueError, match='LIVE_PLAN_DIR'):
+        Engine()
 
 
 def test_ndtp_tcp_frame_reaches_forecast_and_warning(fleet, monkeypatch):

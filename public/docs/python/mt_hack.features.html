@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Python: module mt_hack.features</title>
+</head><body>
+
+<table class="heading">
+<tr class="heading-text decor">
+<td class="title">&nbsp;<br><strong class="title"><a href="mt_hack.html" class="white">mt_hack</a>.features</strong></td>
+<td class="extra"><a href=".">index</a><br><a href="https://github.com/Belorus-ne-vykupaet/mt-hack/blob/main/src/mt_hack/features.py">Исходный код</a></td></tr></table>
+    <p><span class="code">Shared&nbsp;offline/online&nbsp;features.&nbsp;Fact&nbsp;arrival&nbsp;columns&nbsp;are&nbsp;never&nbsp;read.<br>
+&nbsp;<br>
+For&nbsp;every&nbsp;point,&nbsp;all&nbsp;telemetry&nbsp;comes&nbsp;from&nbsp;event_time&nbsp;&lt;=&nbsp;T.&nbsp;Sequence&nbsp;bins&nbsp;are<br>
+right-closed;&nbsp;invalid&nbsp;GPS&nbsp;never&nbsp;becomes&nbsp;a&nbsp;valid&nbsp;zero&nbsp;coordinate.</span></p>
+<p>
+<table class="section">
+<tr class="decor pkg-content-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Modules</strong></td></tr>
+
+<tr><td class="decor pkg-content-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><table><tr><td class="multicolumn"><a href="argparse.html">argparse</a><br>
+</td><td class="multicolumn"><a href="json.html">json</a><br>
+</td><td class="multicolumn"><a href="numpy.html">numpy</a><br>
+</td><td class="multicolumn"><a href="pandas.html">pandas</a><br>
+</td></tr></table></td></tr></table><p>
+<table class="section">
+<tr class="decor functions-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Functions</strong></td></tr>
+
+<tr><td class="decor functions-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><dl><dt><a name="-build_features"><strong>build_features</strong></a>(points, traffic, plan)</dt><dd><span class="code">Return&nbsp;numeric&nbsp;table&nbsp;and&nbsp;30&nbsp;x&nbsp;8&nbsp;past-telemetry&nbsp;tensors&nbsp;for&nbsp;each&nbsp;point.</span></dd></dl>
+ <dl><dt><a name="-load_split"><strong>load_split</strong></a>(root, split)</dt></dl>
+ <dl><dt><a name="-main"><strong>main</strong></a>()</dt></dl>
+ <dl><dt><a name="-seconds"><strong>seconds</strong></a>(values)</dt></dl>
+</td></tr></table><p>
+<table class="section">
+<tr class="decor data-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Data</strong></td></tr>
+
+<tr><td class="decor data-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><strong>PLAN_COLUMNS</strong> = ['tt_action_item_id', 'tr_id', 'time_begin', 'geom']<br>
+<strong>SEQ_NAMES</strong> = ['speed_mean', 'speed_max', 'stopped_fraction', 'target_dx_km', 'target_dy_km', 'count', 'gps_fraction', 'observed']<br>
+<strong>TRAFFIC_COLUMNS</strong> = ['tr_id', 'event_time', 'location_valid', 'lon', 'lat', 'speed', 'heading']</td></tr></table>
+</body></html>

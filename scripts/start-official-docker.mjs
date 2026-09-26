@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import { randomBytes } from "node:crypto";
-import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { resolve, relative, sep } from "node:path";
 
 function keyFrom(file, name) {
   if (!existsSync(file)) return undefined;
@@ -24,15 +25,34 @@ if (!existsSync("ml/artifacts/sasha/ensemble.joblib")) {
 mkdirSync(target, { recursive: true });
 for (const name of ["schedule.csv", "traffic.csv"])
   copyFileSync(`${source}/${name}`, `${target}/${name}`);
-rmSync("docker/local-data/live", { recursive: true, force: true });
-mkdirSync("docker/local-data/live", { recursive: true });
-writeFileSync("docker/local-data/live/.keep", "");
-if (process.env.TELEMETRY_MODE === "ndtp") {
-  for (const name of ["schedule_plan.csv", "traffic.csv", "unit-map.json"]) {
-    if (!existsSync(`ml/data/live/${name}`))
-      throw new Error(`Для NDTP не найден ml/data/live/${name}`);
-    copyFileSync(`ml/data/live/${name}`, `docker/local-data/live/${name}`);
+const liveTarget = "docker/local-data/live";
+const ndtpMode = process.env.TELEMETRY_MODE === "ndtp";
+const liveSource = process.env.LIVE_PLAN_DIR || "ml/data/live";
+const canonical = (path) => existsSync(path) ? realpathSync(path) : resolve(path);
+const relativeLiveSource = relative(canonical(liveTarget), canonical(liveSource));
+const sourceInsideTarget = ndtpMode && relativeLiveSource !== ""
+  && relativeLiveSource !== ".." && !relativeLiveSource.startsWith(`..${sep}`);
+if (sourceInsideTarget) {
+  throw new Error("LIVE_PLAN_DIR не должен находиться внутри docker/local-data/live");
+}
+const sameLiveDirectory = ndtpMode && canonical(liveSource) === canonical(liveTarget);
+if (ndtpMode) {
+  for (const name of ["schedule_plan.csv", "unit-map.json"]) {
+    if (!existsSync(`${liveSource}/${name}`))
+      throw new Error(`Для NDTP не найден ${liveSource}/${name}`);
   }
+}
+if (!sameLiveDirectory) {
+  rmSync(liveTarget, { recursive: true, force: true });
+  mkdirSync(liveTarget, { recursive: true });
+  writeFileSync(`${liveTarget}/.keep`, "");
+}
+if (ndtpMode) {
+  for (const name of ["schedule_plan.csv", "unit-map.json"]) {
+    if (!sameLiveDirectory) copyFileSync(`${liveSource}/${name}`, `${liveTarget}/${name}`);
+  }
+  if (!sameLiveDirectory && existsSync(`${liveSource}/traffic.csv`))
+    copyFileSync(`${liveSource}/traffic.csv`, `${liveTarget}/traffic.csv`);
 }
 
 const apiToken = process.env.API_TOKEN || randomBytes(32).toString("hex");

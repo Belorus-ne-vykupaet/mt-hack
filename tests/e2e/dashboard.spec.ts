@@ -608,7 +608,10 @@ test("3D bus model loads locally, follows forecast, remains selectable and respe
   await expect(page.locator(".detail-panel")).toContainText("ТС 742");
   await page.getByRole("button", { name: "Включить светлую тему" }).click();
   await expect(map).toHaveAttribute("data-map-theme", "light");
-  await expect(map).toHaveAttribute("data-bus-models", "120");
+  // Theme changes recreate the external map style; wait for that style before
+  // asserting that the model has been attached to the new WebGL context.
+  await expect(map).toHaveAttribute("data-map-ready", "true", { timeout: 30000 });
+  await expect(map).toHaveAttribute("data-bus-models", "120", { timeout: 30000 });
   await page.getByRole("button", { name: "Переключить карту в 2D" }).click();
   await expect(map).toHaveAttribute("data-bus-models", "0");
   expect(errors).toEqual([]);
@@ -620,10 +623,11 @@ test("failed 3D model preserves transport as icons with a clear status", async (
   // MSW owns requests in this demo, so intercept fetch before the service worker.
   await page.addInitScript(() => {
     const fetchOriginal = window.fetch;
+    (window as unknown as { failBusModel: boolean }).failBusModel = true;
     window.fetch = (input, init) =>
       String(input instanceof Request ? input.url : input).includes(
         "/models/bus.glb",
-      )
+      ) && (window as unknown as { failBusModel: boolean }).failBusModel
         ? Promise.reject(new TypeError("Model unavailable for test"))
         : fetchOriginal(input, init);
   });
@@ -643,6 +647,14 @@ test("failed 3D model preserves transport as icons with a clear status", async (
     .getByRole("button", { name: /ТС 742/ })
     .click();
   await expect(page.locator(".detail-panel")).toContainText("ТС 742");
+  await page.evaluate(() => {
+    (window as unknown as { failBusModel: boolean }).failBusModel = false;
+  });
+  await page.getByRole("button", { name: "Переключить карту в 2D" }).click();
+  await page.getByRole("button", { name: "Переключить карту в 3D" }).click();
+  await expect(page.locator(".map-shell")).toHaveAttribute(
+    "data-bus-model-status", "ready", { timeout: 30000 },
+  );
 });
 
 test("dispatcher applies a fleet and dwell scenario, persists it, and undo restores the network", async ({

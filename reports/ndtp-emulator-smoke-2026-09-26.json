@@ -1,0 +1,54 @@
+{
+  "measuredAt": "2026-09-26T10:44:34.277019+00:00",
+  "scope": "Official emulator binary TCP with synthetic current plan; transport/integration test only",
+  "backend": {
+    "mode": "official-ndtp",
+    "status": "connected",
+    "predictedVehicles": 1,
+    "warningsIssued": 1,
+    "ndtp": {
+      "frames": 52,
+      "errors": 0,
+      "connections": 2,
+      "units": 1,
+      "lastPacketAt": 1790419473.3998249,
+      "lastPacketAgeSec": 0.9,
+      "outOfOrderFrames": 0,
+      "staleFrames": 0,
+      "ignoredUnits": 19,
+      "mappedPackets": 33,
+      "unmappedPackets": 19,
+      "coalescedPackets": 0,
+      "forecastPending": false
+    },
+    "pipelineLatencyMs": {
+      "samples": 48,
+      "p50": 73.19,
+      "p95": 109.73,
+      "p99": 191.49
+    }
+  },
+  "vehicle": [
+    {
+      "id": "vehicle-99116336",
+      "forecastHorizonSec": 758.60001039505,
+      "predictedDelaySec": 108.37125,
+      "riskLevel": "elevated",
+      "model": "sasha-extra-trees-v2"
+    }
+  ],
+  "alerts": [
+    {
+      "id": "forecast-vehicle-99116336-99110002",
+      "leadTimeSec": 860.0,
+      "modelStatus": "ready"
+    }
+  ],
+  "api": {
+    "status": "connected",
+    "stale": false,
+    "alerts": [
+      "forecast-vehicle-99116336-99110002"
+    ]
+  }
+}

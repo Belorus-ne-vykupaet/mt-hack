@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Python: module transit_ml.features</title>
+</head><body>
+
+<table class="heading">
+<tr class="heading-text decor">
+<td class="title">&nbsp;<br><strong class="title"><a href="transit_ml.html" class="white">transit_ml</a>.features</strong></td>
+<td class="extra"><a href=".">index</a><br><a href="https://github.com/Belorus-ne-vykupaet/mt-hack/blob/main/ml/transit_ml/features.py">Исходный код</a></td></tr></table>
+    <p><span class="code">Shared,&nbsp;causal&nbsp;features&nbsp;for&nbsp;batch&nbsp;training&nbsp;and&nbsp;online&nbsp;inference&nbsp;(event_time&nbsp;&lt;=&nbsp;T).</span></p>
+<p>
+<table class="section">
+<tr class="decor pkg-content-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Modules</strong></td></tr>
+
+<tr><td class="decor pkg-content-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><table><tr><td class="multicolumn"><a href="math.html">math</a><br>
+</td><td class="multicolumn"><a href="numpy.html">numpy</a><br>
+</td><td class="multicolumn"><a href="pandas.html">pandas</a><br>
+</td><td class="multicolumn"></td></tr></table></td></tr></table><p>
+<table class="section">
+<tr class="decor index-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Classes</strong></td></tr>
+
+<tr><td class="decor index-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><dl>
+<dt class="heading-text"><a href="builtins.html#object">builtins.object</a>
+</dt><dd>
+<dl>
+<dt class="heading-text"><a href="transit_ml.features.html#Dataset">Dataset</a>
+</dt></dl>
+</dd>
+</dl>
+ <p>
+<table class="section">
+<tr class="decor title-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><a name="Dataset">class <strong>Dataset</strong></a>(<a href="builtins.html#object">builtins.object</a>)</td></tr>
+
+<tr><td class="decor title-decor" rowspan=2><span class="code">&nbsp;&nbsp;&nbsp;</span></td>
+<td class="decor title-decor" colspan=2><span class="code"><a href="#Dataset">Dataset</a>(folder:&nbsp;pathlib.Path,&nbsp;allow_empty_traffic=False)<br>
+&nbsp;<br>
+Load&nbsp;plan&nbsp;separately;&nbsp;future&nbsp;actual&nbsp;arrivals&nbsp;and&nbsp;labels&nbsp;never&nbsp;enter&nbsp;feature&nbsp;construction.<br>&nbsp;</span></td></tr>
+<tr><td>&nbsp;</td>
+<td class="singlecolumn">Methods defined here:<br>
+<dl><dt><a name="Dataset-__init__"><strong>__init__</strong></a>(self, folder: pathlib.Path, allow_empty_traffic=False)</dt><dd><span class="code">Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</span></dd></dl>
+
+<dl><dt><a name="Dataset-feature"><strong>feature</strong></a>(self, point: dict, history=None)</dt></dl>
+
+<dl><dt><a name="Dataset-history"><strong>history</strong></a>(self, tr_id: int, cutoff: float)</dt></dl>
+
+<dl><dt><a name="Dataset-last_position"><strong>last_position</strong></a>(self, tr_id: int, cutoff: float)</dt><dd><span class="code">Last&nbsp;valid&nbsp;observation&nbsp;at&nbsp;or&nbsp;before&nbsp;T,&nbsp;even&nbsp;after&nbsp;a&nbsp;telemetry&nbsp;outage.</span></dd></dl>
+
+<dl><dt><a name="Dataset-matrix"><strong>matrix</strong></a>(self, points)</dt></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><span class="code">dictionary&nbsp;for&nbsp;instance&nbsp;variables</span></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><span class="code">list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object</span></dd>
+</dl>
+</td></tr></table></td></tr></table><p>
+<table class="section">
+<tr class="decor functions-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Functions</strong></td></tr>
+
+<tr><td class="decor functions-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><dl><dt><a name="-distance"><strong>distance</strong></a>(lon, lat, target_lon, target_lat)</dt></dl>
+ <dl><dt><a name="-seconds"><strong>seconds</strong></a>(values)</dt></dl>
+</td></tr></table><p>
+<table class="section">
+<tr class="decor data-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Data</strong></td></tr>
+
+<tr><td class="decor data-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><strong>FEATURES</strong> = ['cur_dev_s', 'horizon_s', 'hour_sin', 'hour_cos', 'weekday', 'speed_last', 'speed_mean_120', 'speed_mean_600', 'speed_std_600', 'stopped_ratio_600', 'samples_600', 'telemetry_age_s', 'gps_age_s', 'dwell_s', 'distance_target_m', 'required_speed_kmh', 'heading_delta', 'target_lat', 'target_lon']</td></tr></table>
+</body></html>

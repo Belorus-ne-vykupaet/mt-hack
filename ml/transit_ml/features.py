@@ -49,8 +49,16 @@ def distance(lon, lat, target_lon, target_lat):
 class Dataset:
     """Load plan separately; future actual arrivals and labels never enter feature construction."""
 
-    def __init__(self, folder: Path):
-        self.traffic = pd.read_csv(folder / "traffic.csv", low_memory=False)
+    def __init__(self, folder: Path, allow_empty_traffic=False):
+        if allow_empty_traffic:
+            # Live NDTP supplies history from Receiver. Ignore even a present
+            # traffic.csv so old telemetry cannot enter the live catalog.
+            self.traffic = pd.DataFrame(
+                columns=["tr_id", "unit_id", "event_time", "location_valid",
+                         "lon", "lat", "speed", "heading"]
+            )
+        else:
+            self.traffic = pd.read_csv(folder / "traffic.csv", low_memory=False)
         self.traffic["ts"] = seconds(self.traffic.event_time)
         self.traffic = self.traffic.sort_values("ts", kind="stable")
         plan = folder / (

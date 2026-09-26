@@ -27,6 +27,7 @@ import {
 import { useNetwork, useGeometries, queryClient } from "../entities/queries";
 import { useUi } from "./store";
 import { config } from "../shared/config/env";
+import { activeModel, modelDisplayName, modelHeaderLabel, useOfficialModelStatus } from "../entities/official-model-status";
 
 import { AlertsPanel } from "../widgets/AlertsPanel";
 import { Timeline } from "../widgets/Timeline";
@@ -57,6 +58,7 @@ export default function App() {
   const { theme, setTheme } = useTheme();
   const [listView, setListView] = useState<NetworkListKind | null>(null);
   const net = useNetwork();
+  const officialModel = useOfficialModelStatus();
   const ui = useUi();
   const dispatchPlans = useDispatch((s) => s.plans);
   const activePlanCount = dispatchPlans.filter(
@@ -199,7 +201,7 @@ export default function App() {
         <div className="header-status">
           <span className="demo-badge">
             {config.officialMode
-              ? "CATBOOST · АРХИВ"
+              ? modelHeaderLabel(officialModel.data, officialModel.isError)
               : config.csvMode
                 ? "CSV · АРХИВ"
                 : config.dataSource === "mock"
@@ -491,7 +493,9 @@ export default function App() {
             <span className="demo-caption">
               <span className="status-dot" />
               {config.officialMode
-                ? "Официальные данные · ExtraTrees"
+                ? `Официальные данные · ${activeModel(officialModel.data, officialModel.isError)
+                  ? modelDisplayName(officialModel.data)
+                  : modelHeaderLabel(officialModel.data, officialModel.isError).toLocaleLowerCase("ru-RU")}`
                 : config.csvMode
                   ? "Воспроизведение CSV"
                   : config.dataSource === "mock"

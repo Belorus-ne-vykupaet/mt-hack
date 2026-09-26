@@ -5,9 +5,11 @@ import type { Alert } from "../entities/models";
 import { Panel, Empty } from "../shared/ui/primitives";
 import { minutes, percent, time } from "../shared/ui/format";
 import { useUi } from "../app/store";
+import { modelDisplayName, useOfficialModelStatus } from "../entities/official-model-status";
 export function AlertsPanel({ alerts }: { alerts: Alert[] }) {
   const [filter, setFilter] = useState("all");
   const [now, setNow] = useState(() => Date.now());
+  const model = useOfficialModelStatus();
   useEffect(() => {
     const timer = setInterval(() => setNow(Date.now()), 30000);
     return () => clearInterval(timer);
@@ -80,7 +82,7 @@ export function AlertsPanel({ alerts }: { alerts: Alert[] }) {
               <div className="alert-location">
                 <MapPin size={12} />
                 {config.officialMode && a.targetTime && a.expectedArrivalAt
-                  ? `План ${time(a.targetTime)} → ожидается ${time(a.expectedArrivalAt)}. Наблюдаемый фактор: ${a.observedFactor ?? "данные телеметрии"}. ${a.modelStatus === "fallback" ? "ML недоступен; резервная оценка." : "Прогноз ExtraTrees."}`
+                  ? `План ${time(a.targetTime)} → ожидается ${time(a.expectedArrivalAt)}. Наблюдаемый фактор: ${a.observedFactor ?? "данные телеметрии"}. ${a.modelStatus === "fallback" ? "ML недоступен; резервная оценка." : `Прогноз ${modelDisplayName(model.data)}.`}`
                   : a.description}
               </div>
               <div className="alert-bottom">
@@ -93,7 +95,7 @@ export function AlertsPanel({ alerts }: { alerts: Alert[] }) {
                 </span>
                 <span>
                   {config.officialMode && a.leadTimeSec ? (
-                    `Выдан ${time(a.createdAt)} · часы CSV`
+                    `Выдан ${time(a.createdAt)} · ${model.data?.mode === "official-ndtp" ? "UTC плана" : "часы CSV"}`
                   ) : config.csvMode || config.officialMode ? (
                     "Архив CSV"
                   ) : (

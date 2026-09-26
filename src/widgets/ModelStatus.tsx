@@ -1,46 +1,21 @@
-import { useQuery } from "@tanstack/react-query";
 import { BrainCircuit, AlertTriangle } from "lucide-react";
-import { integrationRequest } from "../shared/api/integrations";
+import { activeModel, modelDisplayName, useOfficialModelStatus } from "../entities/official-model-status";
 import { config } from "../shared/config/env";
 import "../styles/model-status.css";
-interface Status {
-  mode: string;
-  status: string;
-  stale?: boolean;
-  asOf?: string;
-  modelVersion?: string;
-  pipelineMs?: number;
-  inferenceMs?: number;
-  predictedVehicles?: number;
-  locatedVehicles?: number;
-  freshVehicles?: number;
-  staleVehicles?: number;
-  totalVehicles?: number;
-  scheduledVehicles?: number;
-  contextVehicles?: number;
-  scheduledWithoutPosition?: number;
-  scheduledStale?: number;
-  scheduledWithoutTarget?: number;
-  metrics?: {
-    maeSec: number;
-    persistenceMaeSec: number;
-    trainRows: number;
-    testRows: number;
-  };
-  ndtp?: { frames: number; connections: number };
+
+function countForm(count: number | undefined, one: string, few: string, many: string) {
+  if (count === undefined) return many;
+  const lastTwo = count % 100;
+  if (lastTwo >= 11 && lastTwo <= 14) return many;
+  const last = count % 10;
+  return last === 1 ? one : last >= 2 && last <= 4 ? few : many;
 }
-const loadStatus = () => integrationRequest<Status>("/ml/status");
+
 export function ModelStatus() {
-  const state = useQuery({
-    queryKey: ["official-model-status"],
-    queryFn: loadStatus,
-    enabled: config.officialMode,
-    refetchInterval: 5000,
-    retry: false,
-  });
+  const state = useOfficialModelStatus();
   if (!config.officialMode) return null;
   const s = state.data,
-    ready = s?.status === "connected" && !s.stale && !state.isError;
+    ready = activeModel(s, state.isError);
   return (
     <section
       className={`model-status ${ready ? "" : "model-status-warning"}`}
@@ -51,7 +26,9 @@ export function ModelStatus() {
         <div>
           <strong>
             {ready
-              ? "ExtraTrees · официальный датасет"
+              ? `${modelDisplayName(s)} · ${s?.mode === "official-ndtp" ? "поток NDTP" : "официальный датасет"}`
+              : s?.stale || state.isError
+                ? "Данные прогноза устарели"
               : s?.status === "fallback"
                 ? "Резервный прогноз · модель недоступна"
                 : s?.status === "no_targets"
@@ -62,8 +39,9 @@ export function ModelStatus() {
             {s?.mode === "official-ndtp"
               ? "Поток NDTP"
               : "Воспроизведение архива"}{" "}
-            · {s?.asOf?.replace("T", " ").slice(0, 19) || "—"} · часы CSV, без
-            перевода часового пояса
+            · {s?.asOf?.replace("T", " ").slice(0, 19) || "—"} · {s?.mode === "official-ndtp"
+              ? "UTC текущего плана"
+              : "часы CSV, без перевода часового пояса"}
           </span>
         </div>
       </div>
@@ -81,9 +59,9 @@ export function ModelStatus() {
         </div>
       )}
       <p className="fleet-coverage" aria-label="Полнота транспортных данных">
-        <strong>{s?.locatedVehicles ?? "—"} GPS-точек на карте</strong> · {s?.freshVehicles ?? "—"} свежих · {s?.staleVehicles ?? "—"} последних известных · {s?.predictedVehicles ?? "—"} с прогнозом
+        <strong>{s?.locatedVehicles ?? "—"} {countForm(s?.locatedVehicles, "GPS-точка", "GPS-точки", "GPS-точек")} на карте</strong> · {s?.freshVehicles ?? "—"} {countForm(s?.freshVehicles, "свежая", "свежие", "свежих")} · {s?.staleVehicles ?? "—"} последних известных · {s?.predictedVehicles ?? "—"} с прогнозом
         <span>
-          В архиве {s?.totalVehicles ?? "—"} ТС: {s?.scheduledVehicles ?? "—"} с расписанием и {s?.contextVehicles ?? "—"} контекстных без него. По контекстным ТС прогноз не требуется.
+          {s?.mode === "official-ndtp" ? "В потоке" : "В архиве"} {s?.totalVehicles ?? "—"} ТС: {s?.scheduledVehicles ?? "—"} с расписанием и {s?.contextVehicles ?? "—"} контекстных без него. По контекстным ТС прогноз не требуется.
         </span>
         <span>
           Среди ТС с расписанием: {s?.predictedVehicles ?? "—"} с прогнозом сейчас · {s?.scheduledWithoutTarget ?? "—"} без остановки через 10–15 минут · {s?.scheduledStale ?? "—"} с устаревшим GPS · {s?.scheduledWithoutPosition ?? "—"} без позиции.

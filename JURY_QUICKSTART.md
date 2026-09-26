@@ -1,0 +1,64 @@
+# Transit Hub: проверка основного этапа
+
+Этот сценарий отделяет **официальное архивное воспроизведение** от отдельной проверки бинарного NDTP-эмулятора. Учебный план для NDTP не является актуальным расписанием Москвы и не используется для оценки MAE.
+
+## 1. Четыре сервиса и официальный архив
+
+Нужны Docker Compose, Node.js 22+, Python 3 и доступ к [архиву организаторов](https://disk.yandex.ru/d/CA6tsj4aJJ4Aaw). Сырые данные и образ эмулятора в Git не включены; веса модели уже в репозитории.
+
+```sh
+python3 scripts/prepare-official-data.py --save-archive ml/data/official-dataset.zip
+export API_TOKEN="$(openssl rand -hex 32)"
+node scripts/start-official-docker.mjs -d
+docker compose -f compose.official.yaml ps
+```
+
+При наличии ZIP скачивание можно заменить на `python3 scripts/prepare-official-data.py --archive /путь/к/архиву.zip`; для пункта 3 ниже сохраните этот ZIP как `ml/data/official-dataset.zip`. Ожидаются четыре контейнера `frontend`, `api`, `backend`, `ml`; три серверных имеют статус `healthy`.
+
+- [Обзор сети](http://127.0.0.1:8080/overview?source=official): GPS-позиции, доступные прогнозы, целевые остановки, риск и алерты. Время — из CSV, **06.01.2026**, а не текущее время Москвы.
+- [Диспетчерская](http://127.0.0.1:8080/dispatch?source=official): автобус → прогноз/текущая задержка → карточка → черновик действия.
+- [Swagger Backend](http://127.0.0.1:8093/docs), [Swagger ML](http://127.0.0.1:8092/docs), [HTML PyDoc](http://127.0.0.1:8080/docs/python/).
+
+Быстрые проверки: `curl -f http://127.0.0.1:8081/api/v1/health`, `curl -f http://127.0.0.1:8093/status`, `curl -f http://127.0.0.1:8092/health`. Число автобусов с прогнозом зависит от времени среза; контекстные ТС без расписания видны на карте, но не получают фиктивный прогноз. `/api/v1/ml/status` сообщает фактическую версию модели и резервный режим, если ML недоступен.
+
+## 2. Проверка раннего предупреждения и score
+
+```sh
+docker compose -f compose.official.yaml run --rm --no-deps -v "$PWD/scripts:/app/scripts:ro" backend python /app/scripts/audit-early-warnings.py
+python3 -c 'import hashlib,pathlib; print(hashlib.sha256(pathlib.Path("submission/best-6-of-6.csv").read_bytes()).hexdigest())'
+```
+
+[Журнал ранних предупреждений](docs/21-early-warning-evidence.md) отдельно сравнивает первый сигнал с плановой целью и фактическим прибытием, считает полноту и ложные сигналы на фиксированном отрезке. [CSV-сабмит](submission/README.md) содержит 151 уникальную конечную строку; участник подтвердил, что именно этот файл дал 6/6 на платформе. Локальный MAE и скрытая оценка платформы — разные показатели; снимок кабинета платформы нужно приложить к сдаче отдельно.
+
+## 3. Реальный Docker-образ эмулятора NDTP
+
+Для проверки транспортного протокола используется **образ организаторов**, а расписание создаётся скриптом как явно учебный план на текущие минуты. Не используйте январский `schedule.csv` как текущий live-план. В том же shell, где задан `API_TOKEN`:
+
+```sh
+unzip -p ml/data/official-dataset.zip ndtp-telemetry-emulator.tar | docker load
+docker run -d --rm --network transit-hub-official_default -p 127.0.0.1:18080:18080 --name transit-ndtp-emulator ndtp-telemetry-emulator:1.0
+python3 scripts/prepare-ndtp-smoke.py --output docker/local-data/live --target-host backend --target-port 9201
+TELEMETRY_MODE=ndtp docker compose -f compose.official.yaml up -d --no-deps --force-recreate backend
+curl -f http://127.0.0.1:8093/status
+curl -f -X POST http://127.0.0.1:18080/api/config -H 'Content-Type: application/json' --data-binary @docker/local-data/live/emulator-config.json
+```
+
+Через несколько секунд проверьте `curl -f http://127.0.0.1:8093/status`, `curl -f http://127.0.0.1:8093/warnings/audit`, `curl -f http://127.0.0.1:8081/api/v1/alerts` и [карту](http://127.0.0.1:8080/overview?source=official). В `/status` должны увеличиваться счётчики принятых кадров; известное устройство из `unit-map.json` даёт GPS-позицию, прогноз и алерт, пока цель находится строго в окне 10–15 минут. Второе устройство в конфиге не имеет планового соответствия и не должно обрушить сервис. [Сохранённый результат полного контура](reports/ndtp-emulator-smoke-2026-09-26.json) связывает кадры, Backend, API и предупреждение; браузерный просмотр подтверждён отдельно. План пересоздаётся перед **каждым** прогоном: окно уходит по текущим часам. Для 30-минутной проверки используйте `--target-count 10`: учебные цели будут расположены с шагом четыре минуты. Для завершения потока отправьте в `/api/config` `{"targetHost":"backend","targetPort":9201,"units":[]}`.
+
+На реальном оценочном контуре замените учебные `schedule_plan.csv` и `unit-map.json` на действующий план и официальное соответствие устройств. Учебный генератор записывает UTC; время реального плана нужно привести к той же шкале, что и время входящих пакетов NDTP. NDTP передаёт координату/скорость/курс, а не ID остановки; сопоставление с планом выполняет сервис. Без плана либо при старом GPS прогноз остаётся недоступным.
+
+## 4. Производительность и отказоустойчивость
+
+[Протокол и методика](docs/20-reliability-benchmark.md), [скрипт длительного замера](scripts/benchmark-soak.mjs), [холодный старт и контролируемые отказы](scripts/benchmark-container-lifecycle.mjs). Измеренные числа всегда привязаны к длительности, версии, машине и типу потока. Отказ ML даёт явно обозначенный резервный прогноз; потеря Backend оставляет последнее состояние со статусом устаревания. Текущая погода в интерфейсе относится к настоящему моменту и не используется для объяснения архивных задержек.
+
+## 5. Материалы сдачи
+
+| Материал | Проверяемый адрес/файл |
+|---|---|
+| CSV лучшего score | [submission/best-6-of-6.csv](submission/best-6-of-6.csv) и [контрольная сумма](submission/README.md) |
+| Модули и запуск | [compose.official.yaml](compose.official.yaml), этот quickstart, [код NDTP](ml/transit_ml/ndtp.py) |
+| Инструкция для жюри | Этот файл и [основной README](README.md) |
+| Документация | `/docs/python/` сайта, Swagger Backend `/docs`, Swagger ML `/docs`, [OpenAPI шлюза](contracts/integration-openapi.json) |
+| Производительность и дополнительные функции | [методика и результаты](docs/20-reliability-benchmark.md), [аудит горизонта](docs/21-early-warning-evidence.md) |
+
+Локальные адреса открываются на компьютере, где запущен Compose. Если жюри открывает ссылки удалённо, предоставьте доступный стенд с теми же страницами; GitHub-ссылка на код сама по себе не открывает локальный Swagger. Не публикуйте исходные CSV/образ организаторов и серверные ключи.

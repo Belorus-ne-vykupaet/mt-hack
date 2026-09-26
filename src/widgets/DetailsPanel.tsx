@@ -20,6 +20,7 @@ import { Panel, Empty, RiskBadge, RouteBadge } from "../shared/ui/primitives";
 import { minutes, riskHex, riskInk, horizonLabel } from "../shared/ui/format";
 import { Chart } from "../shared/ui/Chart";
 import { config } from "../shared/config/env";
+import { useOfficialModelStatus } from "../entities/official-model-status";
 import type { Route, Vehicle, Segment } from "../entities/models";
 import { useNavigate } from "react-router-dom";
 const DebugPanel = () => import("./DebugPanel");
@@ -35,6 +36,8 @@ export function DetailsPanel({
   forecastControl?: boolean;
 }) {
   const ui = useUi();
+  const model = useOfficialModelStatus();
+  const planClock = model.data?.mode === "official-ndtp" ? "UTC плана" : "часы CSV";
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const [tab, setTab] = useState<"overview" | "stops" | "vehicles">("overview");
@@ -218,7 +221,7 @@ export function DetailsPanel({
                   </div>
                   <div className="detail-data">
                     <span>{telemetryAge(vehicle)}</span>
-                    <strong>{vehicle.updatedAt.replace("T", " ").slice(11, 19)} · часы CSV</strong>
+                    <strong>{vehicle.updatedAt.replace("T", " ").slice(11, 19)} · {planClock}</strong>
                   </div>
                 </>
               ) : (
@@ -244,7 +247,7 @@ export function DetailsPanel({
                     vehicle?.forecastTargetTime ||
                     localVehicles[0]?.forecastTargetTime
                   )?.slice(11, 19)}{" "}
-                  · часы CSV. Вероятность — опоздание более 120 секунд.
+                  · {planClock}. Вероятность — опоздание более 120 секунд.
                   Отрицательная задержка означает раннее прибытие. Промежуточный
                   прогноз по минутам не рассчитывается.
                 </p>

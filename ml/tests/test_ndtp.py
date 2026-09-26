@@ -11,10 +11,10 @@ def frame(body, service=1, kind=101):
     return struct.pack("<HHHHBIH", 0x7E7E, len(nph), 0, crc16(nph), 2, 123, 0) + nph
 
 
-def nav():
+def nav(timestamp=None):
     return bytes([0, 0]) + struct.pack(
         "<IIIBBHHHHHBB",
-        int(time.time()),
+        int(time.time()) if timestamp is None else timestamp,
         376173210,
         557551234,
         224,
@@ -94,5 +94,55 @@ def test_tcp_fragmentation_multiple_frames_and_reconnect():
             and len(receiver.histories[123]) == 3
             and len(received) == 3
         )
+
+    asyncio.run(run())
+
+
+def test_old_packet_does_not_replace_latest_position_and_bad_crc_is_counted():
+    async def run():
+        received = []
+        receiver = Receiver(on_packet=received.append)
+        server = await asyncio.start_server(receiver.handle, "127.0.0.1", 0)
+        async with server:
+            port = server.sockets[0].getsockname()[1]
+            _, writer = await asyncio.open_connection("127.0.0.1", port)
+            current = int(time.time())
+            bad = bytearray(frame(nav(current)))
+            bad[-1] ^= 1
+            writer.write(frame(nav(current)) + frame(nav(current - 200)) + bad)
+            await writer.drain()
+            await asyncio.sleep(0.05)
+            writer.close()
+            await writer.wait_closed()
+            await asyncio.sleep(0.02)
+        assert receiver.frames == 1
+        assert receiver.out_of_order_frames == 1
+        assert receiver.errors == 1
+        assert len(received) == 1
+        assert receiver.histories[123][-1]["ts"] == current
+        assert receiver.status()["lastPacketAgeSec"] is not None
+
+    asyncio.run(run())
+
+
+def test_unmapped_unit_is_counted_without_consuming_history_capacity():
+    async def run():
+        received = []
+        receiver = Receiver(max_units=1, on_packet=received.append,
+                            allowed_units={456})
+        server = await asyncio.start_server(receiver.handle, "127.0.0.1", 0)
+        async with server:
+            _, writer = await asyncio.open_connection(
+                "127.0.0.1", server.sockets[0].getsockname()[1]
+            )
+            writer.write(frame(nav()))  # Header unit_id=123 is unmapped.
+            await writer.drain()
+            await asyncio.sleep(0.03)
+            writer.close()
+            await writer.wait_closed()
+            await asyncio.sleep(0.02)
+        assert receiver.frames == 1 and receiver.ignored_units == 1
+        assert receiver.histories == {}
+        assert len(received) == 1
 
     asyncio.run(run())

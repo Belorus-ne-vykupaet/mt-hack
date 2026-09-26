@@ -1,0 +1,20 @@
+{
+  "measuredAt": "2026-09-26T10:43:55.437533+00:00",
+  "scope": "Synthetic current plan; official emulator binary TCP; not a forecast accuracy test",
+  "before": {
+    "frames": 30,
+    "status": "connected",
+    "predictedVehicles": 1
+  },
+  "during": {
+    "frames": 30,
+    "status": "connected",
+    "predictedVehicles": 1
+  },
+  "recovered": {
+    "frames": 32,
+    "status": "connected",
+    "predictedVehicles": 1
+  },
+  "pauseSec": 8
+}

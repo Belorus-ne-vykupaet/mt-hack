@@ -73,6 +73,7 @@ export default function NetworkMap({
   const documentVisible = useDocumentVisible();
   const map = useRef<LibreMap | undefined>(undefined);
   const overlay = useRef<MapLibreOverlay | undefined>(undefined);
+  const busModeEpoch = useRef(0);
   const [ready, setReady] = useState(false);
   const [weatherMap, setWeatherMap] = useState<LibreMap | null>(null);
   const [failed, setFailed] = useState(false);
@@ -154,6 +155,7 @@ export default function NetworkMap({
     setReady(false);
     setWeatherMap(null);
     setBusReady(false);
+    setBusFailed(false);
     // eslint-disable-next-line react/set-state-in-effect
     setLoading(true);
     // eslint-disable-next-line react/set-state-in-effect
@@ -362,6 +364,15 @@ export default function NetworkMap({
   }, [styleUrl, dark, generation, documentVisible]);
 
   useEffect(() => {
+    // Entering 3D is an explicit retry after a model-loading failure.
+    busModeEpoch.current += 1;
+    if (mode === "flow") {
+      setBusReady(false);
+      setBusFailed(false);
+    }
+  }, [mode]);
+
+  useEffect(() => {
     if (!ready || !map.current) return;
     if (mode === "flow") {
       map.current.dragRotate.enable();
@@ -528,42 +539,6 @@ export default function NetworkMap({
     ),
     [physicalStops, ui.selectedStopId, zoom],
   );
-  const busSceneLayer = useMemo(() => new ScenegraphLayer({
-    id: "bus-models",
-    data: ui.vehiclesVisible ? busVisualData : [],
-    scenegraph: "/models/bus.glb",
-    getPosition: (vehicle) => [vehicle.position.lon, vehicle.position.lat, 1],
-    getOrientation: (vehicle) => [0, 180 - vehicle.headingDeg, 90],
-    getScale: (vehicle) => vehicle.id === ui.selectedVehicleId
-      ? [0.75, 0.5625, 1.25] : [0.6, 0.45, 1],
-    sizeScale: 7.8 * 2.7,
-    sizeMinPixels: (zoom < 11 ? 15 : 21) * 2.7,
-    sizeMaxPixels: 54 * 2.7,
-    getColor: (vehicle) => [
-      ...(vehicle.telemetryStale ? [155, 165, 175] as const : [255, 255, 255] as const),
-      ui.selectedRouteId && vehicle.routeId !== ui.selectedRouteId ? 170 : 255,
-    ],
-    updateTriggers: {
-      getColor: [ui.selectedRouteId],
-      getScale: [ui.selectedVehicleId],
-    },
-    _lighting: "pbr",
-    getScene: (gltf) => {
-      if (gltf?.scenes?.[0]) {
-        queueMicrotask(() => setBusReady(true));
-        return gltf.scenes[0];
-      }
-      return null;
-    },
-    onError: () => {
-      setBusFailed(true);
-      return true;
-    },
-    pickable: true,
-    onClick: ({ object }) => {
-      if (object) useUi.getState().selectVehicle(object.id, object.routeId);
-    },
-  }), [busVisualData, ui.vehiclesVisible, ui.selectedVehicleId, ui.selectedRouteId, zoom]);
   useEffect(() => {
     if (!ready || !overlay.current) return;
     const selected = ui.selectedRouteId;
@@ -640,7 +615,7 @@ export default function NetworkMap({
         id: "vehicles",
         billboard: true,
         data:
-          ui.vehiclesVisible && (mode !== "flow" || busFailed)
+          ui.vehiclesVisible && (mode !== "flow" || busFailed || !busReady)
             ? displayedVehicles
             : [],
         getPosition: (d) => [d.position.lon, d.position.lat, 9],
@@ -667,7 +642,7 @@ export default function NetworkMap({
         id: "vehicle-icons",
         parameters: { depthCompare: "always", depthWriteEnabled: false },
         data:
-          ui.vehiclesVisible && (mode !== "flow" || busFailed)
+          ui.vehiclesVisible && (mode !== "flow" || busFailed || !busReady)
             ? currentVehicles
             : [],
         iconAtlas: "/bus-icon.svg",
@@ -763,14 +738,63 @@ export default function NetworkMap({
           transitions: reducedMotion ? {} : { getElevation: 100 },
         }),
       );
-    if (mode === "flow" && !busFailed) layers.push(busSceneLayer);
+    if (mode === "flow" && !busFailed) {
+      // Layer descriptors are cheap. A fresh instance avoids reusing one that
+      // deck.gl finalized when the previous map or 3D view was removed.
+      const ownerMap = map.current;
+      const ownerModeEpoch = busModeEpoch.current;
+      layers.push(new ScenegraphLayer({
+        id: "bus-models",
+        data: ui.vehiclesVisible ? busVisualData : [],
+        scenegraph: "/models/bus.glb",
+        getPosition: (vehicle) => [vehicle.position.lon, vehicle.position.lat, 1],
+        getOrientation: (vehicle) => [0, 180 - vehicle.headingDeg, 90],
+        getScale: (vehicle) => vehicle.id === ui.selectedVehicleId
+          ? [0.75, 0.5625, 1.25] : [0.6, 0.45, 1],
+        sizeScale: 7.8 * 2.7,
+        sizeMinPixels: (zoom < 11 ? 15 : 21) * 2.7,
+        sizeMaxPixels: 54 * 2.7,
+        getColor: (vehicle) => [
+          ...(vehicle.telemetryStale ? [155, 165, 175] as const : [255, 255, 255] as const),
+          ui.selectedRouteId && vehicle.routeId !== ui.selectedRouteId ? 170 : 255,
+        ],
+        updateTriggers: {
+          getColor: [ui.selectedRouteId],
+          getScale: [ui.selectedVehicleId],
+        },
+        _lighting: "pbr",
+        getScene: (gltf) => {
+          if (gltf?.scenes?.[0]) {
+            queueMicrotask(() => {
+              if (ownerMap === map.current && ownerModeEpoch === busModeEpoch.current)
+                setBusReady(true);
+            });
+            return gltf.scenes[0];
+          }
+          return null;
+        },
+        onError: (error) => {
+          // HTTP 200 does not prove that the GLB decoded or WebGL initialized.
+          if (ownerMap !== map.current || ownerModeEpoch !== busModeEpoch.current)
+            return true;
+          console.error("3D bus model failed to load or render", error, error.cause);
+          setBusReady(false);
+          setBusFailed(true);
+          return true;
+        },
+        pickable: true,
+        onClick: ({ object }) => {
+          if (object) useUi.getState().selectVehicle(object.id, object.routeId);
+        },
+      }));
+    }
     overlay.current.setProps({ layers });
   }, [
     ready,
     data,
     routeLayers,
     visibleStops,
-    busSceneLayer,
+    busVisualData,
     displayedVehicles,
     currentVehicles,
     mode,
@@ -781,6 +805,7 @@ export default function NetworkMap({
     segments,
     columnsVisible,
     busFailed,
+    busReady,
     dark,
     reducedMotion,
   ]);
