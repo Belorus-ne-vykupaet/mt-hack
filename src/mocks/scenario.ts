@@ -1,9 +1,8 @@
-import type { DemoRouteDto as RouteDto, DemoVehicleDto as VehicleDto } from "./types";
+import type { DemoRouteDto as RouteDto, DemoVehicleDto as VehicleDto, DemoSegmentDto as SegmentDto } from "./types";
 import type {
   AlertDto,
   NetworkSummaryDto,
   RouteGeometryDto,
-  SegmentDto,
   DelayPointDto,
 } from "../shared/api/generated/models";
 export type Scenario =

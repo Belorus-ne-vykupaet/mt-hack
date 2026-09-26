@@ -1,0 +1,271 @@
+{
+  "scope": "Official NDTP Docker emulator, synthetic current plan, observed stop then departure; not model accuracy evaluation",
+  "status": {
+    "mode": "official-ndtp",
+    "status": "connected",
+    "asOf": "2026-09-26T13:48:42.957531452Z",
+    "modelVersion": "sasha-extra-trees-v2",
+    "metrics": {
+      "modelVersion": "sasha-extra-trees-v2",
+      "modelFamily": "ExtraTreesRegressor",
+      "featureVersion": 2,
+      "trainRows": 4434,
+      "testRows": 353,
+      "maeSec": 58.087528328611896,
+      "persistenceMaeSec": 93.35977337110482,
+      "zeroMaeSec": 103.33711048158641,
+      "chronologicalHoldoutMaeSec": 57.79947695035462,
+      "riskBrier": 0.106890779073252,
+      "riskThresholdSec": 120,
+      "riskModel": "catboost-official-v1",
+      "riskProbabilityCalibrated": false,
+      "horizon": "(600, 900] seconds",
+      "features": [
+        "cur_dev_s",
+        "horizon_s",
+        "hour_sin",
+        "hour_cos",
+        "target_lon",
+        "target_lat",
+        "telemetry_age_s",
+        "gps_age_s",
+        "last_speed",
+        "target_distance_km",
+        "count_60",
+        "valid_frac_60",
+        "speed_mean_60",
+        "speed_std_60",
+        "speed_max_60",
+        "stop_frac_60",
+        "count_180",
+        "valid_frac_180",
+        "speed_mean_180",
+        "speed_std_180",
+        "speed_max_180",
+        "stop_frac_180",
+        "count_300",
+        "valid_frac_300",
+        "speed_mean_300",
+        "speed_std_300",
+        "speed_max_300",
+        "stop_frac_300",
+        "count_600",
+        "valid_frac_600",
+        "speed_mean_600",
+        "speed_std_600",
+        "speed_max_600",
+        "stop_frac_600",
+        "count_900",
+        "valid_frac_900",
+        "speed_mean_900",
+        "speed_std_900",
+        "speed_max_900",
+        "stop_frac_900",
+        "count_1800",
+        "valid_frac_1800",
+        "speed_mean_1800",
+        "speed_std_1800",
+        "speed_max_1800",
+        "stop_frac_1800",
+        "target_prev_gap_s",
+        "planned_stops_ahead",
+        "nearest_plan_distance_km",
+        "position_delay_proxy_s"
+      ],
+      "sequenceFeatures": [
+        "speed_mean",
+        "speed_max",
+        "stopped_fraction",
+        "target_dx_km",
+        "target_dy_km",
+        "count",
+        "gps_fraction",
+        "observed"
+      ],
+      "submissionSha256": "0c5d798e40b5d8a4257b9834d7588799e22df59f443622f37ffcd65e29367781",
+      "evaluation": "58.09 s is on the provided test split used to select ExtraTrees; the hidden evaluation score is separate. The chronological audit is from a model trained before its audit window.",
+      "externalFeaturesUsed": false
+    },
+    "pipelineMs": 72.49,
+    "inferenceMs": 56.19,
+    "ndtp": {
+      "frames": 10,
+      "errors": 0,
+      "connections": 2,
+      "units": 1,
+      "lastPacketAt": 1790430522.957355,
+      "lastPacketAgeSec": 1.0,
+      "outOfOrderFrames": 0,
+      "staleFrames": 0,
+      "ignoredUnits": 4,
+      "mappedPackets": 6,
+      "unmappedPackets": 4,
+      "coalescedPackets": 0,
+      "forecastPending": false
+    },
+    "pipelineLatencyMs": {
+      "samples": 9,
+      "p50": 68.96,
+      "p95": 104.52,
+      "p99": 104.78
+    },
+    "lastError": null,
+    "clockNote": "Время NDTP и текущего плана сравнивается в UTC; требуется согласованная временная шкала.",
+    "predictedVehicles": 1,
+    "locatedVehicles": 1,
+    "freshVehicles": 1,
+    "staleVehicles": 0,
+    "totalVehicles": 1,
+    "scheduledVehicles": 1,
+    "contextVehicles": 0,
+    "scheduledWithoutPosition": 0,
+    "scheduledStale": 0,
+    "scheduledWithoutTarget": 0,
+    "warningsIssued": 1,
+    "warningEvent": {
+      "type": "late_threshold",
+      "latenessThresholdSec": 120,
+      "definition": "Potential lateness threshold breach at planned arrival + 120 seconds",
+      "firstPublicationLeadSec": {
+        "minExclusive": 600,
+        "maxInclusive": 900
+      },
+      "actualArrivalKnownAtPublication": false
+    }
+  },
+  "vehicle": {
+    "id": "vehicle-99116336",
+    "route_id": "duty-99116336",
+    "position": {
+      "lat": 55.7558234,
+      "lon": 37.617321
+    },
+    "bearing_deg": 0.0,
+    "speed_kmh": 20.0,
+    "current_delay_sec": 607.0,
+    "predicted_delay_sec": 120.955,
+    "risk_probability": 0.8577088852684848,
+    "risk_level": "elevated",
+    "status": "active",
+    "telemetry_age_sec": 1.0,
+    "forecast_status": "ready",
+    "forecast_horizon_sec": 728.042468547821,
+    "forecast_target_time": "2026-09-26T14:00:51Z",
+    "forecast_model": "sasha-extra-trees-v2",
+    "observed_factor": "задержка уже есть на предыдущих остановках",
+    "current_segment_id": "segment-duty-99116336-99110001-99110002",
+    "segment_match_status": "matched",
+    "segment_match_reason": null,
+    "next_stop": {
+      "id": "99110002",
+      "name": "Интеграционный стенд · цель 1",
+      "sequence": 0,
+      "position": {
+        "lon": 37.617321,
+        "lat": 55.8251234
+      }
+    },
+    "updated_at": "2026-09-26T13:48:42Z"
+  },
+  "segment": {
+    "id": "segment-duty-99116336-99110001-99110002",
+    "route_id": "duty-99116336",
+    "from_stop_id": "99110001",
+    "to_stop_id": "99110002",
+    "from_stop_name": "Интеграционный стенд · предыдущая остановка",
+    "to_stop_name": "Интеграционный стенд · цель 1",
+    "from_sequence": 0,
+    "to_sequence": 1,
+    "name": "Интеграционный стенд · предыдущая остановка → Интеграционный стенд · цель 1",
+    "started_at": 1790430508.0,
+    "ended_at": null,
+    "current_delay_sec": 607.0,
+    "matching_method": "ordered_stop_visits",
+    "geometry_source": "observed_gps",
+    "is_current": true,
+    "complete": false,
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [
+        [
+          37.617321,
+          55.7551234
+        ],
+        [
+          37.617321,
+          55.7558234
+        ]
+      ]
+    },
+    "observed_paths": [
+      [
+        [
+          37.617321,
+          55.7551234
+        ],
+        [
+          37.617321,
+          55.7558234
+        ]
+      ]
+    ],
+    "mean_speed_kmh": 10.0,
+    "dwell_sec": 6.0,
+    "observed_distance_m": 77.8,
+    "coverage_sec": 14.0,
+    "sample_count": 6,
+    "progress": null,
+    "predicted_delay_sec": 120.955,
+    "risk_probability": 0.8577088852684848,
+    "risk_level": "elevated",
+    "risk_scope": "vehicle_target_stop",
+    "forecast_target_stop_id": "99110002"
+  },
+  "warning": {
+    "issued_at": "2026-09-26T13:48:29.125191Z",
+    "target_time": "2026-09-26T14:00:51Z",
+    "event_type": "late_threshold",
+    "event_time": "2026-09-26T14:02:51Z",
+    "lateness_threshold_sec": 120,
+    "lead_time_sec": 741.9,
+    "forecast_horizon_sec": 741.9,
+    "event_lead_time_sec": 861.9,
+    "current_forecast_horizon_sec": 728.0,
+    "current_event_lead_time_sec": 848.0,
+    "id": "forecast-vehicle-99116336-99110002",
+    "type": "delay_risk",
+    "route_id": "duty-99116336",
+    "vehicle_id": "vehicle-99116336",
+    "severity": "warning",
+    "title": "ТС 99116336 · Интеграционный стенд · цель 1",
+    "description": "Остановка через 12.1 мин · план 14:00, ожидается 14:02 (часы текущего плана). Наблюдаемый фактор: задержка уже есть на предыдущих остановках. ExtraTrees; вероятность опоздания >120 с по отдельному классификатору.",
+    "risk_probability": 0.8577088852684848,
+    "predicted_delay_sec": 120.955,
+    "created_at": "2026-09-26T13:48:29.125191212Z",
+    "expected_arrival_at": "2026-09-26T14:02:51.954999924Z",
+    "observed_factor": "задержка уже есть на предыдущих остановках",
+    "model_status": "ready"
+  },
+  "audit": {
+    "asOf": "2026-09-26T13:48:42.957531452Z",
+    "items": [
+      {
+        "issued_at": "2026-09-26T13:48:29.125191212Z",
+        "target_time": "2026-09-26T14:00:51Z",
+        "event_type": "late_threshold",
+        "event_time": "2026-09-26T14:02:51Z",
+        "lateness_threshold_sec": 120,
+        "lead_time_sec": 741.9,
+        "forecast_horizon_sec": 741.9,
+        "event_lead_time_sec": 861.9,
+        "current_forecast_horizon_sec": 741.9,
+        "current_event_lead_time_sec": 861.9,
+        "id": "forecast-vehicle-99116336-99110002",
+        "vehicle_id": "vehicle-99116336",
+        "target_stop_id": "99110002",
+        "model_status": "ready",
+        "source": "ndtp"
+      }
+    ]
+  }
+}

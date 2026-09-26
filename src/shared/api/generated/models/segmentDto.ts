@@ -5,14 +5,41 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { GeometryDto } from './geometryDto';
+import type { SegmentDtoMatchingMethod } from './segmentDtoMatchingMethod';
 import type { SegmentDtoRiskLevel } from './segmentDtoRiskLevel';
+import type { SegmentDtoRiskScope } from './segmentDtoRiskScope';
 
 export interface SegmentDto {
   id: string;
   route_id: string;
   geometry: GeometryDto;
-  current_delay_sec: number;
-  predicted_delay_sec: number;
-  risk_probability: number;
+  /** @nullable */
+  current_delay_sec: number | null;
+  /** @nullable */
+  predicted_delay_sec: number | null;
+  /** @nullable */
+  risk_probability: number | null;
   risk_level: SegmentDtoRiskLevel;
+  from_stop_id?: string;
+  to_stop_id?: string;
+  name?: string;
+  forecast_target_stop_id?: string;
+  /** @nullable */
+  from_sequence?: number | null;
+  /** @nullable */
+  to_sequence?: number | null;
+  /** @nullable */
+  mean_speed_kmh?: number | null;
+  /** @nullable */
+  dwell_sec?: number | null;
+  /** @nullable */
+  observed_distance_m?: number | null;
+  /** @nullable */
+  coverage_sec?: number | null;
+  /** Observed GPS paths, split at telemetry gaps. */
+  observed_paths?: number[][][];
+  is_current?: boolean;
+  matching_method?: SegmentDtoMatchingMethod;
+  /** Risk of vehicles currently on this segment at their future target stop; not a segment-local model. */
+  risk_scope?: SegmentDtoRiskScope;
 }

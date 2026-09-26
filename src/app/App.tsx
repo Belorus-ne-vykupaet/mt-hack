@@ -640,6 +640,7 @@ export default function App() {
                     routes={routes}
                     vehicles={vehicles}
                     segments={net.segments.data || []}
+                    alerts={alerts}
                   />
                 )}
               </aside>
@@ -676,6 +677,7 @@ export default function App() {
             routes={routes}
             vehicles={vehicles}
             segments={net.segments.data || []}
+                    alerts={alerts}
           />
         </Dialog>
       )}

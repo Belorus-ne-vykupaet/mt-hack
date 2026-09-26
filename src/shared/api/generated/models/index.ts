@@ -6,6 +6,7 @@
  */
 
 export * from './alertDto';
+export * from './alertDtoEventType';
 export * from './alertDtoModelStatus';
 export * from './alertDtoSeverity';
 export * from './alertsDto';
@@ -35,13 +36,16 @@ export * from './routeGeometryDto';
 export * from './routeGeometryDtoType';
 export * from './routesDto';
 export * from './segmentDto';
+export * from './segmentDtoMatchingMethod';
 export * from './segmentDtoRiskLevel';
+export * from './segmentDtoRiskScope';
 export * from './segmentsDto';
 export * from './stopDto';
 export * from './topRoutesDto';
 export * from './vehicleDto';
 export * from './vehicleDtoForecastStatus';
 export * from './vehicleDtoRiskLevel';
+export * from './vehicleDtoSegmentMatchStatus';
 export * from './vehicleDtoStatus';
 export * from './vehicleForecastDto';
 export * from './vehiclesDto';

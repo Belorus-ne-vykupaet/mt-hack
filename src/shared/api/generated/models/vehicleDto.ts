@@ -8,6 +8,7 @@ import type { PositionDto } from './positionDto';
 import type { StopDto } from './stopDto';
 import type { VehicleDtoForecastStatus } from './vehicleDtoForecastStatus';
 import type { VehicleDtoRiskLevel } from './vehicleDtoRiskLevel';
+import type { VehicleDtoSegmentMatchStatus } from './vehicleDtoSegmentMatchStatus';
 import type { VehicleDtoStatus } from './vehicleDtoStatus';
 
 export interface VehicleDto {
@@ -39,4 +40,14 @@ export interface VehicleDto {
   forecast_status?: VehicleDtoForecastStatus;
   /** @minimum 0 */
   telemetry_age_sec?: number;
+  /** @nullable */
+  current_segment_id?: string | null;
+  segment_match_status?: VehicleDtoSegmentMatchStatus;
+  /** @nullable */
+  segment_match_reason?: string | null;
+  /**
+     * Observed telemetry factor; not a causal model attribution.
+     * @nullable
+     */
+  observed_factor?: string | null;
 }

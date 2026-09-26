@@ -35,7 +35,7 @@ def main() -> None:
     # observed deviation. The target stays strictly inside the 10–15 min window.
     rows = [(99110001, now - timedelta(seconds=600), LON, LAT,
              "Интеграционный стенд · предыдущая остановка")]
-    rows.extend((99110002 + i, now + timedelta(seconds=870 + 240 * i),
+    rows.extend((99110002 + i, now + timedelta(seconds=750 + 240 * i),
                  LON, LAT + 0.070,
                  f"Интеграционный стенд · цель {i + 1}")
                 for i in range(args.target_count))

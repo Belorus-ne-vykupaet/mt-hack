@@ -14,6 +14,9 @@ MODULES = (
     "transit_ml.features",
     "transit_ml.inference",
     "transit_ml.ndtp",
+    "transit_ml.segments",
+    "transit_ml.warnings",
+    "transit_ml.outcomes",
     "mt_hack.features",
 )
 

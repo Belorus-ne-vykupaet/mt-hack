@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Python: module transit_ml.segments</title>
+</head><body>
+
+<table class="heading">
+<tr class="heading-text decor">
+<td class="title">&nbsp;<br><strong class="title"><a href="transit_ml.html" class="white">transit_ml</a>.segments</strong></td>
+<td class="extra"><a href=".">index</a><br><a href="https://github.com/Belorus-ne-vykupaet/mt-hack/blob/main/ml/transit_ml/segments.py">Исходный код</a></td></tr></table>
+    <p><span class="code">Causal&nbsp;stop-to-stop&nbsp;observations,&nbsp;independent&nbsp;of&nbsp;the&nbsp;stop-arrival&nbsp;ML&nbsp;model.<br>
+&nbsp;<br>
+The&nbsp;schedule&nbsp;orders&nbsp;stop&nbsp;*visits*,&nbsp;not&nbsp;street&nbsp;geometry.&nbsp;A&nbsp;segment&nbsp;is&nbsp;anchored&nbsp;by<br>
+an&nbsp;observed&nbsp;low-speed&nbsp;visit&nbsp;and&nbsp;ends&nbsp;at&nbsp;the&nbsp;next&nbsp;scheduled&nbsp;visit.&nbsp;Its&nbsp;geometry<br>
+contains&nbsp;only&nbsp;GPS&nbsp;observations.&nbsp;No&nbsp;road&nbsp;shape,&nbsp;unobserved&nbsp;speed,&nbsp;or&nbsp;progress&nbsp;is<br>
+inferred&nbsp;from&nbsp;a&nbsp;straight&nbsp;line&nbsp;joining&nbsp;stops.&nbsp;Instantiate&nbsp;``<a href="#SegmentMatcher">SegmentMatcher</a>``&nbsp;once<br>
+per&nbsp;route;&nbsp;matching&nbsp;is&nbsp;bounded&nbsp;to&nbsp;recent&nbsp;packets&nbsp;and&nbsp;a&nbsp;small&nbsp;time-indexed&nbsp;set&nbsp;of<br>
+candidate&nbsp;stops,&nbsp;rather&nbsp;than&nbsp;comparing&nbsp;every&nbsp;packet&nbsp;with&nbsp;the&nbsp;entire&nbsp;schedule.</span></p>
+<p>
+<table class="section">
+<tr class="decor pkg-content-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Modules</strong></td></tr>
+
+<tr><td class="decor pkg-content-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><table><tr><td class="multicolumn"><a href="math.html">math</a><br>
+</td><td class="multicolumn"><a href="numpy.html">numpy</a><br>
+</td><td class="multicolumn"><a href="pandas.html">pandas</a><br>
+</td><td class="multicolumn"></td></tr></table></td></tr></table><p>
+<table class="section">
+<tr class="decor index-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Classes</strong></td></tr>
+
+<tr><td class="decor index-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><dl>
+<dt class="heading-text"><a href="builtins.html#object">builtins.object</a>
+</dt><dd>
+<dl>
+<dt class="heading-text"><a href="transit_ml.segments.html#SegmentMatcher">SegmentMatcher</a>
+</dt></dl>
+</dd>
+</dl>
+ <p>
+<table class="section">
+<tr class="decor title-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><a name="SegmentMatcher">class <strong>SegmentMatcher</strong></a>(<a href="builtins.html#object">builtins.object</a>)</td></tr>
+
+<tr><td class="decor title-decor" rowspan=2><span class="code">&nbsp;&nbsp;&nbsp;</span></td>
+<td class="decor title-decor" colspan=2><span class="code"><a href="#SegmentMatcher">SegmentMatcher</a>(plan,&nbsp;*,&nbsp;route_id=None,&nbsp;stop_radius_m=50.0,&nbsp;max_gps_age_sec=180.0,&nbsp;max_gap_sec=120.0,&nbsp;history_sec=1800.0,&nbsp;max_packets=4096)<br>
+&nbsp;<br>
+Match&nbsp;ordered&nbsp;visits&nbsp;using&nbsp;fresh&nbsp;GPS&nbsp;and&nbsp;bounded&nbsp;schedule&nbsp;deviation.<br>
+&nbsp;<br>
+Defaults&nbsp;tolerate&nbsp;arrivals&nbsp;up&nbsp;to&nbsp;30&nbsp;minutes&nbsp;late&nbsp;/&nbsp;five&nbsp;minutes&nbsp;early&nbsp;(15<br>
+minutes&nbsp;early&nbsp;for&nbsp;the&nbsp;immediate&nbsp;successor&nbsp;of&nbsp;an&nbsp;observed&nbsp;departed&nbsp;stop).&nbsp;A<br>
+route&nbsp;with&nbsp;more&nbsp;delay,&nbsp;no&nbsp;observed&nbsp;stop,&nbsp;ambiguous&nbsp;co-located&nbsp;visits,&nbsp;stale<br>
+GPS,&nbsp;or&nbsp;an&nbsp;observation&nbsp;gap&nbsp;remains&nbsp;explicitly&nbsp;unmatched.&nbsp;Delay&nbsp;is&nbsp;the&nbsp;last<br>
+observed&nbsp;stop-arrival&nbsp;deviation;&nbsp;it&nbsp;is&nbsp;not&nbsp;an&nbsp;invented&nbsp;between-stop&nbsp;value.<br>
+``time_fact_begin``&nbsp;and&nbsp;other&nbsp;actual/future&nbsp;outcome&nbsp;columns&nbsp;are&nbsp;never&nbsp;read.<br>&nbsp;</span></td></tr>
+<tr><td>&nbsp;</td>
+<td class="singlecolumn">Methods defined here:<br>
+<dl><dt><a name="SegmentMatcher-__init__"><strong>__init__</strong></a>(self, plan, *, route_id=None, stop_radius_m=50.0, max_gps_age_sec=180.0, max_gap_sec=120.0, history_sec=1800.0, max_packets=4096)</dt><dd><span class="code">Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</span></dd></dl>
+
+<dl><dt><a name="SegmentMatcher-match"><strong>match</strong></a>(self, history, cutoff)</dt><dd><span class="code">Return&nbsp;observed&nbsp;segments,&nbsp;ordered&nbsp;stop&nbsp;visits,&nbsp;and&nbsp;current&nbsp;match&nbsp;state.<br>
+&nbsp;<br>
+Target-stop&nbsp;forecast&nbsp;fields&nbsp;are&nbsp;intentionally&nbsp;absent&nbsp;from&nbsp;each&nbsp;segment:<br>
+the&nbsp;caller&nbsp;may&nbsp;attach&nbsp;them&nbsp;with&nbsp;explicit&nbsp;``forecast_scope='target_stop'``<br>
+and&nbsp;the&nbsp;target&nbsp;id,&nbsp;but&nbsp;must&nbsp;not&nbsp;call&nbsp;them&nbsp;a&nbsp;segment-trained&nbsp;prediction.</span></dd></dl>
+
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><span class="code">dictionary&nbsp;for&nbsp;instance&nbsp;variables</span></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><span class="code">list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object</span></dd>
+</dl>
+</td></tr></table></td></tr></table><p>
+<table class="section">
+<tr class="decor functions-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Functions</strong></td></tr>
+
+<tr><td class="decor functions-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><dl><dt><a name="-match_segment"><strong>match_segment</strong></a>(plan, history, cutoff, **options)</dt><dd><span class="code">Convenience&nbsp;API;&nbsp;reuse&nbsp;``<a href="#SegmentMatcher">SegmentMatcher</a>(plan)``&nbsp;in&nbsp;a&nbsp;streaming&nbsp;backend.</span></dd></dl>
+</td></tr></table>
+</body></html>

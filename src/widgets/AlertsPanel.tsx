@@ -1,3 +1,4 @@
+import { incidentTiming } from "../entities/incident";
 import { config } from "../shared/config/env";
 import { useState, useEffect } from "react";
 import { TriangleAlert, ChevronRight, MapPin, CheckCheck } from "lucide-react";
@@ -53,7 +54,9 @@ export function AlertsPanel({ alerts }: { alerts: Alert[] }) {
             <button
               className={`alert-card ${a.severity}`}
               key={a.id}
-              onClick={() => useUi.getState().selectRoute(a.routeId)}
+              onClick={() => config.officialMode
+                ? useUi.getState().selectVehicle(a.vehicleId, a.routeId)
+                : useUi.getState().selectRoute(a.routeId)}
             >
               <div className="row-between">
                 <div className="alert-title">
@@ -73,7 +76,7 @@ export function AlertsPanel({ alerts }: { alerts: Alert[] }) {
                 </span>
               </div>
               <div className="alert-main">
-                <span>{a.title}</span>
+                <span>{a.eventType === "late_threshold" ? "Риск опоздания >2 мин" : a.title}</span>
                 <strong>
                   {minutes(a.predictedDelaySec)}
                   <small> мин</small>
@@ -85,16 +88,22 @@ export function AlertsPanel({ alerts }: { alerts: Alert[] }) {
                   ? `План ${time(a.targetTime)} → ожидается ${time(a.expectedArrivalAt)}. Наблюдаемый фактор: ${a.observedFactor ?? "данные телеметрии"}. ${a.modelStatus === "fallback" ? "ML недоступен; резервная оценка." : `Прогноз ${modelDisplayName(model.data)}.`}`
                   : a.description}
               </div>
+              {incidentTiming(a).event && (
+                <div className="alert-location">{incidentTiming(a).event}</div>
+              )}
+              {incidentTiming(a).forecast && (
+                <div className="alert-location">{incidentTiming(a).forecast}</div>
+              )}
               <div className="alert-bottom">
                 <span>
-                  {config.officialMode && a.leadTimeSec
-                    ? `Сигнал за ${(a.leadTimeSec / 60).toFixed(1)} мин до цели`
+                  {config.officialMode && incidentTiming(a).warning
+                    ? incidentTiming(a).warning
                     : config.officialMode
                     ? "К целевой остановке"
                     : "Прогноз через 15 мин"}
                 </span>
                 <span>
-                  {config.officialMode && a.leadTimeSec ? (
+                  {config.officialMode && (a.eventLeadTimeSec != null || a.leadTimeSec != null) ? (
                     `Выдан ${time(a.createdAt)} · ${model.data?.mode === "official-ndtp" ? "UTC плана" : "часы CSV"}`
                   ) : config.csvMode || config.officialMode ? (
                     "Архив CSV"
