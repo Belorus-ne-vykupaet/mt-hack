@@ -19,3 +19,5 @@ outputs
 __pycache__
 .pytest_cache
 .venv
+data/**
+Предиктор задержек транспорта-dataset

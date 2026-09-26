@@ -4,7 +4,11 @@ ENV PYTHONUNBUFFERED=1 OMP_NUM_THREADS=4 PYTHONPATH=/app/ml:/app/src
 RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 && rm -rf /var/lib/apt/lists/*
 COPY ml/requirements-runtime.txt ./requirements-runtime.txt
 COPY src/mt_hack ./src/mt_hack
-RUN pip install --no-cache-dir -r requirements-runtime.txt
+RUN --mount=type=cache,id=transit-pip-cache,target=/root/.cache/pip \
+    set -eu; for attempt in 1 2 3; do \
+      pip install --timeout 300 --retries 6 -r requirements-runtime.txt && exit 0; \
+      echo "Retrying Python dependencies (attempt $attempt failed)" >&2; \
+    done; exit 1
 COPY ml/transit_ml ./ml/transit_ml
 COPY docker/local-data/test/schedule.csv docker/local-data/test/traffic.csv ./ml/data/official/test/
 COPY docker/local-data/live ./ml/data/live

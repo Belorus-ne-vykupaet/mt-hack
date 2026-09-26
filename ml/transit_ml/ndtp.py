@@ -5,7 +5,7 @@ import struct
 import time
 from collections import deque
 
-CELL_SIZES = {0: 26, 2: 26, 8: 6, 10: 37, 15: 50, 16: 8}
+CELL_SIZES = {0: 26, 2: 26, 4: 15, 8: 6, 10: 37, 15: 50, 16: 8}
 
 
 def crc16(data: bytes):
@@ -39,6 +39,7 @@ def parse_frame(frame: bytes):
         raise ValueError("Unsupported NPH")
     offset = 25
     nav = None
+    doors_open = None
     while offset < len(frame):
         if offset + 2 > len(frame):
             raise ValueError("Truncated cell header")
@@ -81,9 +82,20 @@ def parse_frame(frame: bytes):
                 "heading": heading,
                 "alt": alt,
             }
+        elif cell == 4:
+            # Official G6CellIrma04: odometer u32, zone u16, four u8 entry
+            # counters, four u8 exit counters, then present bits 0..3 and
+            # closed bits 4..7. No installed door means unknown, not closed.
+            flags = frame[offset + 14]
+            present = flags & 0x0F
+            closed = (flags >> 4) & 0x0F
+            if present:
+                open_now = bool(present & ~closed)
+                doors_open = open_now if doors_open is None else doors_open or open_now
         offset += size
     if nav is None:
         raise ValueError("Missing navigation")
+    nav["doors_open"] = doors_open
     return nav
 
 

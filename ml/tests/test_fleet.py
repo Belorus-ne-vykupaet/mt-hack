@@ -1,6 +1,7 @@
 """Fleet visibility is independent of schedule, forecast targets and GPS freshness."""
 import asyncio
 import json
+import time
 from collections import deque
 
 import httpx
@@ -120,6 +121,36 @@ def test_ndtp_loss_keeps_last_position_and_new_packet_recovers(fleet, monkeypatc
     assert s['vehicles'][0]['status'] == 'active'
     assert s['vehicles'][0]['forecast_status'] == 'ready'
     assert s['vehicles'][0]['position']['lon'] == 37.64
+
+
+def test_ndtp_api_poll_reuses_snapshot_until_packet_or_freshness_refresh(fleet, monkeypatch):
+    fleet.mode = 'ndtp'
+    monkeypatch.setattr('transit_ml.backend.time.time', lambda: T.timestamp())
+    fleet.receiver.histories[1] = deque([dict(
+        ts=T.timestamp() - 5, lat=55.75, lon=37.63,
+        location_valid=True, speed=20, heading=90,
+    )], maxlen=1500)
+
+    async def run():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(reply)) as client:
+            fleet.client = client
+            first = await fleet.snapshot()
+            count = len(fleet.pipeline_samples_ms)
+            fleet.cache_at = time.monotonic() - 2
+            second = await fleet.snapshot()
+            assert second is first
+            assert len(fleet.pipeline_samples_ms) == count
+            # A packet wakeup invalidates the cache immediately.
+            fleet.cache_at = 0
+            third = await fleet.snapshot()
+            assert third is not first
+            assert len(fleet.pipeline_samples_ms) == count + 1
+            # Silence still triggers periodic freshness checks.
+            fleet.cache_at = time.monotonic() - 6
+            await fleet.snapshot()
+            assert len(fleet.pipeline_samples_ms) == count + 2
+
+    asyncio.run(run())
 
 
 def test_ndtp_indexes_shared_route_and_sends_only_recent_model_history(fleet, monkeypatch):

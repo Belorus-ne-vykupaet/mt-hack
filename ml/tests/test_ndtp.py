@@ -48,6 +48,22 @@ def test_navigation_and_default_cells():
     assert row["speed"] == 30 and row["location_valid"]
 
 
+def test_official_irma_door_cell():
+    # 15-byte layout confirmed against the organizers' emulator image:
+    # odometer u32, zone u16, four in/out u8 counters and one flag byte.
+    base = nav() + bytes([4, 0]) + struct.pack(
+        "<IH4B4BB", 4660, 3, 123, 0, 0, 0, 45, 0, 0, 0, 0x23
+    )
+    assert parse_frame(frame(base))["doors_open"] is True
+    closed = nav() + bytes([4, 0]) + struct.pack(
+        "<IH4B4BB", 4660, 3, 123, 0, 0, 0, 45, 0, 0, 0, 0x33
+    )
+    assert parse_frame(frame(closed))["doors_open"] is False
+    assert parse_frame(frame(nav()))["doors_open"] is None
+    absent = nav() + bytes([4, 0]) + bytes(15)
+    assert parse_frame(frame(absent))["doors_open"] is None
+
+
 def test_crc_handshake_and_unknown_cells():
     assert (
         crc16(b"123456789") == 0x374B

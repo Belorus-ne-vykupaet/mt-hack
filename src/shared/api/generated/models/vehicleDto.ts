@@ -17,6 +17,11 @@ export interface VehicleDto {
   position: PositionDto;
   bearing_deg: number;
   speed_kmh: number;
+  /**
+     * Observed IRMA door state; null when no door sensor was present in the NDTP packet.
+     * @nullable
+     */
+  doors_open?: boolean | null;
   /** @nullable */
   current_delay_sec: number | null;
   /** @nullable */

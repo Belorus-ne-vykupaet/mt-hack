@@ -185,6 +185,7 @@ const valid = (values) => values.filter((value) => Number.isFinite(value));
 const first = samples[0];
 const last = samples.at(-1);
 const elapsedSec = Math.round((performance.now() - started) / 1000);
+const sampledSec = first && last ? (Date.parse(last.at) - Date.parse(first.at)) / 1000 : null;
 const frameDelta = Number.isFinite(first?.backend.ndtp?.frames) && Number.isFinite(last?.backend.ndtp?.frames)
   ? last.backend.ndtp.frames - first.backend.ndtp.frames : null;
 const result = {
@@ -200,7 +201,8 @@ const result = {
     failedSamples: samples.filter((s) => Object.keys(s.errors).length).length,
     staleSamples: samples.filter((s) => s.api.stale === true).length,
     ndtpFramesDelta: frameDelta,
-    ndtpFramesPerSec: frameDelta === null || elapsedSec === 0 ? null : Math.round(frameDelta / elapsedSec * 100) / 100,
+    ndtpSampledSec: sampledSec,
+    ndtpFramesPerSec: frameDelta === null || !sampledSec || sampledSec <= 0 ? null : Math.round(frameDelta / sampledSec * 100) / 100,
     ndtpErrorsDelta: Number.isFinite(first?.backend.ndtp?.errors) && Number.isFinite(last?.backend.ndtp?.errors)
       ? last.backend.ndtp.errors - first.backend.ndtp.errors : null,
     ndtpCoalescedDelta: Number.isFinite(first?.backend.ndtp?.coalescedPackets) && Number.isFinite(last?.backend.ndtp?.coalescedPackets)
@@ -214,7 +216,7 @@ const result = {
     wsMessages, wsHeartbeats, wsUnexpectedCloses, wsErrors,
     observedVehicles: observedVehicles.size,
     eventToWebSocketMs: distribution(eventToBrowserMs),
-    eventToWebSocketDefinition: "First received update for each new vehicle telemetry timestamp on each reading WS client; UTC generator event timestamp to client receipt, includes 1-second timestamp quantization and 5-second broadcast cadence. Excludes warm history and repeated old positions.",
+    eventToWebSocketDefinition: "First received update for each new vehicle telemetry timestamp on each reading WS client; UTC generator event timestamp to client receipt, includes 1-second timestamp quantization and stream scheduling. Excludes warm history and repeated old positions.",
     freshVehicles: distribution(valid(samples.map(s => s.backend.freshVehicles))),
     predictedVehicles: distribution(valid(samples.map(s => s.backend.predictedVehicles))),
     rssMiB: Object.fromEntries(Object.keys(ports).map((name) => [name, {

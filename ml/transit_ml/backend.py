@@ -318,7 +318,12 @@ class Engine:
 
     async def snapshot(self):
         async with self.lock:
-            if self.cache is not None and time.monotonic() - self.cache_at < 1:
+            # NDTP packets already wake stream_forecasts. Read-only API polling
+            # must not launch a second full-fleet inference every second while
+            # the same GPS state is cached. A five-second refresh still marks
+            # silent vehicles stale and advances the live clock during outages.
+            cache_ttl = 5 if self.mode == "ndtp" else 1
+            if self.cache is not None and time.monotonic() - self.cache_at < cache_ttl:
                 return self.cache
             begin = time.perf_counter()
             cutoff = (
@@ -468,6 +473,8 @@ class Engine:
                         "speed_kmh": float(last.speed)
                         if pd.notna(last.speed) and 0 <= last.speed <= 150
                         else 0.0,
+                        "doors_open": bool(last.get("doors_open"))
+                        if pd.notna(last.get("doors_open")) else None,
                         "current_delay_sec": cur,
                         "predicted_delay_sec": None,
                         "risk_probability": None,

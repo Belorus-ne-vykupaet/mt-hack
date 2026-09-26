@@ -40,6 +40,7 @@ const fields: Record<string, string> = {
   forecast_model: "forecastModel",
   forecast_status: "forecastStatus",
   telemetry_age_sec: "telemetryAgeSec",
+  doors_open: "doorsOpen",
   route_id: "routeId",
   vehicle_id: "vehicleId",
   current_delay_sec: "currentDelaySec",

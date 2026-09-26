@@ -206,6 +206,41 @@ describe("real HTTP integration API", () => {
     ]);
     ws.close();
   });
+  it("delivers an official GPS change on the next stream tick", async () => {
+    const state = { ...csvSnapshot(900), geometries: csvGeometries };
+    const official = {
+      routes: state.routes,
+      stale: false,
+      snapshot: async () => state,
+    } as unknown as OfficialSource;
+    const api = await start({ official });
+    const ws = new WebSocket(api.url.replace("http:", "ws:") + "/stream");
+    cleanups.push(async () => { ws.close(); });
+    const vehicleId = state.vehicles[0].id;
+    const waitForVehicle = (updatedAt: string, timeoutMs: number) => new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(() => {
+        ws.off("message", onMessage);
+        reject(new Error(`No timely GPS update for ${vehicleId}`));
+      }, timeoutMs);
+      const onMessage = (raw: Buffer) => {
+        const event = JSON.parse(raw.toString());
+        if (event.type !== "vehicle.updated" || event.payload.id !== vehicleId ||
+            event.payload.updated_at !== updatedAt) return;
+        clearTimeout(timer);
+        ws.off("message", onMessage);
+        resolve();
+      };
+      ws.on("message", onMessage);
+    });
+    const original = state.vehicles[0].updated_at;
+    await waitForVehicle(original, 3500);
+    const changed = new Date().toISOString();
+    const next = waitForVehicle(changed, 2600);
+    state.vehicles[0].updated_at = changed;
+    const started = performance.now();
+    await next;
+    expect(performance.now() - started).toBeLessThan(2600);
+  }, 8000);
   it("builds rules-v2 recommendations on the official road geometry", async () => {
     const snapshot = { ...csvSnapshot(900), geometries: csvGeometries };
     const official = {

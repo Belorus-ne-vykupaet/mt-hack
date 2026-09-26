@@ -808,6 +808,11 @@
           "speed_kmh": {
             "type": "number"
           },
+          "doors_open": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Observed IRMA door state; null when no door sensor was present in the NDTP packet."
+          },
           "current_delay_sec": {
             "type": "number",
             "nullable": true

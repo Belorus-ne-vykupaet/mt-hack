@@ -1,7 +1,35 @@
 import { expect, it, vi } from "vitest";
 import { WebSocket, WebSocketServer } from "ws";
 import { EventEmitter, once } from "node:events";
-import { MAX_STREAM_BUFFER_BYTES, sendStreamBatch, sendStreamEvent } from "../server/stream";
+import { MAX_STREAM_BUFFER_BYTES, routeStreamVersion, sendStreamBatch, sendStreamEvent, vehicleStreamVersion } from "../server/stream";
+
+it("streams new telemetry and risk without resending countdown-only changes", () => {
+  const initial = {
+    id: "vehicle-1", updated_at: "2026-09-26T17:00:00Z",
+    position: { lat: 55.75, lon: 37.62 }, speed_kmh: 12,
+    status: "active", current_delay_sec: 20, risk_level: "normal",
+    forecast_status: "ready", forecast_target_time: "2026-09-26T17:12:00Z",
+    predicted_delay_sec: 41, risk_probability: 0.12,
+  };
+  const version = vehicleStreamVersion(initial);
+  expect(vehicleStreamVersion({ ...initial, forecast_horizon_sec: 710, telemetry_age_sec: 1 })).toBe(version);
+  expect(vehicleStreamVersion({ ...initial, updated_at: "2026-09-26T17:00:05Z" })).not.toBe(version);
+  expect(vehicleStreamVersion({ ...initial, risk_level: "high" })).not.toBe(version);
+  expect(vehicleStreamVersion({ ...initial, current_delay_sec: 130 })).not.toBe(version);
+  expect(vehicleStreamVersion({ ...initial, doors_open: true })).not.toBe(version);
+});
+
+it("streams material route risk changes without broadcasting tiny forecast drift", () => {
+  const route = {
+    id: "duty-1", vehicle_count: 1, current_delay_sec: 31,
+    predicted_delay_sec: 71, risk_probability: 0.31,
+    risk_level: "elevated", forecast_status: "ready",
+  };
+  const version = routeStreamVersion(route);
+  expect(routeStreamVersion({ ...route, predicted_delay_sec: 72, risk_probability: 0.32 })).toBe(version);
+  expect(routeStreamVersion({ ...route, risk_level: "high" })).not.toBe(version);
+  expect(routeStreamVersion({ ...route, predicted_delay_sec: 85 })).not.toBe(version);
+});
 
 it("terminates a slow client before serializing another event", () => {
   const send = vi.fn();

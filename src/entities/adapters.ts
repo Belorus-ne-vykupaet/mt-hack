@@ -43,6 +43,7 @@ export const mapVehicle = (d: VehicleDto): Vehicle => ({
   forecastStatus: d.forecast_status,
   telemetryAgeSec: d.telemetry_age_sec,
   telemetryStale: d.status === "stale",
+  doorsOpen: d.doors_open,
   id: d.id,
   routeId: d.route_id,
   position: d.position,

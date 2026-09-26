@@ -16,7 +16,7 @@ import { riskFromDelay } from "../src/entities/forecast";
 import { DispatchService, ApiError } from "./dispatch-service";
 import { Providers } from "./providers";
 import { ModelProvider } from "./model";
-import { sendStreamBatch, sendStreamEvent } from "./stream";
+import { routeStreamVersion, sendStreamBatch, sendStreamEvent, vehicleStreamVersion } from "./stream";
 import { DriverOutbox } from "./driver-outbox";
 import { GigachatAdvisor } from "./gigachat";
 import { DailyReports } from "./daily-reports";
@@ -641,21 +641,14 @@ export function createApi(options: ServerOptions = {}) {
     previousRoutes = new Set<string>(),
     routeVersions = new Map<string, string>(),
     vehicleVersions = new Map<string, string>(),
-    segmentVersion = "",
-    lastDataBroadcast = 0;
+    segmentVersion = "";
   const timer = setInterval(async () => {
     if (!wss.clients.size || busy) return;
-    // The 10–15 minute forecast is still recomputed by the Python service.
-    // Broadcasting each full UI tick every second needlessly rebuilds the 3D map.
-    if (options.official && Date.now() - lastDataBroadcast < 5000) {
-      for (const ws of wss.clients)
-        send(ws, "system.heartbeat", { stale: options.official.stale });
-      return;
-    }
+    // Deliver new official telemetry on the next stream tick. The downstream
+    // version checks keep unchanged vehicles and routes out of the batch.
     busy = true;
     try {
       const s = await snapshot();
-      lastDataBroadcast = Date.now();
       const events: [string, unknown][] = [[
         "system.heartbeat",
         { stale: options.official?.stale ?? false },
@@ -685,13 +678,13 @@ export function createApi(options: ServerOptions = {}) {
           risk_level: r.risk_level,
           forecast_status: r.forecast_status,
         };
-        const version = JSON.stringify(patch);
+        const version = options.official ? routeStreamVersion(patch) : JSON.stringify(patch);
         if (!knownRoutes.has(r.id) || routeVersions.get(r.id) !== version)
           events.push(["route.updated", knownRoutes.has(r.id) ? patch : r]);
         routeVersions.set(r.id, version);
       });
       s.vehicles.forEach((v) => {
-        const version = JSON.stringify(v);
+        const version = options.official ? vehicleStreamVersion(v) : JSON.stringify(v);
         if (vehicleVersions.get(v.id) !== version)
           events.push(["vehicle.updated", v]);
         vehicleVersions.set(v.id, version);

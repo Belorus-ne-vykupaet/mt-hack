@@ -216,6 +216,10 @@ export function DetailsPanel({
                     </span>
                     <strong>{Math.round(vehicle.speedKmh)} км/ч</strong>
                   </div>
+                  {config.officialMode && vehicle.doorsOpen != null && <div className="detail-data">
+                    <span>Двери{vehicle.telemetryStale ? " при последнем GPS" : ""}</span>
+                    <strong>{vehicle.doorsOpen ? "Открыты" : "Закрыты"}</strong>
+                  </div>}
                   <div className="detail-data">
                     <span>
                       {config.officialMode

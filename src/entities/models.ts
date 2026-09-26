@@ -26,6 +26,7 @@ export interface Vehicle extends PredictionAvailability {
   bearingDeg?: number;
   telemetryAgeSec?: number;
   telemetryStale?: boolean;
+  doorsOpen?: boolean | null;
   forecastHorizonSec?: number;
   forecastTargetTime?: string;
   forecastModel?: string;

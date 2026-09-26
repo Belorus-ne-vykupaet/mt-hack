@@ -2,7 +2,8 @@ FROM node:22-alpine AS build
 WORKDIR /app
 RUN corepack enable
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-RUN pnpm install --frozen-lockfile
+RUN --mount=type=cache,id=transit-pnpm-store,target=/root/.local/share/pnpm/store/v11 \
+    pnpm install --frozen-lockfile --fetch-retries 5 --fetch-timeout 120000 --network-concurrency 8
 COPY . .
 ARG VITE_DATA_SOURCE=mock
 ARG VITE_OFFICIAL_MODE=false
