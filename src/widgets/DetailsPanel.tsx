@@ -59,11 +59,11 @@ export function DetailsPanel({
   const entity = isVehicle ? vehicle : route;
   const title =
     ui.rightPanel === "route"
-      ? `Маршрут ${route?.number || ui.selectedRouteId || ""}`
+      ? `${config.officialMode ? "План ТС" : "Маршрут"} ${route?.number || ui.selectedRouteId || ""}`
       : isVehicle
         ? `ТС ${ui.selectedVehicleId?.replace("vehicle-", "") || ""}`
         : {
-            routes: "Маршруты",
+            routes: config.officialMode ? "Планы ТС" : "Маршруты",
             vehicles: "Транспорт",
             stops: "Остановки",
             settings: "Настройки",
@@ -98,7 +98,7 @@ export function DetailsPanel({
       <BusFront size={16} />
       <div>
         <strong>ТС {v.id.replace("vehicle-", "")}</strong>
-        <small>Маршрут {v.routeId}</small>
+        <small>{config.officialMode ? "План ТС" : "Маршрут"} {config.officialMode ? v.routeId.replace(/^duty-/, "") : v.routeId}</small>
       </div>
       <span style={{ color: riskInk[v.riskLevel] }}>
         {v.hasForecast === false ? forecastAvailability(v) : `${minutes(v.predictedDelaySec)} мин`}
@@ -137,14 +137,14 @@ export function DetailsPanel({
               className="route-back"
               onClick={() => ui.selectRoute(route.id)}
             >
-              Открыть маршрут {route.number}
+              Открыть {config.officialMode ? "план ТС" : "маршрут"} {route.number}
               <ArrowUpRight size={13} />
             </button>
           )}
           <div
             className="detail-tabs"
             role="tablist"
-            aria-label="Карточка маршрута"
+            aria-label={config.officialMode ? "Карточка плана ТС" : "Карточка маршрута"}
           >
             {(["overview", "stops", "vehicles"] as const).map((t, i) => (
               <button
@@ -172,7 +172,7 @@ export function DetailsPanel({
                     {" из "}{route.activeVehicleCount} автобусов
                   </span>
                   <small>
-                    Статус маршрута отражает наибольший риск. Цвет участка
+                    Статус {config.officialMode ? "плана ТС" : "маршрута"} отражает наибольший риск. Цвет участка
                     показывает риск находящихся на нём ТС к целевой остановке.
                   </small>
                 </div>
@@ -276,7 +276,7 @@ export function DetailsPanel({
                 className="primary-button"
                 onClick={() => navigate("/dispatch")}
               >
-                Управление маршрутом
+                {config.officialMode ? "Планирование ТС" : "Управление маршрутом"}
                 <ArrowUpRight size={15} />
               </button>
               {config.officialMode && entity.hasForecast !== false && (
@@ -363,7 +363,7 @@ export function DetailsPanel({
             </>
           ) : tab === "stops" ? (
             <>
-              <h3>Остановки маршрута</h3>
+              <h3>{config.officialMode ? "Остановки плана ТС" : "Остановки маршрута"}</h3>
               <div className="stops-list">
                 {routeStops.map((s) => (
                   <button
@@ -386,7 +386,7 @@ export function DetailsPanel({
             </>
           ) : (
             <>
-              <h3>{route.activeVehicleCount} ТС на маршруте</h3>
+              <h3>{route.activeVehicleCount} ТС {config.officialMode ? "в плане" : "на маршруте"}</h3>
               {localVehicles.map(renderVehicle)}
             </>
           )}
@@ -408,7 +408,7 @@ export function DetailsPanel({
             </label>
             <label>
               <Layers size={15} />
-              Маршруты на карте
+              {config.officialMode ? "Линии планов ТС" : "Маршруты на карте"}
               <input
                 type="checkbox"
                 checked={ui.routesVisible}
@@ -475,7 +475,7 @@ export function DetailsPanel({
                     >
                       <RouteBadge number={r.number} risk={r.riskLevel} />
                       <div>
-                        <strong>Маршрут {r.number}</strong>
+                        <strong>{config.officialMode ? "План ТС" : "Маршрут"} {r.number}</strong>
                         <small>{r.name}</small>
                       </div>
                       <span style={{ color: riskInk[r.riskLevel] }}>
@@ -501,7 +501,7 @@ export function DetailsPanel({
                           <MapPin size={16} />
                           <div>
                             <strong>{s.name}</strong>
-                            <small>Маршрут {r.number}</small>
+                            <small>{config.officialMode ? "План ТС" : "Маршрут"} {r.number}</small>
                           </div>
                           <ChevronRight size={14} />
                         </button>

@@ -16,7 +16,7 @@ def clock(value):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--input", default="reports/early-warning-audit-2026-09-26.json")
+    parser.add_argument("--input", default="reports/early-warning-audit-2026-09-27-osm.json")
     parser.add_argument("--output", default="public/docs/early-warning")
     args = parser.parse_args()
     report = json.loads(Path(args.input).read_text())
@@ -64,7 +64,8 @@ li{{margin:7px 0}}.footer{{font-size:13px;margin-top:24px}}code{{font-size:.91em
 <h1>От первого сигнала до наблюдённого прибытия</h1>
 <p class="intro">Воспроизведение официального архива за 6 января 2026 года. Первые сигналы проверены
 на 91 срезе, затем поток продолжен ещё на {evidence["settlement_snapshots"]} срезов для наблюдения исходов.
-Дата расчёта: {esc(report["measured_at_utc"][:19])} UTC. Все часы ниже — исходные часы CSV.</p>
+Модель: {esc(report["model_version"])}. Дата расчёта: {esc(report["measured_at_utc"][:19])} UTC.
+Все часы ниже — исходные часы CSV.</p>
 <div class="cards">
 <div class="card"><strong>{len(rows)}</strong><span>предупреждений с наблюдённым исходом</span></div>
 <div class="card"><strong>{evidence["late_arrivals"]}</strong><span>нарушенных плановых сроков, сигнал за 10,5–13 минут</span></div>
@@ -94,7 +95,7 @@ li{{margin:7px 0}}.footer{{font-size:13px;margin-top:24px}}code{{font-size:.91em
 <li><strong>Начало нарушения срока:</strong> плановое время, если фактическое прибытие позже него.
 Это восстановленная граница нарушения расписания, подтверждённая последующим наблюдением прибытия;
 она не выдаётся за отдельную GPS-метку или время возникновения дорожного затора.</li>
-<li><strong>Риск &gt;2 минут:</strong> отдельный исход. Опоздание на 107 или 113 секунд
+<li><strong>Риск &gt;2 минут:</strong> отдельный исход. Опоздание менее 120 секунд
 не превращает ложный сигнал двухминутного риска в правильный.</li>
 <li><strong>Фактическое прибытие:</strong> отдельная временная отметка.
 Окно до него не подменяет окно до нарушения планового срока.</li>
@@ -115,7 +116,7 @@ li{{margin:7px 0}}.footer{{font-size:13px;margin-top:24px}}code{{font-size:.91em
 <th>Факт прибытия</th><th>Факт доступен</th><th>Опоздание</th><th>До нарушения срока</th>
 <th>Риск &gt;2 мин</th></tr></thead><tbody>{''.join(table)}</tbody></table></div>
 </section>
-<p class="footer"><a href="audit.json">Полный JSON: сигналы, переходы состояний и все 199 целей</a> ·
+<p class="footer"><a href="audit.json">Полный JSON: сигналы, переходы состояний и все {report["scheduled_targets_in_window"]} целей</a> ·
 <a href="/overview?source=official">К дашборду</a> · <a href="/docs/python/">PyDoc</a><br>
 Это сохранённый аудит архива, не текущая телеметрия и не новая оценка скрытого теста.
 Предоставленный test использовался при выборе модели. Оценку выставляет жюри.</p>

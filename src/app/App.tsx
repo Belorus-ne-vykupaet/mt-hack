@@ -129,7 +129,7 @@ export default function App() {
 
   const search = ui.search.trim().toLowerCase();
   const searchRoutes = routes
-    .filter((r) => matchesSearch(`Маршрут ${r.number} ${r.name}`, search))
+    .filter((r) => matchesSearch(`${config.officialMode ? "План ТС" : "Маршрут"} ${r.number} ${r.name}`, search))
     .slice(0, 4);
   const searchVehicles = vehicles
     .filter((v) =>
@@ -141,7 +141,7 @@ export default function App() {
     .filter((s) => matchesSearch(s.name, search))
     .slice(0, 3) : [];
   const navItems = [
-    { icon: RouteIcon, label: "Маршруты", panel: "routes", path: undefined },
+    { icon: RouteIcon, label: config.officialMode ? "Планы ТС" : "Маршруты", panel: "routes", path: undefined },
     { icon: BusFront, label: "Транспорт", panel: "vehicles", path: undefined },
     { icon: MapPin, label: "Остановки", panel: "stops", path: undefined },
     { icon: Bell, label: "События", panel: "events", path: undefined },
@@ -315,8 +315,8 @@ export default function App() {
             >
               <Search size={16} />
               <input
-                aria-label="Поиск маршрута, ТС или остановки"
-                placeholder="Маршрут, транспорт, остановка…"
+                aria-label={config.officialMode ? "Поиск плана ТС, ТС или остановки" : "Поиск маршрута, ТС или остановки"}
+                placeholder={config.officialMode ? "План ТС, транспорт, остановка…" : "Маршрут, транспорт, остановка…"}
                 value={ui.search}
                 onChange={(e) => ui.set({ search: e.target.value })}
                 onKeyDown={(e) => {
@@ -330,7 +330,7 @@ export default function App() {
               <kbd>↵</kbd>
               {search && (
                 <div className="search-results">
-                  {!!searchRoutes.length && <small>МАРШРУТЫ</small>}
+                  {!!searchRoutes.length && <small>{config.officialMode ? "ПЛАНЫ ТС" : "МАРШРУТЫ"}</small>}
                   {searchRoutes.map((r) => (
                     <button
                       key={r.id}
@@ -353,7 +353,7 @@ export default function App() {
                       }}
                     >
                       <BusFront size={16} />
-                      ТС {v.id.replace("vehicle-", "")} · Маршрут {v.routeId}
+                      ТС {v.id.replace("vehicle-", "")} · {config.officialMode ? "План ТС" : "Маршрут"} {config.officialMode ? v.routeId.replace(/^duty-/, "") : v.routeId}
                     </button>
                   ))}
                   {!!searchStops.length && <small>ОСТАНОВКИ</small>}
@@ -382,7 +382,7 @@ export default function App() {
                 <strong>{summary.vehiclesLocated ?? summary.vehiclesActive}</strong>
                 <span>{config.officialMode ? <>GPS-позиций на карте<br /><small>{summary.vehiclesActive} свежих · {summary.vehiclesStale ?? 0} последних известных</small></> : "транспорт на линии"}</span>
                 <button
-                  aria-label="Посмотреть транспорт на линии"
+                  aria-label={config.officialMode ? "Посмотреть транспорт на карте" : "Посмотреть транспорт на линии"}
                   onClick={() => setListView("vehicles")}
                 >
                   Посмотреть
@@ -397,7 +397,7 @@ export default function App() {
                     : "активных маршрутов"}
                 </span>
                 <button
-                  aria-label="Посмотреть активные маршруты"
+                  aria-label={config.officialMode ? "Посмотреть автобусы с прогнозом" : "Посмотреть активные маршруты"}
                   onClick={() => setListView(config.officialMode ? "forecasts" : "routes")}
                 >
                   Посмотреть

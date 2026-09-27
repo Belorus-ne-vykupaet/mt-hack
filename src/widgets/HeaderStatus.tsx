@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
 import { useConnection } from "../app/store";
+import { useOfficialModelStatus } from "../entities/official-model-status";
 import { config } from "../shared/config/env";
 
 /** Keep the one-second clock update out of the map and dashboard tree. */
 export function HeaderStatus() {
   const connection = useConnection();
+  const officialModel = useOfficialModelStatus();
   const [clock, setClock] = useState(() => new Date());
+  const isOfficialArchive = config.officialMode && officialModel.data?.mode === "official-replay";
+  const isOfficialNdtp = config.officialMode && officialModel.data?.mode === "official-ndtp";
 
   useEffect(() => {
     if (config.visualTest) return;
@@ -24,7 +28,13 @@ export function HeaderStatus() {
             {connection.status === "connected"
               ? config.csvMode
                 ? "Архив CSV"
-                : "Поток активен"
+                : isOfficialArchive
+                  ? "Архив воспроизводится"
+                  : isOfficialNdtp
+                    ? "Поток NDTP активен"
+                    : config.officialMode
+                      ? "Источник уточняется"
+                      : "Поток активен"
               : connection.status === "connecting"
                 ? "Подключение"
                 : connection.status === "stale"
@@ -37,9 +47,13 @@ export function HeaderStatus() {
             {connection.status === "connected"
               ? config.csvMode
                 ? "Время указано под картой"
-                : config.officialMode
-                  ? "Данные карты каждые 5 с"
-                  : "Обновлено только что"
+                : isOfficialArchive
+                  ? "Архивная телеметрия · обновление каждые 5 с"
+                  : isOfficialNdtp
+                    ? "План NDTP · обновление каждые 5 с"
+                    : config.officialMode
+                      ? "Проверка источника · обновление каждые 5 с"
+                      : "Обновлено только что"
               : `Обновление ${Math.max(0, Math.floor((clock.getTime() - connection.lastUpdate) / 1000))} сек назад`}
           </small>
         </div>

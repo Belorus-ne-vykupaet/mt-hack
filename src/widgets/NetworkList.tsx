@@ -31,7 +31,7 @@ const isOnTime = (v: Vehicle) =>
 const titles: Record<NetworkListKind, string> = {
   forecasts: "Автобусы с прогнозом",
   vehicles: config.officialMode ? "Автобусы на карте" : "Транспорт на линии",
-  routes: "Активные маршруты",
+  routes: config.officialMode ? "Планы ТС с расписанием" : "Активные маршруты",
   stops: "Остановки сети",
   "on-time": "Транспорт по расписанию",
   alerts: "События, требующие внимания",
@@ -87,7 +87,7 @@ export function NetworkList({
               delay: forecast?.predictedDelaySec ?? null,
               risk: forecast?.riskLevel ?? "unknown" as const,
               probability: forecast?.riskProbability ?? 0,
-              info: forecast ? `Прогноз ТС ${forecast.id.replace("vehicle-", "")}` : `Маршрут ${r.number}`,
+              info: forecast ? `Прогноз ТС ${forecast.id.replace("vehicle-", "")}` : `${config.officialMode ? "План ТС" : "Маршрут"} ${r.number}`,
               select: () => useUi.getState().selectStop(forecast?.nextStop?.id || stop.id, r.id),
             };
           }),
@@ -97,7 +97,7 @@ export function NetworkList({
             key: r.id,
             routeId: r.id,
             number: r.number,
-            title: `${config.officialMode ? "ТС" : "Маршрут"} ${r.number}`,
+            title: `${config.officialMode ? "План ТС" : "Маршрут"} ${r.number}`,
             description: r.name,
             delay: r.hasForecast === false ? null : r.predictedDelaySec,
             risk: r.riskLevel,
@@ -221,7 +221,7 @@ export function NetworkList({
           <input
             ref={input}
             aria-label="Поиск в полном списке"
-            placeholder="Поиск по номеру, маршруту или остановке…"
+            placeholder={config.officialMode ? "Поиск по ТС, плану или остановке…" : "Поиск по номеру, маршруту или остановке…"}
             value={query}
             onChange={(e) => {
               setQuery(e.target.value);
@@ -233,7 +233,7 @@ export function NetworkList({
           <table>
             <thead>
               <tr>
-                <th>Маршрут / объект</th>
+                <th>{config.officialMode ? "План ТС / объект" : "Маршрут / объект"}</th>
                 <th>Направление</th>
                 <th>
                   {kind === "on-time" ? "Задержка сейчас" : config.officialMode ? "Прогноз к остановке" : "Прогноз +15 мин"}

@@ -15,7 +15,7 @@ test("hidden dashboard releases WebGL and live stream, then restores the selecte
   await expect(map).toHaveAttribute("data-map-ready", "true", {
     timeout: 30000,
   });
-  await page.getByLabel("Поиск маршрута, ТС или остановки").fill(vehicle.id);
+  await page.getByLabel("Поиск плана ТС, ТС или остановки").fill(vehicle.id);
   await page.locator(".search-results").getByRole("button", {
     name: new RegExp(`ТС ${vehicle.id.replace("vehicle-", "")}`),
   }).click();

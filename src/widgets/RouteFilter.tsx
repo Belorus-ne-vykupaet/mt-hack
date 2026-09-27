@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Route } from "../entities/models";
 import { useUi } from "../app/store";
 import { matchesSearch } from "../shared/lib/search";
+import { config } from "../shared/config/env";
 export function RouteFilter({ routes }: { routes: Route[] }) {
   const { routeFilters, set } = useUi();
   const [query, setQuery] = useState("");
@@ -22,15 +23,15 @@ export function RouteFilter({ routes }: { routes: Route[] }) {
         if (e.key === "Escape") e.currentTarget.open = false;
       }}
     >
-      <summary aria-label="Фильтр по маршрутам">
+      <summary aria-label={config.officialMode ? "Фильтр по планам ТС" : "Фильтр по маршрутам"}>
         {routeFilters.length
-          ? `Маршруты: ${routeFilters.length}`
-          : "Все маршруты"}
+          ? `${config.officialMode ? "Планы ТС" : "Маршруты"}: ${routeFilters.length}`
+          : config.officialMode ? "Все планы ТС" : "Все маршруты"}
       </summary>
       <div className="route-filter-menu">
-        <strong>Отслеживаемые маршруты</strong>
+        <strong>{config.officialMode ? "Планы ТС с расписанием" : "Отслеживаемые маршруты"}</strong>
         <input
-          aria-label="Найти маршрут для отслеживания"
+          aria-label={config.officialMode ? "Найти план ТС для отслеживания" : "Найти маршрут для отслеживания"}
           placeholder="Номер или название…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -39,7 +40,7 @@ export function RouteFilter({ routes }: { routes: Route[] }) {
           className="text-button"
           onClick={() => set({ routeFilters: [] })}
         >
-          Показать все маршруты
+          {config.officialMode ? "Показать все планы ТС" : "Показать все маршруты"}
         </button>
         <div className="route-filter-options">
           {routes
@@ -48,7 +49,7 @@ export function RouteFilter({ routes }: { routes: Route[] }) {
               <label key={r.id}>
                 <input
                   type="checkbox"
-                  aria-label={`Отслеживать маршрут ${r.number}`}
+                  aria-label={`${config.officialMode ? "Отслеживать план ТС" : "Отслеживать маршрут"} ${r.number}`}
                   checked={routeFilters.includes(r.id)}
                   onChange={(e) =>
                     set({
@@ -65,7 +66,7 @@ export function RouteFilter({ routes }: { routes: Route[] }) {
             ))}
           {!routes.some((r) =>
             matchesSearch(`${r.number} ${r.name}`, query),
-          ) && <p>Маршрут не найден</p>}
+          ) && <p>{config.officialMode ? "План ТС не найден" : "Маршрут не найден"}</p>}
         </div>
         <small>Выберите несколько. Пустой выбор показывает всю сеть.</small>
       </div>

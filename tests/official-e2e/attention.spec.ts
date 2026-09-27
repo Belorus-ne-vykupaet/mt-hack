@@ -8,8 +8,8 @@ test("two late warnings and one early bus produce three consistent attention ent
     risk_level: i === 0 ? "high" : "elevated", status: "active", forecast_status: "ready",
     forecast_target_time: "2026-01-06T07:39:00Z", forecast_horizon_sec: 720,
   }));
-  const routes = buses.map((v: any) => ({ ...catalog.items.find((r: any) => r.id === v.route_id),
-    predicted_delay_sec: v.predicted_delay_sec, risk_level: v.risk_level }));
+  const routes = buses.map((v: any, i: number) => ({ ...catalog.items.find((r: any) => r.id === v.route_id),
+    number: `plan-${i}`, predicted_delay_sec: v.predicted_delay_sec, risk_level: v.risk_level }));
   const alerts = buses.slice(0, 2).map((v: any, i: number) => ({
     id: `warning-${i}`, route_id: v.route_id, vehicle_id: v.id, severity: i ? "warning" : "high",
     type: "delay_risk", title: "Риск опоздания", description: "Риск опоздания",
@@ -25,6 +25,10 @@ test("two late warnings and one early bus produce three consistent attention ent
   const attention = page.locator(".left-column .panel").filter({ hasText: "Требуют внимания" });
   await expect(attention.locator(".count")).toHaveText("3");
   await expect(attention.locator(".top-route")).toHaveCount(3);
+  await expect(attention.locator(".top-route").first()).toContainText(`ТС ${buses[0].id.replace("vehicle-", "")}`);
+  await attention.locator(".top-route").first().click();
+  await expect(page.getByRole("heading", { name: `ТС ${buses[0].id.replace("vehicle-", "")}`, exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Закрыть карточку" }).click();
   await expect(page.locator(".alerts-panel .count")).toHaveText("3");
   await expect(page.locator(".alert-tabs").getByRole("button", {name: "Все 3", exact: true})).toBeVisible();
   await expect(page.locator(".alert-card")).toHaveCount(3);

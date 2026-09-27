@@ -102,6 +102,7 @@ export function NetworkStatus({
   onShowRoutes: () => void;
 }) {
   const selectRoute = useUi((s) => s.selectRoute);
+  const selectVehicle = useUi((s) => s.selectVehicle);
   const connection = useConnection((s) => s.status);
   const officialModel = useOfficialModelStatus();
   const current = connection === "connected";
@@ -109,7 +110,8 @@ export function NetworkStatus({
     ? alerts.map(event => ({
         id: event.id,
         routeId: event.routeId,
-        number: routes.find(route => route.id === event.routeId)?.number || event.vehicleId.replace("vehicle-", ""),
+        vehicleId: event.vehicleId,
+        number: event.vehicleId.replace("vehicle-", ""),
         riskLevel: event.severity === "critical" ? "critical" as const : event.severity === "high" ? "high" as const : "elevated" as const,
         predictedDelaySec: event.predictedDelaySec,
       }))
@@ -234,12 +236,14 @@ export function NetworkStatus({
             <button
               key={r.id}
               className="top-route"
-              onClick={() => selectRoute(r.routeId)}
+              onClick={() => "vehicleId" in r
+                ? selectVehicle(r.vehicleId, r.routeId)
+                : selectRoute(r.routeId)}
             >
               <RouteBadge number={r.number} risk={r.riskLevel} />
               <div>
                 <div className="row-between">
-                  <span>Маршрут {r.number}</span>
+                  <span>{config.officialMode ? "ТС" : "Маршрут"} {r.number}</span>
                   <b style={{ color: riskInk[r.riskLevel] }}>
                     {minutes(r.predictedDelaySec)} <small>мин</small>
                   </b>
@@ -258,7 +262,7 @@ export function NetworkStatus({
           ))}
         </div>
         <button className="panel-link" onClick={onShowRoutes}>
-          Все маршруты <ArrowUpRight size={15} />
+          {config.officialMode ? "Все планы ТС" : "Все маршруты"} <ArrowUpRight size={15} />
         </button>
       </Panel>
     </aside>

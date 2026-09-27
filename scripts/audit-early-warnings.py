@@ -259,6 +259,8 @@ async def audit():
 
     report = {
         "mode": "official-test-causal-replay",
+        "model_version": engine.metrics["modelVersion"],
+        "submission_sha256": engine.metrics.get("submissionSha256"),
         "clock_note": "CSV timestamps are compared without timezone conversion",
         "measured_at_utc": datetime.now(timezone.utc).isoformat(),
         "archive_start": pd.Timestamp(start, unit="s", tz="UTC").isoformat(),

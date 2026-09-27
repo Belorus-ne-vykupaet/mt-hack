@@ -24,16 +24,20 @@ def main() -> None:
     parser.add_argument("--target-port", type=int, default=9201)
     parser.add_argument("--target-count", type=int, default=1,
                         help="number of synthetic stops, four minutes apart; use 10 for a 30-minute soak")
+    parser.add_argument("--previous-stop-offset-sec", type=int, default=-600,
+                        help="planned offset from plan creation to the previous stop; positive means an early visit")
     args = parser.parse_args()
     if not 1 <= args.target_port <= 65535:
         parser.error("target-port must be 1…65535")
     if not 1 <= args.target_count <= 30:
         parser.error("target-count must be 1…30")
+    if not -1800 <= args.previous_stop_offset_sec <= 60:
+        parser.error("previous-stop-offset-sec must be -1800…60")
     args.output.mkdir(parents=True, exist_ok=True)
     now = datetime.now(timezone.utc).replace(microsecond=0)
-    # A previously scheduled stop at the stationary GPS position supplies an
-    # observed deviation. The target stays strictly inside the 10–15 min window.
-    rows = [(99110001, now - timedelta(seconds=600), LON, LAT,
+    # A stop at the stationary GPS position supplies an observed deviation.
+    # A positive offset lets a real-clock test start before any known delay.
+    rows = [(99110001, now + timedelta(seconds=args.previous_stop_offset_sec), LON, LAT,
              "Интеграционный стенд · предыдущая остановка")]
     rows.extend((99110002 + i, now + timedelta(seconds=750 + 240 * i),
                  LON, LAT + 0.070,

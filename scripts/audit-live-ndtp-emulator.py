@@ -40,6 +40,8 @@ def main():
     parser.add_argument("--emulator", default="http://127.0.0.1:18081")
     parser.add_argument("--output", type=Path, default=Path("reports/ndtp-live-window-2026-09-27.json"))
     parser.add_argument("--arrival-delay-sec", type=int, default=130)
+    parser.add_argument("--require-no-existing-delay", action="store_true",
+                        help="fail unless the previous observed stop was on time or early at first warning")
     args = parser.parse_args()
     if not 121 <= args.arrival_delay_sec <= 600:
         parser.error("arrival delay must confirm the >120 second risk within 10 minutes")
@@ -97,6 +99,11 @@ def main():
             raise RuntimeError("no first warning before the 10-minute boundary")
         record["firstWarning"] = warning
         record["statusAtIssue"] = get_json(backend + "/status")
+        if args.require_no_existing_delay and not (
+            warning["current_delay_sec_at_issue"] is not None
+            and warning["current_delay_sec_at_issue"] <= 0
+        ):
+            raise RuntimeError("first warning was issued after an earlier observed delay")
         if not (600 < warning["forecast_horizon_sec"] <= 900
                 and 600 < warning["event_lead_time_sec"] <= 900
                 and warning["source"] == "ndtp"):

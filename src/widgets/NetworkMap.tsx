@@ -936,7 +936,7 @@ export default function NetworkMap({
               checked={ui.routesVisible}
               onChange={(e) => ui.set({ routesVisible: e.target.checked })}
             />
-            Маршруты и риск
+            {config.officialMode ? "Траектории ТС и риск" : "Маршруты и риск"}
           </label>
           <label>
             <input
@@ -970,7 +970,7 @@ export default function NetworkMap({
         </div>
       )}
       {!loading && !routes.length && (
-        <div className="map-notice">Нет маршрутов для выбранных фильтров</div>
+        <div className="map-notice">{config.officialMode ? "Нет планов ТС для выбранных фильтров" : "Нет маршрутов для выбранных фильтров"}</div>
       )}
       <div className="map-legend">
         <span>
@@ -982,7 +982,7 @@ export default function NetworkMap({
         </span>
         <small className="local-risk-key">
           {config.officialMode
-            ? "Тонкие линии — маршрут · участки и кольца ТС — риск · серые — нет прогноза / старый GPS"
+            ? "Тонкие линии — наблюдаемая траектория ТС · участки и кольца — риск · серые — нет прогноза / старый GPS"
             : mode === "flow"
             ? "Кольца, участки и столбцы — риск"
             : "Линии — участки · значки — автобусы"}
