@@ -18,7 +18,7 @@ test("API mode connects REST/WS, uses server recommendations and survives reload
   });
   await page.getByRole("link", { name: "Диспетчер", exact: true }).click();
   await expect(page.locator(".api-dispatch-notice")).toContainText(
-    "Команды через API",
+    "Состояние подключений",
   );
   await expect(page.locator(".dispatch-queue-item")).toHaveCount(15);
   await page.getByLabel("Плановое количество автобусов").fill("10");
@@ -52,7 +52,7 @@ test("API mode connects REST/WS, uses server recommendations and survives reload
     "Сервер подтвердил отмену",
   );
   await expect(page.locator(".dispatch-context")).toContainText("8 на линии");
-  await page.getByRole("link", { name: "Интеграции", exact: true }).click();
+  await page.goto("/integrations");
   await page.setViewportSize({ width: 390, height: 844 });
   expect(
     await page.evaluate(

@@ -193,10 +193,6 @@ export default function App() {
             <FileText size={17} />
             <span>Отчёты</span>
           </NavLink>
-          <NavLink to="/integrations">
-            <Orbit size={17} />
-            <span>Интеграции</span>
-          </NavLink>
         </nav>
         <div className="header-status">
           <span className="demo-badge">
@@ -260,9 +256,6 @@ export default function App() {
               <Settings size={19} />
               <span>Настройки</span>
             </button>
-            <span className="avatar" title="Рабочее место диспетчера">
-              Д
-            </span>
           </div>
         </nav>
         <main className="main">
@@ -494,7 +487,7 @@ export default function App() {
               <span className="status-dot" />
               {config.officialMode
                 ? `Официальные данные · ${activeModel(officialModel.data, officialModel.isError)
-                  ? modelDisplayName(officialModel.data)
+                  ? modelDisplayName()
                   : modelHeaderLabel(officialModel.data, officialModel.isError).toLocaleLowerCase("ru-RU")}`
                 : config.csvMode
                   ? "Воспроизведение CSV"

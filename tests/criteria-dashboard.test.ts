@@ -12,7 +12,7 @@ vi.mock("../src/app/theme", () => ({ useTheme: () => ({ theme: "light", setTheme
 vi.mock("react-router-dom", () => ({ useNavigate: () => () => {} }));
 vi.mock("../src/entities/official-model-status", () => ({
   useOfficialModelStatus: () => ({ data: { mode: "official-ndtp", status: "connected" } }),
-  modelDisplayName: () => "ExtraTrees",
+  modelDisplayName: () => "Предсказание модели",
 }));
 
 import { mapAlert, mapRoute, mapSegment, mapVehicle } from "../src/entities/adapters";

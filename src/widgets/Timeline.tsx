@@ -13,7 +13,7 @@ export function Timeline({ compact = false }: { compact?: boolean }) {
       : model.data?.status === "no_targets"
         ? "Нет цели прогноза"
         : activeModel(model.data, model.isError)
-          ? `Прогноз ${modelDisplayName(model.data)}`
+          ? modelDisplayName()
           : "Ожидание прогноза";
   if (config.officialMode)
     return (

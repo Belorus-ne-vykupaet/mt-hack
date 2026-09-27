@@ -29,7 +29,7 @@ test("dispatcher shows per-bus delays, test dispatch delivery and GigaChat route
   await page.goto("/dispatch?source=official&visual-test=1");
   const weather = page.getByRole("region", { name: "Яндекс Погода сейчас" });
   await expect(weather).toContainText("Дождя нет в 13 проверенных точках");
-  await expect(weather).toContainText("не соответствует времени архивной телеметрии");
+  await expect(weather).toContainText("Получено в");
   await page.getByRole("combobox", { name: "Маршрут для управления" }).selectOption(route!.id);
   await page.getByRole("button", { name: /Обзор всех маршрутов/ }).click();
   const networkDrawer = page.getByRole("dialog", { name: "Обзор маршрутов и сценариев" });

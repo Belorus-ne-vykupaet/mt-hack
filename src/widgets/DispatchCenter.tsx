@@ -14,7 +14,7 @@ import {
   AlertTriangle,
   CircleCheck,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useDispatch } from "../app/dispatch-store";
 import { useUi, useConnection } from "../app/store";
 import { config } from "../shared/config/env";
@@ -274,9 +274,9 @@ export default function DispatchCenter({
     <section className="dispatch-center">
       {config.dispatchApi && (
         <div className="api-dispatch-notice">
-          <strong>Команды через API · учебный контур.</strong> Рекомендации,
-          резерв и журнал поступают с сервера. Исполнение на реальном транспорте
-          не подключено. <a href="/integrations">Состояние подключений →</a>
+          <Link className="dispatch-connections-link" to="/integrations">
+            Состояние подключений <ArrowRight size={16} aria-hidden="true" />
+          </Link>
           {(api.commands.isError || api.recommendations.isError) && (
             <p role="alert">
               {api.commands.error?.message ||
@@ -892,10 +892,6 @@ function Planner({
               onChange={(e) => setCycle(e.target.valueAsNumber)}
             />
           </label>
-          <small>
-            Допущение сценария: учитывает оба направления и отдых на конечных.
-            Дополнительный автобус меняет интервал, но не устраняет пробку.
-          </small>
         </section>
         <section className="dispatch-card">
           <div className="dispatch-card-title">
@@ -989,11 +985,6 @@ function Planner({
               </button>
             ))}
           </div>
-          <small>
-            Изменение на одно прохождение остановки. В демопрогнозе влияет на
-            автобусы, для которых она следующая. Посадка пассажиров и
-            ограничения перевозчика пока не моделируются.
-          </small>
         </section>
         <section className="dispatch-card dispatch-preview">
           <div className="dispatch-card-title">
@@ -1118,11 +1109,9 @@ function Planner({
               {error}
             </p>
           )}
-          <small>
-            {canApply
-              ? "Действует только в демонстрации. Можно отменить в журнале. Резервные автобусы показаны на начальной остановке."
-              : "CSV и реальная телеметрия остаются неизменными. Применение команд требует API перевозчика."}
-          </small>
+          {canApply && <small>
+            Действует только в демонстрации. Можно отменить в журнале. Резервные автобусы показаны на начальной остановке.
+          </small>}
         </section>
       </div>
     </>

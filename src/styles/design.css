@@ -135,7 +135,6 @@
   border-left-color: var(--blue);
 }
 .sidebar-bottom { gap: 5px; }
-.avatar { border-radius: 2px; font-family: "IBM Plex Mono", monospace; }
 
 .main { padding: 29px clamp(20px, 2.35vw, 42px) 14px; }
 .workspace-heading {

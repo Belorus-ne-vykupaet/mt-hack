@@ -38,10 +38,10 @@ test("official Sasha predictions, archive clock, map and themes", async ({
     ),
   ).toBeTruthy();
   await page.goto("/overview?source=official");
-  await expect(page.locator(".demo-badge")).toHaveText("EXTRATREES · АРХИВ");
+  await expect(page.locator(".demo-badge")).toHaveText("ПРЕДСКАЗАНИЕ МОДЕЛИ · АРХИВ");
   await expect(page.getByLabel("Горизонт прогноза в минутах")).toHaveCount(0);
   await page
-    .getByRole("button", { name: "Прогноз ExtraTrees", exact: true })
+    .getByRole("button", { name: "Предсказание модели", exact: true })
     .click();
   await page
     .getByRole("button", { name: "Переключить карту в 3D", exact: true })
@@ -68,14 +68,14 @@ test("official Sasha predictions, archive clock, map and themes", async ({
   await expect(page.getByText("Применить в демо", { exact: true })).toHaveCount(
     0,
   );
-  await page.getByRole("link", { name: "Интеграции", exact: true }).click();
+  await page.goto("/integrations?source=official");
   await expect(
-    page.getByText("sasha-extra-trees-v2", { exact: false }),
+    page.getByText("Предсказание модели. Подсказки управления", { exact: false }),
   ).toBeVisible({timeout: 20000});
   expect(errors).toEqual([]);
 });
 
-test("official header and forecast controls show the actual model and fallback", async ({ page, request }) => {
+test("official header and forecast controls show a generic model label and fallback", async ({ page, request }) => {
   const live = await (await request.get("/api/v1/ml/status")).json();
   await page.route("**/api/v1/ml/status", (route) => route.fulfill({
     json: {
@@ -87,8 +87,8 @@ test("official header and forecast controls show the actual model and fallback",
     },
   }));
   await page.goto("/overview?source=official");
-  await expect(page.locator(".demo-badge")).toHaveText("CANDIDATE · АРХИВ");
-  await expect(page.getByRole("button", { name: "Прогноз Candidate", exact: true })).toBeVisible();
+  await expect(page.locator(".demo-badge")).toHaveText("ПРЕДСКАЗАНИЕ МОДЕЛИ · АРХИВ");
+  await expect(page.getByRole("button", { name: "Предсказание модели", exact: true })).toBeVisible();
 
   await page.unroute("**/api/v1/ml/status");
   await page.route("**/api/v1/ml/status", (route) => route.fulfill({

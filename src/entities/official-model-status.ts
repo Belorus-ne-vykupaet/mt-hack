@@ -40,9 +40,8 @@ export function useOfficialModelStatus() {
   });
 }
 
-export function modelDisplayName(status?: OfficialModelStatus) {
-  const family = status?.metrics?.modelFamily?.replace(/Regressor$/, "");
-  return family || status?.modelVersion || "модель";
+export function modelDisplayName() {
+  return "Предсказание модели";
 }
 
 export function activeModel(status?: OfficialModelStatus, isError = false) {
@@ -54,5 +53,5 @@ export function modelHeaderLabel(status?: OfficialModelStatus, isError = false) 
   if (status?.status === "fallback") return "РЕЗЕРВНЫЙ ПРОГНОЗ";
   if (status?.status === "no_targets") return "НЕТ ЦЕЛЕЙ ПРОГНОЗА";
   if (!activeModel(status)) return "ПРОВЕРКА МОДЕЛИ";
-  return `${modelDisplayName(status).toUpperCase()} · ${status?.mode === "official-ndtp" ? "NDTP" : "АРХИВ"}`;
+  return `${modelDisplayName().toUpperCase()} · ${status?.mode === "official-ndtp" ? "NDTP" : "АРХИВ"}`;
 }

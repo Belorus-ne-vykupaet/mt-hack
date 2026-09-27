@@ -273,13 +273,9 @@ export default function Analytics({
           </div>
         </Panel>
       </div>
-      <p className="analytics-note">
-        {config.dataSource === "mock"
-          ? "Факт и прогноз — демонстрационные. "
-          : ""}
-        Показатели и временные ряды отражают всю сеть. Распределение риска и
-        рейтинг учитывают выбранные фильтры.
-      </p>
+      {config.dataSource === "mock" && (
+        <p className="analytics-note">Факт и прогноз — демонстрационные.</p>
+      )}
     </div>
   );
 }

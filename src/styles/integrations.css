@@ -157,12 +157,30 @@
   padding: 10px;
 }
 .api-dispatch-notice {
-  padding: 14px 18px;
-  background: var(--surface);
-  border: 1px solid var(--blue);
   margin-bottom: 18px;
   font-size: 12px;
   line-height: 1.7;
+}
+.dispatch-connections-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  color: var(--blue);
+  background: var(--surface);
+  border: 2px solid var(--blue);
+  border-radius: 4px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.dispatch-connections-link:hover {
+  background: var(--hover);
+}
+.dispatch-connections-link:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 3px;
 }
 @media (max-width: 700px) {
   .integration-intro,

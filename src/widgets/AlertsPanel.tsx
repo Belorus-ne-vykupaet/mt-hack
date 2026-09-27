@@ -86,7 +86,7 @@ export function AlertsPanel({ alerts, segments = [] }: { alerts: Alert[]; segmen
               <div className="alert-location">
                 <MapPin size={12} />
                 {config.officialMode && a.targetTime && a.expectedArrivalAt
-                  ? `План ${time(a.targetTime)} → ожидается ${time(a.expectedArrivalAt)}. ${a.modelStatus === "fallback" ? "ML недоступен; резервная оценка." : `Прогноз ${modelDisplayName(model.data)}.`}`
+                  ? `План ${time(a.targetTime)} → ожидается ${time(a.expectedArrivalAt)}. ${a.modelStatus === "fallback" ? "ML недоступен; резервная оценка." : `${modelDisplayName()}.`}`
                   : a.description}
               </div>
               {config.officialMode && (

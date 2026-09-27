@@ -60,7 +60,7 @@ export function YandexWeatherBrief() {
           <span> · {cloudy.length ? `облачно в ${cloudy.length}` : "ясно во всех"} {cloudy.length ? `из ${points.length}` : "точках"}</span>
         </p>
         {!!rain.length && <small>Осадки: {rain.map((point) => point.name).join(", ")}</small>}
-        <small>Получено в {observed} МСК · текущая погода не соответствует времени архивной телеметрии и не участвует в расчёте задержки.</small>
+        <small>Получено в {observed} МСК</small>
       </> : <p role="status">{message}</p>}
     </div>
     <button className="dispatch-weather-map" onClick={openMap} title="Открыть погоду на 3D-карте">
