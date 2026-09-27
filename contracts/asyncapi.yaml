@@ -2,7 +2,7 @@ asyncapi: 3.0.0
 info:
   title: Transit Control realtime
   version: 1.0.0
-  description: REST remains authoritative after reconnect. API sandbox uses per-client consecutive sequences.
+  description: REST and WebSocket deliver completed backend snapshots. Each client receives a full first snapshot, consecutive sequences and subsequent entity deltas.
 servers:
   local:
     host: localhost:8081
@@ -27,7 +27,7 @@ components:
         properties:
           type:
             type: string
-            enum: [system.hello, system.heartbeat, network.updated, route.updated, vehicle.updated, vehicle.removed, alert.created, alert.updated, alert.resolved, forecast.updated, alerts.snapshot, analytics.snapshot]
+            enum: [system.hello, system.heartbeat, network.updated, route.updated, route.removed, vehicle.updated, vehicle.removed, alert.created, alert.updated, alert.resolved, forecast.updated, alerts.snapshot, analytics.snapshot]
           version:
             type: integer
             const: 1

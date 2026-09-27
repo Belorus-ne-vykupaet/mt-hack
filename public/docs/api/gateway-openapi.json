@@ -10,14 +10,76 @@
       "get": {
         "operationId": "getMlStatus",
         "summary": "Состояние модели, телеметрии и расчёта прогнозов",
-        "responses": { "200": { "description": "Статус Backend/ML и актуальность кэша шлюза", "content": { "application/json": { "schema": { "type": "object", "properties": { "mode": { "type": "string" }, "status": { "type": "string" }, "stale": { "type": "boolean" }, "modelVersion": { "type": "string" }, "pipelineMs": { "type": "number" }, "inferenceMs": { "type": "number" }, "predictedVehicles": { "type": "integer" }, "metrics": { "type": "object" }, "ndtp": { "type": "object" } } } } } } }
+        "responses": {
+          "200": {
+            "description": "Статус Backend/ML и актуальность кэша шлюза",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "mode": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "stale": {
+                      "type": "boolean"
+                    },
+                    "modelVersion": {
+                      "type": "string"
+                    },
+                    "pipelineMs": {
+                      "type": "number"
+                    },
+                    "inferenceMs": {
+                      "type": "number"
+                    },
+                    "predictedVehicles": {
+                      "type": "integer"
+                    },
+                    "metrics": {
+                      "type": "object"
+                    },
+                    "ndtp": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/routes/geometry": {
       "get": {
         "operationId": "getAllRouteGeometries",
         "summary": "Геометрия всех маршрутов выбранного источника",
-        "responses": { "200": { "description": "GeoJSON-геометрия маршрутов", "content": { "application/json": { "schema": { "type": "object", "required": ["items"], "properties": { "items": { "type": "array", "items": { "$ref": "#/components/schemas/RouteGeometryDto" } } } } } } } }
+        "responses": {
+          "200": {
+            "description": "GeoJSON-геометрия маршрутов",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "items"
+                  ],
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RouteGeometryDto"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/traffic/notifications": {
@@ -25,24 +87,88 @@
         "operationId": "getRoadNotifications",
         "summary": "Дорожные события впереди автобусов и рекомендации GigaChat",
         "description": "Запускает фоновое обновление настроенного источника и возвращает текущее состояние мониторинга. Тестовые события имеют source=demo.",
-        "responses": { "200": { "description": "Дорожный мониторинг", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RoadMonitorState" } } } } }
+        "responses": {
+          "200": {
+            "description": "Дорожный мониторинг",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoadMonitorState"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/traffic/demo": {
       "post": {
         "operationId": "createOrClearRoadDemo",
         "summary": "Показать тестовое ДТП перед выбранным автобусом или очистить демонстрацию",
-        "security": [{ "BearerAuth": [] }, { "SessionCookie": [] }],
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "oneOf": [
-          { "type": "object", "required": ["vehicleId"], "properties": { "vehicleId": { "type": "string" } } },
-          { "type": "object", "required": ["clear"], "properties": { "clear": { "const": true } } }
-        ] } } } },
+        "security": [
+          {
+            "BearerAuth": []
+          },
+          {
+            "SessionCookie": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "vehicleId"
+                    ],
+                    "properties": {
+                      "vehicleId": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "clear"
+                    ],
+                    "properties": {
+                      "clear": {
+                        "const": true
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
         "responses": {
-          "200": { "description": "Обновлённый дорожный мониторинг", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/RoadMonitorState" } } } },
-          "400": { "description": "Нужно указать автобус" },
-          "401": { "description": "Требуется авторизация" },
-          "404": { "description": "Автобус не найден" },
-          "422": { "description": "Для автобуса не определён участок впереди по маршруту" }
+          "200": {
+            "description": "Обновлённый дорожный мониторинг",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoadMonitorState"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Нужно указать автобус"
+          },
+          "401": {
+            "description": "Требуется авторизация"
+          },
+          "404": {
+            "description": "Автобус не найден"
+          },
+          "422": {
+            "description": "Для автобуса не определён участок впереди по маршруту"
+          }
         }
       }
     },
@@ -51,11 +177,37 @@
         "operationId": "getForecastEvaluation",
         "summary": "First successful forecasts paired with causally observed arrivals",
         "description": "Official mode only. Persistent bounded journal keyed by plan, model, vehicle and target. Repeated predictions cannot replace the first. Future/unobserved arrivals are null; fallback predictions are excluded. MAE covers all retained observed pairs in the selected plans, while items are limited to 200, completed pairs first.",
-        "parameters": [{ "name": "route_id", "in": "query", "style": "form", "explode": true, "schema": { "type": "array", "items": { "type": "string" } } }],
+        "parameters": [
+          {
+            "name": "route_id",
+            "in": "query",
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
         "responses": {
-          "200": { "description": "Forecast evaluation", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/ForecastEvaluation" } } } },
-          "404": { "description": "Official source is not configured" },
-          "500": { "description": "Upstream journal unavailable" }
+          "200": {
+            "description": "Forecast evaluation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForecastEvaluation"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Official source is not configured"
+          },
+          "500": {
+            "description": "Upstream journal unavailable"
+          }
         }
       }
     },
@@ -63,50 +215,257 @@
       "get": {
         "operationId": "listDailyReports",
         "summary": "Сохранённые дневные сводки по фактически наблюдавшимся срезам",
-        "responses": { "200": { "description": "Dates and reports; no model call", "content": { "application/json": { "schema": { "type": "object", "properties": { "items": { "type": "array", "items": { "$ref": "#/components/schemas/DailyReport" } }, "modelConfigured": { "type": "boolean" }, "model": { "type": "string" } } } } } } }
+        "responses": {
+          "200": {
+            "description": "Dates and reports; no model call",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/DailyReport"
+                      }
+                    },
+                    "modelConfigured": {
+                      "type": "boolean"
+                    },
+                    "model": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/dispatch/reports/{date}": {
       "get": {
         "operationId": "getDailyReport",
-        "parameters": [{ "name": "date", "in": "path", "required": true, "schema": { "type": "string", "format": "date" } }],
-        "responses": { "200": { "description": "Saved day", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DailyReport" } } } } }
+        "parameters": [
+          {
+            "name": "date",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Saved day",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DailyReport"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/dispatch/reports/{date}/generate": {
       "post": {
         "operationId": "generateDailyReport",
         "summary": "Создать или обновить краткий текст GigaChat на основе серверных агрегатов",
-        "parameters": [{ "name": "date", "in": "path", "required": true, "schema": { "type": "string", "format": "date" } }],
-        "responses": { "200": { "description": "Persisted report", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DailyReport" } } } } }
+        "parameters": [
+          {
+            "name": "date",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Persisted report",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DailyReport"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/dispatch/advice": {
       "get": {
         "operationId": "getRuleDispatchAdvice",
         "summary": "Правила для выбранного маршрута; не вызывает GigaChat",
-        "parameters": [{ "name": "route_id", "in": "query", "required": true, "schema": { "type": "string" } }],
-        "responses": { "200": { "description": "Advice with source=rules", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DispatchAdvice" } } } } }
+        "parameters": [
+          {
+            "name": "route_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Advice with source=rules",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DispatchAdvice"
+                }
+              }
+            }
+          }
+        }
       },
       "post": {
         "operationId": "requestGigachatDispatchAdvice",
         "summary": "Запрос GigaChat по серверной сводке; при отсутствии ключа — явные правила",
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["routeId"], "properties": { "routeId": { "type": "string" } } } } } },
-        "responses": { "200": { "description": "Advice for operator review", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DispatchAdvice" } } } } }
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "routeId"
+                ],
+                "properties": {
+                  "routeId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Advice for operator review",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DispatchAdvice"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/dispatch/driver-messages": {
       "get": {
         "operationId": "getDriverDrafts",
         "summary": "Черновики для водителей; требуется авторизация даже в режиме publicRead",
-        "parameters": [{ "name": "route_id", "in": "query", "required": false, "schema": { "type": "string" } }],
-        "responses": { "200": { "description": "Draft journal", "content": { "application/json": { "schema": { "type": "object", "properties": { "items": { "type": "array", "items": { "$ref": "#/components/schemas/DriverDraft" } } } } } } } }
+        "parameters": [
+          {
+            "name": "route_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Draft journal",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/DriverDraft"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       },
       "post": {
         "operationId": "saveDriverDraft",
         "summary": "Сохранить черновик: доставки водителю нет",
-        "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["routeId", "vehicleId", "kind", "text"], "properties": { "routeId": { "type": "string" }, "vehicleId": { "type": "string" }, "kind": { "type": "string", "enum": ["message", "speed", "dwell"] }, "text": { "type": "string", "maxLength": 500 }, "speedKmh": { "type": "integer", "minimum": 5, "maximum": 60 }, "dwellSec": { "type": "integer", "minimum": 10, "maximum": 300 }, "dwellStops": { "type": "integer", "minimum": 1, "maximum": 5 }, "stopId": { "type": "string" } } } } } },
-        "responses": { "201": { "description": "Saved draft, not delivered", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/DriverDraft" } } } } }
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "routeId",
+                  "vehicleId",
+                  "kind",
+                  "text"
+                ],
+                "properties": {
+                  "routeId": {
+                    "type": "string"
+                  },
+                  "vehicleId": {
+                    "type": "string"
+                  },
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "message",
+                      "speed",
+                      "dwell"
+                    ]
+                  },
+                  "text": {
+                    "type": "string",
+                    "maxLength": 500
+                  },
+                  "speedKmh": {
+                    "type": "integer",
+                    "minimum": 5,
+                    "maximum": 60
+                  },
+                  "dwellSec": {
+                    "type": "integer",
+                    "minimum": 10,
+                    "maximum": 300
+                  },
+                  "dwellStops": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 5
+                  },
+                  "stopId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Saved draft, not delivered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DriverDraft"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/network/summary": {
@@ -2128,35 +2487,158 @@
   "components": {
     "schemas": {
       "RoadMonitorState": {
-        "type": "object", "required": ["configured", "status", "checkedAt", "items", "usedInModel"],
+        "type": "object",
+        "required": [
+          "configured",
+          "status",
+          "checkedAt",
+          "items",
+          "usedInModel"
+        ],
         "properties": {
-          "configured": { "type": "boolean" },
-          "status": { "type": "string", "enum": ["needs_key", "checking", "ready", "unavailable"] },
-          "checkedAt": { "type": ["string", "null"], "format": "date-time" },
-          "usedInModel": { "const": false },
-          "items": { "type": "array", "items": { "$ref": "#/components/schemas/RoadNotice" } }
+          "configured": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "needs_key",
+              "checking",
+              "ready",
+              "unavailable"
+            ]
+          },
+          "checkedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "usedInModel": {
+            "const": false
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RoadNotice"
+            }
+          }
         }
       },
       "RoadNotice": {
-        "type": "object", "required": ["id", "event", "vehicleId", "routeId", "routeNumber", "distanceM", "delayStatus", "delaySec", "analysisStatus", "observedAt", "expiresAt"],
+        "type": "object",
+        "required": [
+          "id",
+          "event",
+          "vehicleId",
+          "routeId",
+          "routeNumber",
+          "distanceM",
+          "delayStatus",
+          "delaySec",
+          "analysisStatus",
+          "observedAt",
+          "expiresAt"
+        ],
         "properties": {
-          "id": { "type": "string" }, "event": { "$ref": "#/components/schemas/RoadEvent" },
-          "vehicleId": { "type": "string" }, "routeId": { "type": "string" }, "routeNumber": { "type": "string" },
-          "distanceM": { "type": "number" }, "delayStatus": { "const": "indefinite" }, "delaySec": { "type": "null" },
-          "analysisStatus": { "type": "string", "enum": ["pending", "ready", "unavailable"] },
-          "analysis": { "type": "string" }, "recommendation": { "type": "string" },
-          "observedAt": { "type": "string", "format": "date-time" }, "expiresAt": { "type": "string", "format": "date-time" }
+          "id": {
+            "type": "string"
+          },
+          "event": {
+            "$ref": "#/components/schemas/RoadEvent"
+          },
+          "vehicleId": {
+            "type": "string"
+          },
+          "routeId": {
+            "type": "string"
+          },
+          "routeNumber": {
+            "type": "string"
+          },
+          "distanceM": {
+            "type": "number"
+          },
+          "delayStatus": {
+            "const": "indefinite"
+          },
+          "delaySec": {
+            "type": "null"
+          },
+          "analysisStatus": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "ready",
+              "unavailable"
+            ]
+          },
+          "analysis": {
+            "type": "string"
+          },
+          "recommendation": {
+            "type": "string"
+          },
+          "observedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
         }
       },
       "RoadEvent": {
-        "type": "object", "required": ["id", "kind", "position", "description", "observedAt", "expiresAt", "source"],
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "position",
+          "description",
+          "observedAt",
+          "expiresAt",
+          "source"
+        ],
         "properties": {
-          "id": { "type": "string" },
-          "kind": { "type": "string", "enum": ["accident", "closure", "roadworks", "congestion"] },
-          "position": { "$ref": "#/components/schemas/PositionDto" }, "bearingDeg": { "type": "number" },
-          "description": { "type": "string" },
-          "observedAt": { "type": "string", "format": "date-time" }, "expiresAt": { "type": "string", "format": "date-time" },
-          "source": { "type": "string", "enum": ["yandex-router", "event-feed", "demo"] }
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "accident",
+              "closure",
+              "roadworks",
+              "congestion"
+            ]
+          },
+          "position": {
+            "$ref": "#/components/schemas/PositionDto"
+          },
+          "bearingDeg": {
+            "type": "number"
+          },
+          "description": {
+            "type": "string"
+          },
+          "observedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "yandex-router",
+              "event-feed",
+              "demo"
+            ]
+          }
         }
       },
       "ForecastEvaluation": {
@@ -2319,33 +2801,241 @@
       },
       "DailyReport": {
         "type": "object",
-        "required": ["date", "archive", "firstAsOf", "lastAsOf", "samples", "metrics", "source", "summary", "highlights", "coverageNote"],
+        "required": [
+          "date",
+          "archive",
+          "firstAsOf",
+          "lastAsOf",
+          "samples",
+          "metrics",
+          "source",
+          "summary",
+          "highlights",
+          "coverageNote"
+        ],
         "properties": {
-          "date": { "type": "string", "format": "date" }, "archive": { "type": "boolean" },
-          "firstAsOf": { "type": "string" }, "lastAsOf": { "type": "string" }, "samples": { "type": "integer" },
-          "source": { "type": "string", "enum": ["rules", "gigachat"] },
-          "model": { "type": ["string", "null"] }, "generatedAt": { "type": "string" },
-          "basedOnSamples": { "type": "integer" }, "needsRefresh": { "type": "boolean" },
-          "summary": { "type": "string" }, "highlights": { "type": "array", "items": { "type": "string" } },
-          "coverageNote": { "type": "string" },
-          "metrics": { "type": "object", "properties": {
-            "vehiclesObserved": { "type": "integer" }, "vehiclesWithForecast": { "type": "integer" },
-            "routesObserved": { "type": "integer" }, "peakDelayedVehicles": { "type": "integer" },
-            "meanPredictedDelaySec": { "type": ["number", "null"] }, "peakPredictedDelaySec": { "type": ["number", "null"] }
-          } }
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "archive": {
+            "type": "boolean"
+          },
+          "firstAsOf": {
+            "type": "string"
+          },
+          "lastAsOf": {
+            "type": "string"
+          },
+          "samples": {
+            "type": "integer"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "rules",
+              "gigachat"
+            ]
+          },
+          "model": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "generatedAt": {
+            "type": "string"
+          },
+          "basedOnSamples": {
+            "type": "integer"
+          },
+          "needsRefresh": {
+            "type": "boolean"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "highlights": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "coverageNote": {
+            "type": "string"
+          },
+          "metrics": {
+            "type": "object",
+            "properties": {
+              "vehiclesObserved": {
+                "type": "integer"
+              },
+              "vehiclesWithForecast": {
+                "type": "integer"
+              },
+              "routesObserved": {
+                "type": "integer"
+              },
+              "peakDelayedVehicles": {
+                "type": "integer"
+              },
+              "meanPredictedDelaySec": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "peakPredictedDelaySec": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              }
+            }
+          }
         }
       },
       "DispatchAdvice": {
-        "type": "object", "required": ["configured", "source", "generatedAt", "summary", "cards", "note"],
+        "type": "object",
+        "required": [
+          "configured",
+          "source",
+          "generatedAt",
+          "summary",
+          "cards",
+          "note"
+        ],
         "properties": {
-          "configured": { "type": "boolean" }, "source": { "type": "string", "enum": ["rules", "gigachat"] }, "model": { "type": "string" },
-          "generatedAt": { "type": "string", "format": "date-time" }, "summary": { "type": "string" }, "note": { "type": "string" },
-          "cards": { "type": "array", "items": { "type": "object", "required": ["kind", "title", "reason"], "properties": { "kind": { "type": "string", "enum": ["message", "speed", "dwell", "reserve"] }, "title": { "type": "string" }, "reason": { "type": "string" }, "vehicleId": { "type": ["string", "null"] }, "message": { "type": ["string", "null"] } } } }
+          "configured": {
+            "type": "boolean"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "rules",
+              "gigachat"
+            ]
+          },
+          "model": {
+            "type": "string"
+          },
+          "generatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "cards": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "kind",
+                "title",
+                "reason"
+              ],
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "message",
+                    "speed",
+                    "dwell",
+                    "reserve"
+                  ]
+                },
+                "title": {
+                  "type": "string"
+                },
+                "reason": {
+                  "type": "string"
+                },
+                "vehicleId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "message": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              }
+            }
+          }
         }
       },
       "DriverDraft": {
-        "type": "object", "required": ["id", "routeId", "vehicleId", "kind", "text", "createdAt", "status"],
-        "properties": { "id": { "type": "string" }, "routeId": { "type": "string" }, "vehicleId": { "type": "string" }, "kind": { "type": "string", "enum": ["message", "speed", "dwell"] }, "text": { "type": "string" }, "speedKmh": { "type": ["integer", "null"] }, "dwellSec": { "type": ["integer", "null"] }, "dwellStops": { "type": ["integer", "null"] }, "stopId": { "type": ["string", "null"] }, "createdAt": { "type": "string", "format": "date-time" }, "status": { "type": "string", "const": "draft" } }
+        "type": "object",
+        "required": [
+          "id",
+          "routeId",
+          "vehicleId",
+          "kind",
+          "text",
+          "createdAt",
+          "status"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "routeId": {
+            "type": "string"
+          },
+          "vehicleId": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "message",
+              "speed",
+              "dwell"
+            ]
+          },
+          "text": {
+            "type": "string"
+          },
+          "speedKmh": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "dwellSec": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "dwellStops": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "stopId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string",
+            "const": "draft"
+          }
+        }
       },
       "PositionDto": {
         "type": "object",

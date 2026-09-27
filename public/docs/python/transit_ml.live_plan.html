@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Python: module transit_ml.live_plan</title>
+</head><body>
+
+<table class="heading">
+<tr class="heading-text decor">
+<td class="title">&nbsp;<br><strong class="title"><a href="transit_ml.html" class="white">transit_ml</a>.live_plan</strong></td>
+<td class="extra"><a href=".">index</a><br><a href="https://github.com/Belorus-ne-vykupaet/mt-hack/blob/main/ml/transit_ml/live_plan.py">Исходный код</a></td></tr></table>
+    <p><span class="code">Read-only&nbsp;preflight&nbsp;for&nbsp;supplied&nbsp;NDTP&nbsp;plans.&nbsp;Format&nbsp;checks&nbsp;cannot&nbsp;prove&nbsp;provenance.</span></p>
+<p>
+<table class="section">
+<tr class="decor pkg-content-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Modules</strong></td></tr>
+
+<tr><td class="decor pkg-content-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><table><tr><td class="multicolumn"><a href="argparse.html">argparse</a><br>
+<a href="csv.html">csv</a><br>
+</td><td class="multicolumn"><a href="json.html">json</a><br>
+<a href="math.html">math</a><br>
+</td><td class="multicolumn"><a href="re.html">re</a><br>
+</td><td class="multicolumn"></td></tr></table></td></tr></table><p>
+<table class="section">
+<tr class="decor index-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Classes</strong></td></tr>
+
+<tr><td class="decor index-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><dl>
+<dt class="heading-text"><a href="builtins.html#ValueError">builtins.ValueError</a>(<a href="builtins.html#Exception">builtins.Exception</a>)
+</dt><dd>
+<dl>
+<dt class="heading-text"><a href="transit_ml.live_plan.html#PlanError">PlanError</a>
+</dt></dl>
+</dd>
+</dl>
+ <p>
+<table class="section">
+<tr class="decor title-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><a name="PlanError">class <strong>PlanError</strong></a>(<a href="builtins.html#ValueError">builtins.ValueError</a>)</td></tr>
+
+<tr><td class="decor title-decor"><span class="code">&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><dl><dt>Method resolution order:</dt>
+<dd><a href="transit_ml.live_plan.html#PlanError">PlanError</a></dd>
+<dd><a href="builtins.html#ValueError">builtins.ValueError</a></dd>
+<dd><a href="builtins.html#Exception">builtins.Exception</a></dd>
+<dd><a href="builtins.html#BaseException">builtins.BaseException</a></dd>
+<dd><a href="builtins.html#object">builtins.object</a></dd>
+</dl>
+<hr>
+Data descriptors defined here:<br>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><span class="code">list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object</span></dd>
+</dl>
+<hr>
+Methods inherited from <a href="builtins.html#ValueError">builtins.ValueError</a>:<br>
+<dl><dt><a name="PlanError-__init__"><strong>__init__</strong></a>(self, /, *args, **kwargs)</dt><dd><span class="code">Initialize&nbsp;self.&nbsp;&nbsp;See&nbsp;help(type(self))&nbsp;for&nbsp;accurate&nbsp;signature.</span></dd></dl>
+
+<hr>
+Static methods inherited from <a href="builtins.html#ValueError">builtins.ValueError</a>:<br>
+<dl><dt><a name="PlanError-__new__"><strong>__new__</strong></a>(*args, **kwargs)<span class="grey"><span class="heading-text"> class method of <a href="builtins.html#ValueError">builtins.ValueError</a></span></span></dt><dd><span class="code">Create&nbsp;and&nbsp;return&nbsp;a&nbsp;new&nbsp;object.&nbsp;&nbsp;See&nbsp;help(type)&nbsp;for&nbsp;accurate&nbsp;signature.</span></dd></dl>
+
+<hr>
+Methods inherited from <a href="builtins.html#BaseException">builtins.BaseException</a>:<br>
+<dl><dt><a name="PlanError-__getattribute__"><strong>__getattribute__</strong></a>(self, name, /)</dt><dd><span class="code">Return&nbsp;getattr(self,&nbsp;name).</span></dd></dl>
+
+<dl><dt><a name="PlanError-__reduce__"><strong>__reduce__</strong></a>(...)</dt><dd><span class="code">Helper&nbsp;for&nbsp;pickle.</span></dd></dl>
+
+<dl><dt><a name="PlanError-__repr__"><strong>__repr__</strong></a>(self, /)</dt><dd><span class="code">Return&nbsp;repr(self).</span></dd></dl>
+
+<dl><dt><a name="PlanError-__setstate__"><strong>__setstate__</strong></a>(...)</dt></dl>
+
+<dl><dt><a name="PlanError-__str__"><strong>__str__</strong></a>(self, /)</dt><dd><span class="code">Return&nbsp;str(self).</span></dd></dl>
+
+<dl><dt><a name="PlanError-add_note"><strong>add_note</strong></a>(...)</dt><dd><span class="code">Exception.<a href="#PlanError-add_note">add_note</a>(note)&nbsp;--<br>
+add&nbsp;a&nbsp;note&nbsp;to&nbsp;the&nbsp;exception</span></dd></dl>
+
+<dl><dt><a name="PlanError-with_traceback"><strong>with_traceback</strong></a>(...)</dt><dd><span class="code">Exception.<a href="#PlanError-with_traceback">with_traceback</a>(tb)&nbsp;--<br>
+set&nbsp;self.<strong>__traceback__</strong>&nbsp;to&nbsp;tb&nbsp;and&nbsp;return&nbsp;self.</span></dd></dl>
+
+<hr>
+Data descriptors inherited from <a href="builtins.html#BaseException">builtins.BaseException</a>:<br>
+<dl><dt><strong>__cause__</strong></dt>
+<dd><span class="code">exception&nbsp;cause</span></dd>
+</dl>
+<dl><dt><strong>__context__</strong></dt>
+<dd><span class="code">exception&nbsp;context</span></dd>
+</dl>
+<dl><dt><strong>__dict__</strong></dt>
+</dl>
+<dl><dt><strong>__suppress_context__</strong></dt>
+</dl>
+<dl><dt><strong>__traceback__</strong></dt>
+</dl>
+<dl><dt><strong>args</strong></dt>
+</dl>
+</td></tr></table></td></tr></table><p>
+<table class="section">
+<tr class="decor functions-decor heading-text">
+<td class="section-title" colspan=3>&nbsp;<br><strong class="bigsection">Functions</strong></td></tr>
+
+<tr><td class="decor functions-decor"><span class="code">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></td><td>&nbsp;</td>
+<td class="singlecolumn"><dl><dt><a name="-check_live_plan"><strong>check_live_plan</strong></a>(directory, *, now=None, emulator_config=None)</dt><dd><span class="code">Validate&nbsp;existing&nbsp;files&nbsp;without&nbsp;editing&nbsp;dates,&nbsp;IDs,&nbsp;emulator&nbsp;state&nbsp;or&nbsp;the&nbsp;Backend.</span></dd></dl>
+ <dl><dt><a name="-main"><strong>main</strong></a>()</dt></dl>
+</td></tr></table>
+</body></html>
