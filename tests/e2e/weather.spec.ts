@@ -101,9 +101,9 @@ test("current point clouds render, stay independent of forecast and survive them
       ),
     )
     .toBeGreaterThan(0);
-  await page.screenshot({ path: test.info().outputPath("transit-weather-light.png") });
+  await page.screenshot({ path: "/private/tmp/transit-weather-light.png" });
   await page.getByRole("button", { name: "Погода на 3D-карте" }).click();
-  await page.screenshot({ path: test.info().outputPath("transit-weather-panel.png") });
+  await page.screenshot({ path: "/private/tmp/transit-weather-panel.png" });
   await page.getByLabel("Выразительность погоды").fill("0.95");
   await page.getByRole("button", { name: "Закрыть настройки погоды" }).click();
   await page.getByLabel("Горизонт прогноза в минутах").fill("10");
@@ -125,7 +125,7 @@ test("current point clouds render, stay independent of forecast and survive them
     "data-weather-active",
     "true",
   );
-  await page.screenshot({ path: test.info().outputPath("transit-weather-dark.png") });
+  await page.screenshot({ path: "/private/tmp/transit-weather-dark.png" });
   for (let i = 0; i < 4; i++)
     await page
       .getByRole("button", {
@@ -145,7 +145,7 @@ test("current point clouds render, stay independent of forecast and survive them
     "false",
   );
   await page.getByRole("button", { name: "Закрыть настройки погоды" }).click();
-  await page.screenshot({ path: test.info().outputPath("transit-weather-off.png") });
+  await page.screenshot({ path: "/private/tmp/transit-weather-off.png" });
   expect(errors).toEqual([]);
 });
 
