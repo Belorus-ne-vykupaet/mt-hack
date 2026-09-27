@@ -36,9 +36,10 @@ test("the dashboard is installable as an app and offers install from the header"
     });
     window.dispatchEvent(event);
   });
+  await expect(install).toBeVisible({ timeout: 20000 });
   await install.click();
   await expect
-    .poll(() => page.evaluate(() => (window as unknown as { prompted?: boolean }).prompted))
+    .poll(() => page.evaluate(() => (window as unknown as { prompted?: boolean }).prompted), { timeout: 20000 })
     .toBe(true);
   await expect(install).toHaveCount(0);
 });

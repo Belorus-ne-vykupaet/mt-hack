@@ -58,7 +58,7 @@ test("forecast moves selected bus in both map modes and Now restores telemetry",
     "data-selected-vehicle-position",
     halfway!,
   );
-  await page.locator(".live-button").click();
+  await slider.fill("0");
   await expect(map).toHaveAttribute("data-selected-vehicle-position", initial!);
   await expect(page.locator(".map-position-caption")).toHaveCount(0);
   expect(errors).toEqual([]);
@@ -191,7 +191,7 @@ test("continuous forecast supports fractional minutes without playback controls"
   await expect(page.locator(".detail-forecast")).toContainText("+5.3");
   await slider.press("ArrowRight");
   await expect(slider).toHaveValue("7.51");
-  await page.locator(".live-button").click();
+  await slider.fill("0");
   await expect(slider).toHaveValue("0");
   await expect(page.locator(".detail-forecast")).toContainText("+2.3");
 });
@@ -260,11 +260,15 @@ for (const theme of ["dark", "light"])
       });
     });
 
-test("root redirects to overview and browser back preserves navigation", async ({
+test("root opens welcome and browser back preserves navigation", async ({
   page,
 }) => {
   await page.goto("/");
-  await expect(page).toHaveURL(/\/overview$/);
+  await expect(page).toHaveURL(/\/welcome$/);
+  await page.getByRole("link", { name: "Открыть диспетчерскую" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Обзор транспортной сети" }),
+  ).toBeVisible();
   await page.getByRole("link", { name: "Аналитика", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Аналитика движения" }),
@@ -594,7 +598,7 @@ test("3D bus model loads locally, follows forecast, remains selectable and respe
     "data-selected-vehicle-heading",
     heading!,
   );
-  await page.locator(".live-button").click();
+  await page.getByLabel("Горизонт прогноза в минутах").fill("0");
   await page.getByRole("button", { name: "Слои карты", exact: true }).click();
   await page.getByLabel("Столбцы задержек").uncheck();
   await page.getByLabel("Транспорт", { exact: true }).uncheck();
