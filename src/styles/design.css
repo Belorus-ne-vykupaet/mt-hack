@@ -830,17 +830,31 @@
   flex-wrap: wrap;
   column-gap: 14px;
 }
-.official-detail-note {
-  margin: 14px 0;
+/* Supporting copy uses the same compact type as the rest of the route card. */
+.detail-panel .official-detail-note {
+  margin: 12px 0;
   color: var(--secondary);
-  font-size: 11px;
-  line-height: 1.6;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 1.55;
+  letter-spacing: normal;
 }
-.official-detail-note > strong {
+.detail-panel .official-detail-note > strong {
   display: block;
-  margin-bottom: 5px;
+  margin-bottom: 6px;
   color: var(--text);
-  font-size: 12px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
 }
-.official-detail-note > p { margin: 5px 0; }
-.official-detail-note > small { display: block; font-size: 10px; }
+.detail-panel .official-detail-note > p {
+  margin: 4px 0;
+  font: inherit;
+}
+.detail-panel .official-detail-note > small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font: inherit;
+}

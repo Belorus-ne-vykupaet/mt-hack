@@ -25,7 +25,6 @@ import {
 import { useNetwork, useGeometries, queryClient } from "../entities/queries";
 import { useUi } from "./store";
 import { config } from "../shared/config/env";
-import { modelHeaderLabel, useOfficialModelStatus } from "../entities/official-model-status";
 
 import { AlertsPanel } from "../widgets/AlertsPanel";
 import { Timeline } from "../widgets/Timeline";
@@ -57,7 +56,6 @@ export default function App() {
   const { theme, setTheme } = useTheme();
   const [listView, setListView] = useState<NetworkListKind | null>(null);
   const net = useNetwork();
-  const officialModel = useOfficialModelStatus();
   const ui = useUi();
   const dispatchPlans = useDispatch((s) => s.plans);
   const activePlanCount = dispatchPlans.filter(
@@ -194,15 +192,11 @@ export default function App() {
           </NavLink>
         </nav>
         <div className="header-status">
-          <span className="demo-badge">
-            {config.officialMode
-              ? modelHeaderLabel(officialModel.data, officialModel.isError)
-              : config.csvMode
-                ? "CSV · АРХИВ"
-                : config.dataSource === "mock"
-                  ? "ДЕМО"
-                  : "API"}
-          </span>
+          {!config.officialMode && (
+            <span className="demo-badge">
+              {config.csvMode ? "CSV · АРХИВ" : config.dataSource === "mock" ? "ДЕМО" : "API"}
+            </span>
+          )}
           <button
             className="theme-toggle"
             aria-label={

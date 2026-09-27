@@ -38,7 +38,7 @@ test("official Sasha predictions, archive clock, map and themes", async ({
     ),
   ).toBeTruthy();
   await page.goto("/overview?source=official");
-  await expect(page.locator(".demo-badge")).toHaveText("ПРЕДСКАЗАНИЕ МОДЕЛИ · АРХИВ");
+  await expect(page.locator(".demo-badge")).toHaveCount(0);
   await page.getByLabel("Горизонт прогноза в минутах").fill("15");
   await page
     .getByRole("button", { name: "Переключить карту в 3D", exact: true })
@@ -72,7 +72,7 @@ test("official Sasha predictions, archive clock, map and themes", async ({
   expect(errors).toEqual([]);
 });
 
-test("official header and forecast controls show a generic model label and fallback", async ({ page, request }) => {
+test("official header has no model badge and forecast slider remains available during fallback", async ({ page, request }) => {
   const live = await (await request.get("/api/v1/ml/status")).json();
   await page.route("**/api/v1/ml/status", (route) => route.fulfill({
     json: {
@@ -84,7 +84,7 @@ test("official header and forecast controls show a generic model label and fallb
     },
   }));
   await page.goto("/overview?source=official");
-  await expect(page.locator(".demo-badge")).toHaveText("ПРЕДСКАЗАНИЕ МОДЕЛИ · АРХИВ");
+  await expect(page.locator(".demo-badge")).toHaveCount(0);
   await expect(page.getByLabel("Горизонт прогноза в минутах")).toHaveValue("0");
   await page.getByLabel("Горизонт прогноза в минутах").fill("7.35");
   await expect(page.locator(".map-shell")).toHaveAttribute("data-forecast-offset", "7.35");
@@ -94,7 +94,7 @@ test("official header and forecast controls show a generic model label and fallb
     json: { ...live, status: "fallback", stale: false },
   }));
   await page.reload();
-  await expect(page.locator(".demo-badge")).toHaveText("РЕЗЕРВНЫЙ ПРОГНОЗ");
+  await expect(page.locator(".demo-badge")).toHaveCount(0);
   await expect(page.getByLabel("Горизонт прогноза в минутах")).toBeVisible();
 });
 

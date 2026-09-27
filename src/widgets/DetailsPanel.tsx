@@ -260,7 +260,8 @@ export function DetailsPanel({
               {config.officialMode && incident?.eventType === "late_threshold" && (
                 <div className="official-detail-note">
                   <strong>Риск опоздания &gt;2 мин</strong>
-                  <p>{timing?.event}. {timing?.warning}.</p>
+                  <p>{timing?.event}.</p>
+                  <p>{timing?.warning}.</p>
                   {timing?.forecast && <small>{timing.forecast}.</small>}
                 </div>
               )}
