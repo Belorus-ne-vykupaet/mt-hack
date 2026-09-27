@@ -3,6 +3,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { WebSocket } from "ws";
+import { connect } from "node:net";
 import { createApi } from "../server/app";
 import type { ServerOptions } from "../server/app";
 import { csvSnapshot, csvGeometries } from "../src/mocks/csv-scenario";
@@ -46,6 +47,41 @@ const post = (url: string, body: unknown, key = "key-one", headers = {}) =>
     body: JSON.stringify(body),
   });
 describe("real HTTP integration API", () => {
+  it("returns a controlled error for malformed and oversized login bodies", async () => {
+    const api = await start({ token: "jury-test-token-1234567890123456", publicRead: true });
+    for (const [body, status] of [["{", 400], [JSON.stringify({ token: "x".repeat(70000) }), 413]] as const) {
+      const response = await fetch(api.url + "/session", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body,
+      });
+      expect(response.status).toBe(status);
+    }
+    expect((await fetch(api.url + "/health")).status).toBe(200);
+  });
+  it("rejects an oversized WebSocket frame without an unhandled server error", async () => {
+    const api = await start();
+    const ws = new WebSocket(api.url.replace("http:", "ws:") + "/stream");
+    ws.on("error", () => {});
+    await new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(() => { ws.terminate(); reject(new Error("Client was not closed")); }, 2000);
+      ws.on("open", () => ws.send(Buffer.alloc(65537)));
+      ws.on("close", () => { clearTimeout(timer); resolve(); });
+    });
+    expect((await fetch(api.url + "/health")).status).toBe(200);
+  });
+  it("rejects a malformed upgrade URL without an unhandled exception", async () => {
+    const api = await start();
+    const response = await new Promise<string>((resolve, reject) => {
+      const socket = connect(Number(new URL(api.url).port), "127.0.0.1");
+      let data = "";
+      socket.setTimeout(2000, () => { socket.destroy(); reject(new Error("Upgrade was not rejected")); });
+      socket.on("error", reject);
+      socket.on("data", chunk => { data += chunk; });
+      socket.on("end", () => resolve(data));
+      socket.on("connect", () => socket.write("GET http://[invalid HTTP/1.1\r\nHost: localhost\r\nConnection: Upgrade\r\nUpgrade: websocket\r\n\r\n"));
+    });
+    expect(response).toContain("400 Bad Request");
+    expect((await fetch(api.url + "/health")).status).toBe(200);
+  });
   it("forwards filtered forecast evaluation without substituting synthetic observations", async () => {
     const read = vi.fn().mockResolvedValue({ summary: { total: 1, observed: 0, maeSec: null }, items: [] });
     const official = { read, snapshot: vi.fn() } as unknown as OfficialSource;

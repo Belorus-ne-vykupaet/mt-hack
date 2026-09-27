@@ -1,0 +1,93 @@
+{
+  "mode": "fault",
+  "service": "backend",
+  "measuredAt": "2026-09-27T14:57:11.635Z",
+  "initial": {
+    "apiStatus": "connected",
+    "apiStale": false,
+    "forecastAvailable": true,
+    "backendStatus": "connected",
+    "predictedVehicles": 10,
+    "containerHealth": {
+      "api": "healthy",
+      "backend": "healthy",
+      "frontend": "running",
+      "ml": "healthy"
+    }
+  },
+  "degradationAtSec": 1.94,
+  "recoveryAfterStartSec": 6.49,
+  "degradedSamples": [
+    {
+      "second": 1.94,
+      "apiStatus": "disconnected",
+      "apiStale": true,
+      "forecastAvailable": true,
+      "backendStatus": null,
+      "predictedVehicles": null,
+      "containerHealth": {
+        "api": "healthy",
+        "frontend": "running",
+        "ml": "healthy"
+      }
+    }
+  ],
+  "recoveredSamples": [
+    {
+      "second": 0,
+      "apiStatus": "disconnected",
+      "apiStale": true,
+      "forecastAvailable": true,
+      "backendStatus": null,
+      "predictedVehicles": null,
+      "containerHealth": {
+        "api": "healthy",
+        "backend": "starting",
+        "frontend": "running",
+        "ml": "healthy"
+      }
+    },
+    {
+      "second": 1.84,
+      "apiStatus": "disconnected",
+      "apiStale": true,
+      "forecastAvailable": true,
+      "backendStatus": null,
+      "predictedVehicles": null,
+      "containerHealth": {
+        "api": "healthy",
+        "backend": "starting",
+        "frontend": "running",
+        "ml": "healthy"
+      }
+    },
+    {
+      "second": 3.66,
+      "apiStatus": "connected",
+      "apiStale": true,
+      "forecastAvailable": true,
+      "backendStatus": "connected",
+      "predictedVehicles": 10,
+      "containerHealth": {
+        "api": "healthy",
+        "backend": "starting",
+        "frontend": "running",
+        "ml": "healthy"
+      }
+    },
+    {
+      "second": 6.49,
+      "apiStatus": "connected",
+      "apiStale": false,
+      "forecastAvailable": true,
+      "backendStatus": "connected",
+      "predictedVehicles": 10,
+      "containerHealth": {
+        "api": "healthy",
+        "backend": "healthy",
+        "frontend": "running",
+        "ml": "healthy"
+      }
+    }
+  ]
+}

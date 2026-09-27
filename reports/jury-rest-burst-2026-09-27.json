@@ -1,0 +1,84 @@
+{
+  "scope": "Local UI REST workload, warm processes, official CSV replay; not a production load test",
+  "measuredAt": "2026-09-27T14:53:25.554Z",
+  "base": "http://127.0.0.1:8080",
+  "site": "http://127.0.0.1:8080",
+  "platform": "win32",
+  "node": "v22.14.0",
+  "ui": {
+    "sequential": {
+      "/api/v1/forecast": {
+        "count": 12,
+        "medianMs": 80.08,
+        "p95Ms": 251.06,
+        "maxMs": 251.06,
+        "responseBytes": 842533
+      },
+      "/api/v1/routes": {
+        "count": 12,
+        "medianMs": 64.31,
+        "p95Ms": 118.71,
+        "maxMs": 118.71,
+        "responseBytes": 724476
+      },
+      "/api/v1/network/summary": {
+        "count": 12,
+        "medianMs": 57.77,
+        "p95Ms": 229.68,
+        "maxMs": 229.68,
+        "responseBytes": 351
+      },
+      "/api/v1/vehicles": {
+        "count": 12,
+        "medianMs": 72.28,
+        "p95Ms": 144.45,
+        "maxMs": 144.45,
+        "responseBytes": 13885
+      },
+      "/api/v1/alerts": {
+        "count": 12,
+        "medianMs": 26.67,
+        "p95Ms": 75.22,
+        "maxMs": 75.22,
+        "responseBytes": 2548
+      },
+      "/api/v1/analytics/delay-series": {
+        "count": 12,
+        "medianMs": 20.91,
+        "p95Ms": 22.69,
+        "maxMs": 22.69,
+        "responseBytes": 207
+      }
+    },
+    "concurrent": {
+      "batchSize": 50,
+      "batches": 20,
+      "count": 1000,
+      "medianMs": 703.87,
+      "p95Ms": 1332.72,
+      "maxMs": 1571.27,
+      "responseBytes": 842569,
+      "elapsedMs": 27894.06,
+      "completedRequestsPerSec": 35.85
+    }
+  },
+  "oneTimeStaticRoadMap": {
+    "path": "/data/official-road-routes.json",
+    "latencyMs": 10.91,
+    "bytes": 301159
+  },
+  "diagnosticGeometry": {
+    "count": 3,
+    "medianMs": 56.05,
+    "p95Ms": 86.38,
+    "maxMs": 86.38,
+    "responseBytes": 252278
+  },
+  "backend": {
+    "status": "connected",
+    "pipelineMs": 573.01,
+    "inferenceMs": 246.33,
+    "locatedVehicles": 18,
+    "predictedVehicles": 10
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "mode": "fault",
+  "service": "ml",
+  "measuredAt": "2026-09-27T14:54:38.412Z",
+  "initial": {
+    "apiStatus": "connected",
+    "apiStale": false,
+    "forecastAvailable": true,
+    "backendStatus": "connected",
+    "predictedVehicles": 10,
+    "containerHealth": {
+      "api": "healthy",
+      "backend": "healthy",
+      "frontend": "running",
+      "ml": "healthy"
+    }
+  },
+  "degradationAtSec": 1.57,
+  "recoveryAfterStartSec": 4.41,
+  "degradedSamples": [
+    {
+      "second": 1.57,
+      "apiStatus": "fallback",
+      "apiStale": false,
+      "forecastAvailable": true,
+      "backendStatus": "fallback",
+      "predictedVehicles": 10,
+      "containerHealth": {
+        "api": "healthy",
+        "backend": "healthy",
+        "frontend": "running"
+      }
+    }
+  ],
+  "recoveredSamples": [
+    {
+      "second": 0,
+      "apiStatus": "fallback",
+      "apiStale": false,
+      "forecastAvailable": true,
+      "backendStatus": "fallback",
+      "predictedVehicles": 10,
+      "containerHealth": {
+        "api": "healthy",
+        "backend": "healthy",
+        "frontend": "running",
+        "ml": "starting"
+      }
+    },
+    {
+      "second": 2.22,
+      "apiStatus": "fallback",
+      "apiStale": false,
+      "forecastAvailable": true,
+      "backendStatus": "fallback",
+      "predictedVehicles": 10,
+      "containerHealth": {
+        "api": "healthy",
+        "backend": "healthy",
+        "frontend": "running",
+        "ml": "starting"
+      }
+    },
+    {
+      "second": 4.41,
+      "apiStatus": "connected",
+      "apiStale": false,
+      "forecastAvailable": true,
+      "backendStatus": "connected",
+      "predictedVehicles": 10,
+      "containerHealth": {
+        "api": "healthy",
+        "backend": "healthy",
+        "frontend": "running",
+        "ml": "healthy"
+      }
+    }
+  ]
+}

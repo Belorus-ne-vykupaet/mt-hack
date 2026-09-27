@@ -1,0 +1,23 @@
+{
+  "mode": "cold-start",
+  "measuredAt": "2026-09-27T14:54:14.137Z",
+  "composeReturnedAtSec": 22.46,
+  "allContainersReadySec": 22.46,
+  "firstNonFallbackForecastSec": 22.46,
+  "samples": [
+    {
+      "second": 22.46,
+      "apiStatus": "connected",
+      "apiStale": false,
+      "forecastAvailable": true,
+      "backendStatus": "connected",
+      "predictedVehicles": 10,
+      "containerHealth": {
+        "api": "healthy",
+        "backend": "healthy",
+        "frontend": "running",
+        "ml": "healthy"
+      }
+    }
+  ]
+}

@@ -641,8 +641,15 @@ export function createApi(options: ServerOptions = {}) {
   });
   const wss = new WebSocketServer({ noServer: true, maxPayload: 65536 });
   server.on("upgrade", (req, socket, head) => {
+    let pathname: string;
+    try {
+      pathname = new URL(req.url || "", "http://localhost").pathname;
+    } catch {
+      socket.end("HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n");
+      return;
+    }
     if (
-      new URL(req.url!, "http://localhost").pathname !== "/api/v1/stream" ||
+      pathname !== "/api/v1/stream" ||
       !allowedOrigin(req) ||
       (!authorized(req) && !options.publicRead)
     ) {
@@ -659,9 +666,12 @@ export function createApi(options: ServerOptions = {}) {
     sequences.set(ws, sendStreamEvent(ws, sequences.get(ws) || 0, type, payload));
   };
   // Each client has its own consecutive sequence; broadcasts share the same events below.
-  wss.on("connection", (ws) =>
-    send(ws, "system.hello", { stream_id: "api-sandbox" }),
-  );
+  wss.on("connection", (ws) => {
+    // A malformed/oversized frame emits `error` on this client. Without a
+    // listener Node treats it as an uncaught exception and exits the API.
+    ws.on("error", () => ws.terminate());
+    send(ws, "system.hello", { stream_id: "api-sandbox" });
+  });
   let busy = false,
     previous = new Set<string>(),
     previousRoutes = new Set<string>(),

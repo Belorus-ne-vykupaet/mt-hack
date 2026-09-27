@@ -1,0 +1,17 @@
+{
+  "measuredAt": "2026-09-27T14:58:07.640Z",
+  "before": {
+    "restartCount": 0,
+    "running": true,
+    "health": "healthy",
+    "policy": "unless-stopped"
+  },
+  "after": {
+    "restartCount": 1,
+    "running": true,
+    "health": "healthy",
+    "policy": "unless-stopped"
+  },
+  "recoveredAtSec": 8.59,
+  "passed": true
+}

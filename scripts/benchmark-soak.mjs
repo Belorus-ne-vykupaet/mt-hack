@@ -1,5 +1,6 @@
 /** Sample the official pipeline over time. Run from the repository root. */
-import { execFileSync } from "node:child_process";
+import { execFile, execFileSync } from "node:child_process";
+import { promisify } from "node:util";
 import { writeFileSync } from "node:fs";
 import { performance } from "node:perf_hooks";
 import { createHash } from "node:crypto";
@@ -61,15 +62,16 @@ function rssMiB(port) {
     return Number.isFinite(kb) && kb > 0 ? Math.round(kb / 1024 * 10) / 10 : null;
   } catch { return null; }
 }
-function dockerRssMiB(service) {
+const execFileAsync = promisify(execFile);
+async function dockerRssMiB(service) {
   try {
-    const ids = execFileSync("docker", ["ps", "--filter", `label=com.docker.compose.project=${composeProject}`,
+    const ids = (await execFileAsync("docker", ["ps", "--filter", `label=com.docker.compose.project=${composeProject}`,
       "--filter", `label=com.docker.compose.service=${service}`, "--format", "{{.ID}}"],
-    { encoding: "utf8", timeout: 3000 }).trim().split(/\s+/).filter(Boolean);
+    { encoding: "utf8", timeout: 3000 })).stdout.trim().split(/\s+/).filter(Boolean);
     if (ids.length !== 1) return null;
     const scan = 'for f in /proc/[0-9]*/status; do n= r=; while read -r k v rest; do case "$k" in Name:) n="$v";; VmRSS:) r="$v";; esac; done < "$f"; case "$n" in node|python|uvicorn|nginx) [ -n "$r" ] && printf "%s %s\\n" "$n" "$r";; esac; done';
-    const lines = execFileSync("docker", ["exec", ids[0], "sh", "-c", scan], { encoding: "utf8", timeout: 3000 })
-      .trim().split("\n").filter(Boolean);
+    const lines = (await execFileAsync("docker", ["exec", ids[0], "sh", "-c", scan], { encoding: "utf8", timeout: 3000 }))
+      .stdout.trim().split("\n").filter(Boolean);
     const rss = lines.map((line) => Number(line.split(" ").at(-1))).filter((value) => Number.isFinite(value) && value > 0);
     return rss.length ? Math.round(Math.max(...rss) / 1024 * 10) / 10 : null;
   } catch { return null; }
@@ -89,6 +91,7 @@ async function getJson(origin, path) {
 let wsMessages = 0;
 let wsHeartbeats = 0;
 let wsUnexpectedCloses = 0;
+const wsCloseDetails = [];
 let wsErrors = 0;
 const eventToBrowserMs = [];
 const observedVehicles = new Set();
@@ -112,7 +115,12 @@ for (let i = 0; i < clients; i++) {
       }
     }
   });
-  socket.on("close", () => { if (!closing) wsUnexpectedCloses++; });
+  socket.on("close", (code, reason) => {
+    if (!closing) {
+      wsUnexpectedCloses++;
+      wsCloseDetails.push({ client: i, elapsedSec: Math.round((performance.now() - started) / 1000), code, reason: reason.toString() });
+    }
+  });
   socket.on("error", () => { wsErrors++; });
   sockets.push(socket);
 }
@@ -161,8 +169,8 @@ try {
       },
       api: { status: a.status ?? null, stale: a.stale ?? null },
       ws: { messages: wsMessages, heartbeats: wsHeartbeats, unexpectedCloses: wsUnexpectedCloses },
-      rssMiB: Object.fromEntries(Object.entries(ports).map(([name, port]) => [name,
-        rssMode === "local" ? rssMiB(port) : rssMode === "docker" ? dockerRssMiB(name) : null])),
+      rssMiB: Object.fromEntries(await Promise.all(Object.entries(ports).map(async ([name, port]) => [name,
+        rssMode === "local" ? rssMiB(port) : rssMode === "docker" ? await dockerRssMiB(name) : null]))),
     });
     if ((performance.now() - started) / 1000 - lastProgress >= 60) {
       lastProgress = (performance.now() - started) / 1000;
@@ -227,7 +235,7 @@ const result = {
     forecastPendingSamples: samples.filter((s) => s.backend.ndtp?.forecastPending === true).length,
     lastPacketAgeSec: distribution(valid(samples.map((s) => s.backend.ndtp?.lastPacketAgeSec))),
     backendReportedPipelineLatencyMs: last?.backend.pipelineLatencyMs ?? null,
-    wsMessages, wsHeartbeats, wsUnexpectedCloses, wsErrors,
+    wsMessages, wsHeartbeats, wsUnexpectedCloses, wsErrors, wsCloseDetails,
     observedVehicles: observedVehicles.size,
     warningAudit,
     eventToWebSocketMs: distribution(eventToBrowserMs),

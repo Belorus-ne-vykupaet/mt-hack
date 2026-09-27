@@ -1,0 +1,3886 @@
+{
+  "scope": "Local official pipeline time-series; HTTP client latency includes network and JSON; backend pipelineMs is last calculation, not per-frame end-to-end latency",
+  "startedAt": "2026-09-27T15:01:03.206Z",
+  "completedAt": "2026-09-27T15:06:07.429Z",
+  "interrupted": false,
+  "provenance": {
+    "commit": "d5c615889e1533e687ec62d1b2e614bb28b09ef3",
+    "platform": "win32 10.0.26200 x64",
+    "node": "v22.14.0",
+    "cpu": "AMD Ryzen 5 5500U with Radeon Graphics         ",
+    "logicalCpus": 12,
+    "memoryGiB": 15,
+    "sourceSha256": {
+      "ml/transit_ml/backend.py": "7263b48607f34d23e32e5025ce15d43caa07935d8dfa401fc2afe96b888890ec",
+      "ml/transit_ml/inference.py": "85b70ea75952ab4669a51ef89fe109795dc26c9090b65bf234ada0ceb520dd5c",
+      "ml/transit_ml/ndtp.py": "8f968223aa25f601658e6297d1ef2289759173097206f6f419dbadcdc1e4fa49",
+      "ml/transit_ml/evaluation.py": "7f6837ce32d6391eb41b5e0515c248e6fda000844dd326b8b84dacbe317fb400",
+      "src/mt_hack/features.py": "c54579c607e8c6d158827cb53fbfdc512f13ff8ad071f00de424fdf70bcb6b60",
+      "server/app.ts": "e84bb252c7c01c3b793e074a10fb26a391ab61a986f537fa2549c67b2e7483e6",
+      "server/stream.ts": "041a2516b379355bf529e640e3d246a43d3354cccf0c6dd83423ec36a14f3dc9",
+      "scripts/ndtp-fleet-load.py": "fd756f7d316d083ee6601a26d39350a0f8001d6da5447d462a0a6250469ef716",
+      "scripts/benchmark-soak.mjs": "bbae33ef005953400959acdd05b4ac43acefeb6c9a030e186b4be3f2516af1ed"
+    },
+    "sourceChangedDuringRun": false
+  },
+  "config": {
+    "durationSec": 300,
+    "intervalSec": 5,
+    "clients": 15,
+    "api": "http://127.0.0.1:8080",
+    "backend": "http://127.0.0.1:8093",
+    "ml": "http://127.0.0.1:8092",
+    "site": "http://127.0.0.1:8080",
+    "wsUrl": "ws://127.0.0.1:8080/api/v1/stream",
+    "rssMode": "docker",
+    "composeProject": "transit-hub-official"
+  },
+  "summary": {
+    "elapsedSec": 304,
+    "samples": 59,
+    "forecastHttpMs": {
+      "count": 59,
+      "p50": 742.29,
+      "p95": 1313.85,
+      "p99": 1668.44,
+      "max": 1668.44
+    },
+    "backendPipelineMs": {
+      "count": 55,
+      "p50": 3659.25,
+      "p95": 4377.12,
+      "p99": 5116.48,
+      "max": 5116.48
+    },
+    "mlInferenceMs": {
+      "count": 55,
+      "p50": 985.8,
+      "p95": 1150.13,
+      "p99": 1218.54,
+      "max": 1218.54
+    },
+    "failedSamples": 19,
+    "staleSamples": 30,
+    "ndtpFramesDelta": 5861,
+    "ndtpSampledSec": 296.307,
+    "ndtpFramesPerSec": 19.78,
+    "ndtpErrorsDelta": 0,
+    "ndtpCoalescedDelta": 5803,
+    "ndtpUnmappedDelta": 0,
+    "ndtpIgnoredUnitsAtEnd": 0,
+    "forecastPendingSamples": 1,
+    "lastPacketAgeSec": {
+      "count": 55,
+      "p50": 2,
+      "p95": 5,
+      "p99": 7.1,
+      "max": 7.1
+    },
+    "backendReportedPipelineLatencyMs": {
+      "samples": 69,
+      "p50": 3691.76,
+      "p95": 4512.81,
+      "p99": 4911.41
+    },
+    "wsMessages": 92910,
+    "wsHeartbeats": 4080,
+    "wsUnexpectedCloses": 0,
+    "wsErrors": 0,
+    "observedVehicles": 100,
+    "warningAudit": {
+      "available": true,
+      "firstWarnings": 150,
+      "observedOutcomes": 0,
+      "pendingOutcomes": 150,
+      "invalidFirstWindow": 0,
+      "issuedAfterArrival": 0,
+      "sourceModes": [
+        "ndtp"
+      ]
+    },
+    "eventToWebSocketMs": {
+      "count": 55140,
+      "p50": 9490,
+      "p95": 12869,
+      "p99": 13622,
+      "max": 13674
+    },
+    "eventToWebSocketDefinition": "First received update for each new vehicle telemetry timestamp on each reading WS client; UTC generator event timestamp to client receipt, includes 1-second timestamp quantization and stream scheduling. Excludes warm history and repeated old positions.",
+    "freshVehicles": {
+      "count": 55,
+      "p50": 100,
+      "p95": 100,
+      "p99": 100,
+      "max": 100
+    },
+    "predictedVehicles": {
+      "count": 55,
+      "p50": 100,
+      "p95": 100,
+      "p99": 100,
+      "max": 100
+    },
+    "rssMiB": {
+      "frontend": {
+        "first": 5.8,
+        "last": 5.8,
+        "peak": 5.8,
+        "windows": [
+          {
+            "fromSec": 0,
+            "toSec": 300,
+            "count": 58,
+            "median": 5.8,
+            "peak": 5.8
+          },
+          {
+            "fromSec": 300,
+            "toSec": 600,
+            "count": 1,
+            "median": 5.8,
+            "peak": 5.8
+          }
+        ]
+      },
+      "api": {
+        "first": 103.1,
+        "last": 464.1,
+        "peak": 574.5,
+        "windows": [
+          {
+            "fromSec": 0,
+            "toSec": 300,
+            "count": 58,
+            "median": 469.2,
+            "peak": 574.5
+          },
+          {
+            "fromSec": 300,
+            "toSec": 600,
+            "count": 1,
+            "median": 464.1,
+            "peak": 464.1
+          }
+        ]
+      },
+      "backend": {
+        "first": 180.4,
+        "last": 187.9,
+        "peak": 188,
+        "windows": [
+          {
+            "fromSec": 0,
+            "toSec": 300,
+            "count": 55,
+            "median": 183.1,
+            "peak": 188
+          },
+          {
+            "fromSec": 300,
+            "toSec": 600,
+            "count": 1,
+            "median": 187.9,
+            "peak": 187.9
+          }
+        ]
+      },
+      "ml": {
+        "first": 342.1,
+        "last": 358,
+        "peak": 367.8,
+        "windows": [
+          {
+            "fromSec": 0,
+            "toSec": 300,
+            "count": 58,
+            "median": 357.9,
+            "peak": 367.8
+          },
+          {
+            "fromSec": 300,
+            "toSec": 600,
+            "count": 1,
+            "median": 358,
+            "peak": 358
+          }
+        ]
+      }
+    }
+  },
+  "samples": [
+    {
+      "at": "2026-09-27T15:01:06.478Z",
+      "elapsedSec": 3,
+      "http": {
+        "backendStatusMs": 1826.81,
+        "backendStatusOk": true,
+        "apiStatusMs": 3093.22,
+        "apiStatusOk": true,
+        "forecastMs": 70.24,
+        "forecastOk": true,
+        "mlHealthMs": 555.35,
+        "mlHealthOk": true
+      },
+      "errors": {},
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "fallback",
+        "pipelineMs": 5116.48,
+        "inferenceMs": 924.2,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 36897,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 36000,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521262.7964835,
+          "lastPacketAgeSec": 2.3,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 36897,
+          "unmappedPackets": 0,
+          "coalescedPackets": 36887,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 11,
+          "p50": 4008.2,
+          "p95": 4965.69,
+          "p99": 5086.32
+        }
+      },
+      "api": {
+        "status": "fallback",
+        "stale": false
+      },
+      "ws": {
+        "messages": 240,
+        "heartbeats": 45,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 103.1,
+        "backend": 180.4,
+        "ml": 342.1
+      }
+    },
+    {
+      "at": "2026-09-27T15:01:10.389Z",
+      "elapsedSec": 7,
+      "http": {
+        "backendStatusMs": 1815.79,
+        "backendStatusOk": true,
+        "apiStatusMs": 1816.81,
+        "apiStatusOk": true,
+        "forecastMs": 11.46,
+        "forecastOk": true,
+        "mlHealthMs": 7.16,
+        "mlHealthOk": true
+      },
+      "errors": {},
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 3761.25,
+        "inferenceMs": 1143.86,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 36996,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 36000,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521268.5425072,
+          "lastPacketAgeSec": 1.6,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 36996,
+          "unmappedPackets": 0,
+          "coalescedPackets": 36985,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 12,
+          "p50": 3884.72,
+          "p95": 4950.62,
+          "p99": 5083.31
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": true
+      },
+      "ws": {
+        "messages": 420,
+        "heartbeats": 90,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 103.2,
+        "backend": 181.8,
+        "ml": 349
+      }
+    },
+    {
+      "at": "2026-09-27T15:01:17.164Z",
+      "elapsedSec": 14,
+      "http": {
+        "backendStatusMs": 2949.81,
+        "backendStatusOk": true,
+        "apiStatusMs": 3945.75,
+        "apiStatusOk": true,
+        "forecastMs": 1313.85,
+        "forecastOk": true,
+        "mlHealthMs": 10.83,
+        "mlHealthOk": true
+      },
+      "errors": {},
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 4411.56,
+        "inferenceMs": 1051.02,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 37095,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 36000,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521274.124998,
+          "lastPacketAgeSec": 1.4,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 37095,
+          "unmappedPackets": 0,
+          "coalescedPackets": 37083,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 13,
+          "p50": 4008.2,
+          "p95": 4935.54,
+          "p99": 5080.29
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": false
+      },
+      "ws": {
+        "messages": 3765,
+        "heartbeats": 165,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 326.3,
+        "backend": 181.8,
+        "ml": 352.6
+      }
+    },
+    {
+      "at": "2026-09-27T15:01:22.721Z",
+      "elapsedSec": 20,
+      "http": {
+        "backendStatusMs": 2389.85,
+        "backendStatusOk": true,
+        "apiStatusMs": 3334.5,
+        "apiStatusOk": true,
+        "forecastMs": 894.17,
+        "forecastOk": true,
+        "mlHealthMs": 105.78,
+        "mlHealthOk": false
+      },
+      "errors": {
+        "mlHealth": "UND_ERR_SOCKET"
+      },
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 4377.12,
+        "inferenceMs": 1075.05,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 37194,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 36000,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521279.6056955,
+          "lastPacketAgeSec": 3.6,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 37194,
+          "unmappedPackets": 0,
+          "coalescedPackets": 37181,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 14,
+          "p50": 4192.66,
+          "p95": 4920.46,
+          "p99": 5077.28
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": false
+      },
+      "ws": {
+        "messages": 5670,
+        "heartbeats": 225,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 512.7,
+        "backend": 181.8,
+        "ml": 344
+      }
+    },
+    {
+      "at": "2026-09-27T15:01:28.221Z",
+      "elapsedSec": 25,
+      "http": {
+        "backendStatusMs": 2158.99,
+        "backendStatusOk": true,
+        "apiStatusMs": 3294.6,
+        "apiStatusOk": true,
+        "forecastMs": 907.52,
+        "forecastOk": true,
+        "mlHealthMs": 164.55,
+        "mlHealthOk": true
+      },
+      "errors": {},
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 4283.99,
+        "inferenceMs": 1092.76,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 37293,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 36000,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521287.1042678,
+          "lastPacketAgeSec": 1.4,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 37293,
+          "unmappedPackets": 0,
+          "coalescedPackets": 37279,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 15,
+          "p50": 4283.99,
+          "p95": 4905.38,
+          "p99": 5074.26
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": false
+      },
+      "ws": {
+        "messages": 7530,
+        "heartbeats": 315,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 403.1,
+        "backend": 186.4,
+        "ml": 352.8
+      }
+    },
+    {
+      "at": "2026-09-27T15:01:31.796Z",
+      "elapsedSec": 29,
+      "http": {
+        "backendStatusMs": 1508.9,
+        "backendStatusOk": true,
+        "apiStatusMs": 1512.88,
+        "apiStatusOk": true,
+        "forecastMs": 285.26,
+        "forecastOk": true,
+        "mlHealthMs": 4.09,
+        "mlHealthOk": false
+      },
+      "errors": {
+        "mlHealth": "UND_ERR_SOCKET"
+      },
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 3413.5,
+        "inferenceMs": 1043.24,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 37392,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 36000,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521291.585429,
+          "lastPacketAgeSec": 1.3,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 37392,
+          "unmappedPackets": 0,
+          "coalescedPackets": 37377,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 16,
+          "p50": 4146.09,
+          "p95": 4890.3,
+          "p99": 5071.24
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": true
+      },
+      "ws": {
+        "messages": 7710,
+        "heartbeats": 360,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 405.4,
+        "backend": 186.5,
+        "ml": 352.6
+      }
+    },
+    {
+      "at": "2026-09-27T15:01:37.023Z",
+      "elapsedSec": 34,
+      "http": {
+        "backendStatusMs": 3073.48,
+        "backendStatusOk": true,
+        "apiStatusMs": 3076.94,
+        "apiStatusOk": true,
+        "forecastMs": 265.3,
+        "forecastOk": true,
+        "mlHealthMs": 6.84,
+        "mlHealthOk": true
+      },
+      "errors": {},
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 3659.25,
+        "inferenceMs": 1096.84,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 37491,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 36000,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521296.3392148,
+          "lastPacketAgeSec": 2.2,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 37491,
+          "unmappedPackets": 0,
+          "coalescedPackets": 37475,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 17,
+          "p50": 4008.2,
+          "p95": 4875.22,
+          "p99": 5068.23
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": true
+      },
+      "ws": {
+        "messages": 8010,
+        "heartbeats": 435,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 390.1,
+        "backend": 181.8,
+        "ml": 353.6
+      }
+    },
+    {
+      "at": "2026-09-27T15:01:43.099Z",
+      "elapsedSec": 40,
+      "http": {
+        "backendStatusMs": 3014.86,
+        "backendStatusOk": true,
+        "apiStatusMs": 4006.41,
+        "apiStatusOk": false,
+        "forecastMs": 1668.44,
+        "forecastOk": true,
+        "mlHealthMs": 4.34,
+        "mlHealthOk": true
+      },
+      "errors": {
+        "apiStatus": "The operation was aborted due to timeout"
+      },
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 3664.3,
+        "inferenceMs": 973.52,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 37590,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 36000,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521301.9407737,
+          "lastPacketAgeSec": 1.2,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 37590,
+          "unmappedPackets": 0,
+          "coalescedPackets": 37573,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 18,
+          "p50": 3884.72,
+          "p95": 4860.15,
+          "p99": 5065.21
+        }
+      },
+      "api": {
+        "status": null,
+        "stale": null
+      },
+      "ws": {
+        "messages": 10140,
+        "heartbeats": 510,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 417.2,
+        "backend": 181.8,
+        "ml": 352.9
+      }
+    },
+    {
+      "at": "2026-09-27T15:01:48.509Z",
+      "elapsedSec": 45,
+      "http": {
+        "backendStatusMs": 3236.79,
+        "backendStatusOk": true,
+        "apiStatusMs": 3250.24,
+        "apiStatusOk": true,
+        "forecastMs": 839.92,
+        "forecastOk": true,
+        "mlHealthMs": 106.55,
+        "mlHealthOk": false
+      },
+      "errors": {
+        "mlHealth": "UND_ERR_SOCKET"
+      },
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 3936.71,
+        "inferenceMs": 1074.95,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 37689,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 36000,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521306.7875922,
+          "lastPacketAgeSec": 2.2,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 37689,
+          "unmappedPackets": 0,
+          "coalescedPackets": 37671,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 19,
+          "p50": 3936.71,
+          "p95": 4845.07,
+          "p99": 5062.2
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": false
+      },
+      "ws": {
+        "messages": 12270,
+        "heartbeats": 585,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 400.1,
+        "backend": 181.8,
+        "ml": 356.7
+      }
+    },
+    {
+      "at": "2026-09-27T15:01:53.453Z",
+      "elapsedSec": 50,
+      "http": {
+        "backendStatusMs": 2681.69,
+        "backendStatusOk": true,
+        "apiStatusMs": 2705.17,
+        "apiStatusOk": true,
+        "forecastMs": 789.86,
+        "forecastOk": true,
+        "mlHealthMs": 134,
+        "mlHealthOk": true
+      },
+      "errors": {},
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 3565.77,
+        "inferenceMs": 976.8,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 37788,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 36000,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521309.0257485,
+          "lastPacketAgeSec": 4.5,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 37788,
+          "unmappedPackets": 0,
+          "coalescedPackets": 37769,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 20,
+          "p50": 3848.98,
+          "p95": 4829.99,
+          "p99": 5059.18
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": false
+      },
+      "ws": {
+        "messages": 14340,
+        "heartbeats": 645,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 439.6,
+        "backend": 181.8,
+        "ml": 356.9
+      }
+    },
+    {
+      "at": "2026-09-27T15:01:58.845Z",
+      "elapsedSec": 56,
+      "http": {
+        "backendStatusMs": 3262.87,
+        "backendStatusOk": true,
+        "apiStatusMs": 3267.01,
+        "apiStatusOk": true,
+        "forecastMs": 862.95,
+        "forecastOk": true,
+        "mlHealthMs": 97.6,
+        "mlHealthOk": true
+      },
+      "errors": {},
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 3935.56,
+        "inferenceMs": 1029.28,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 37887,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 36000,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521313.5505075,
+          "lastPacketAgeSec": 5,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 37887,
+          "unmappedPackets": 0,
+          "coalescedPackets": 37867,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 21,
+          "p50": 3935.56,
+          "p95": 4814.91,
+          "p99": 5056.17
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": true
+      },
+      "ws": {
+        "messages": 16515,
+        "heartbeats": 720,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 397.2,
+        "backend": 181.8,
+        "ml": 354.6
+      }
+    },
+    {
+      "at": "2026-09-27T15:02:04.102Z",
+      "elapsedSec": 61,
+      "http": {
+        "backendStatusMs": 2874.39,
+        "backendStatusOk": true,
+        "apiStatusMs": 2877.26,
+        "apiStatusOk": true,
+        "forecastMs": 422.36,
+        "forecastOk": true,
+        "mlHealthMs": 3.61,
+        "mlHealthOk": false
+      },
+      "errors": {
+        "mlHealth": "UND_ERR_SOCKET"
+      },
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 4005.46,
+        "inferenceMs": 1061.53,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 37986,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 36000,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521318.5123644,
+          "lastPacketAgeSec": 5,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 37986,
+          "unmappedPackets": 0,
+          "coalescedPackets": 37965,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 22,
+          "p50": 3936.14,
+          "p95": 4805.07,
+          "p99": 5053.15
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": true
+      },
+      "ws": {
+        "messages": 16815,
+        "heartbeats": 795,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 413.6,
+        "backend": 181.8,
+        "ml": 356.7
+      }
+    },
+    {
+      "at": "2026-09-27T15:02:08.084Z",
+      "elapsedSec": 65,
+      "http": {
+        "backendStatusMs": 1953.15,
+        "backendStatusOk": true,
+        "apiStatusMs": 1956.27,
+        "apiStatusOk": true,
+        "forecastMs": 285.41,
+        "forecastOk": true,
+        "mlHealthMs": 7.11,
+        "mlHealthOk": true
+      },
+      "errors": {},
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 3561.47,
+        "inferenceMs": 1091,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 38085,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 36000,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521323.5405362,
+          "lastPacketAgeSec": 3.6,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 38085,
+          "unmappedPackets": 0,
+          "coalescedPackets": 38063,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 23,
+          "p50": 3935.56,
+          "p95": 4795.23,
+          "p99": 5050.13
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": true
+      },
+      "ws": {
+        "messages": 17055,
+        "heartbeats": 855,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 392.7,
+        "backend": 186.6,
+        "ml": 356.8
+      }
+    },
+    {
+      "at": "2026-09-27T15:02:12.833Z",
+      "elapsedSec": 70,
+      "http": {
+        "backendStatusMs": 2598.44,
+        "backendStatusOk": true,
+        "apiStatusMs": 2601.01,
+        "apiStatusOk": true,
+        "forecastMs": 248.56,
+        "forecastOk": true,
+        "mlHealthMs": 13.02,
+        "mlHealthOk": true
+      },
+      "errors": {},
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 3405.85,
+        "inferenceMs": 958.85,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 38184,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 36000,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521330.8397071,
+          "lastPacketAgeSec": 3.4,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 38184,
+          "unmappedPackets": 0,
+          "coalescedPackets": 38161,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 24,
+          "p50": 3848.4,
+          "p95": 4785.39,
+          "p99": 5047.12
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": true
+      },
+      "ws": {
+        "messages": 17295,
+        "heartbeats": 915,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 382,
+        "backend": 182,
+        "ml": 357.4
+      }
+    },
+    {
+      "at": "2026-09-27T15:02:18.853Z",
+      "elapsedSec": 76,
+      "http": {
+        "backendStatusMs": 3829.8,
+        "backendStatusOk": true,
+        "apiStatusMs": 3825.6,
+        "apiStatusOk": true,
+        "forecastMs": 521.15,
+        "forecastOk": true,
+        "mlHealthMs": 4.13,
+        "mlHealthOk": true
+      },
+      "errors": {},
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 3625.07,
+        "inferenceMs": 1117.54,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 38283,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 36000,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521334.6266825,
+          "lastPacketAgeSec": 5.2,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 38283,
+          "unmappedPackets": 0,
+          "coalescedPackets": 38259,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 25,
+          "p50": 3761.25,
+          "p95": 4775.55,
+          "p99": 5044.1
+        }
+      },
+      "api": {
+        "status": "disconnected",
+        "stale": true
+      },
+      "ws": {
+        "messages": 17655,
+        "heartbeats": 1005,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 399.3,
+        "backend": 182,
+        "ml": 356.7
+      }
+    },
+    {
+      "at": "2026-09-27T15:02:22.573Z",
+      "elapsedSec": 79,
+      "http": {
+        "backendStatusMs": 1469.58,
+        "backendStatusOk": true,
+        "apiStatusMs": 1469.5,
+        "apiStatusOk": true,
+        "forecastMs": 269.48,
+        "forecastOk": true,
+        "mlHealthMs": 3.94,
+        "mlHealthOk": false
+      },
+      "errors": {
+        "mlHealth": "UND_ERR_SOCKET"
+      },
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 3300.78,
+        "inferenceMs": 1005.79,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 38382,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 36000,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521339.7897534,
+          "lastPacketAgeSec": 3.4,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 38382,
+          "unmappedPackets": 0,
+          "coalescedPackets": 38357,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 26,
+          "p50": 3712.78,
+          "p95": 4765.71,
+          "p99": 5041.09
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": true
+      },
+      "ws": {
+        "messages": 17835,
+        "heartbeats": 1050,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 395.5,
+        "backend": 182,
+        "ml": 357.7
+      }
+    },
+    {
+      "at": "2026-09-27T15:02:27.412Z",
+      "elapsedSec": 84,
+      "http": {
+        "backendStatusMs": 2694.18,
+        "backendStatusOk": true,
+        "apiStatusMs": 2844.55,
+        "apiStatusOk": true,
+        "forecastMs": 331.92,
+        "forecastOk": true,
+        "mlHealthMs": 21.96,
+        "mlHealthOk": true
+      },
+      "errors": {},
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 3295.57,
+        "inferenceMs": 907.72,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 38481,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 36000,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521343.7784212,
+          "lastPacketAgeSec": 3.7,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 38481,
+          "unmappedPackets": 0,
+          "coalescedPackets": 38455,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 27,
+          "p50": 3664.3,
+          "p95": 4755.87,
+          "p99": 5038.07
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": true
+      },
+      "ws": {
+        "messages": 18135,
+        "heartbeats": 1125,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 405.9,
+        "backend": 186.6,
+        "ml": 357.7
+      }
+    },
+    {
+      "at": "2026-09-27T15:02:33.011Z",
+      "elapsedSec": 90,
+      "http": {
+        "backendStatusMs": 2985.62,
+        "backendStatusOk": true,
+        "apiStatusMs": 3478.05,
+        "apiStatusOk": true,
+        "forecastMs": 382.37,
+        "forecastOk": true,
+        "mlHealthMs": 12.76,
+        "mlHealthOk": true
+      },
+      "errors": {},
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "fallback",
+        "pipelineMs": 3616.29,
+        "inferenceMs": 907.72,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 38580,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 36000,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521348.639605,
+          "lastPacketAgeSec": 3.6,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 38580,
+          "unmappedPackets": 0,
+          "coalescedPackets": 38553,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 28,
+          "p50": 3661.78,
+          "p95": 4746.03,
+          "p99": 5035.06
+        }
+      },
+      "api": {
+        "status": "fallback",
+        "stale": false
+      },
+      "ws": {
+        "messages": 20819,
+        "heartbeats": 1185,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 471.4,
+        "backend": 186.6,
+        "ml": 356.7
+      }
+    },
+    {
+      "at": "2026-09-27T15:02:37.878Z",
+      "elapsedSec": 95,
+      "http": {
+        "backendStatusMs": 2892.6,
+        "backendStatusOk": true,
+        "apiStatusMs": 1224.21,
+        "apiStatusOk": true,
+        "forecastMs": 288.08,
+        "forecastOk": true,
+        "mlHealthMs": 5.31,
+        "mlHealthOk": true
+      },
+      "errors": {},
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "fallback",
+        "pipelineMs": 3633.87,
+        "inferenceMs": 907.72,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 38679,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 36000,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521353.6890354,
+          "lastPacketAgeSec": 3.7,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 38679,
+          "unmappedPackets": 0,
+          "coalescedPackets": 38651,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 29,
+          "p50": 3659.25,
+          "p95": 4736.19,
+          "p99": 5032.04
+        }
+      },
+      "api": {
+        "status": "disconnected",
+        "stale": true
+      },
+      "ws": {
+        "messages": 24107,
+        "heartbeats": 1260,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 466.7,
+        "backend": 182,
+        "ml": 357.4
+      }
+    },
+    {
+      "at": "2026-09-27T15:02:43.934Z",
+      "elapsedSec": 101,
+      "http": {
+        "backendStatusMs": 4001.64,
+        "backendStatusOk": false,
+        "apiStatusMs": 4002.13,
+        "apiStatusOk": false,
+        "forecastMs": 1493.83,
+        "forecastOk": true,
+        "mlHealthMs": 43.13,
+        "mlHealthOk": true
+      },
+      "errors": {
+        "backendStatus": "The operation was aborted due to timeout",
+        "apiStatus": "The operation was aborted due to timeout"
+      },
+      "backend": {
+        "mode": null,
+        "status": null,
+        "pipelineMs": null,
+        "inferenceMs": null,
+        "predictedVehicles": null,
+        "freshVehicles": null,
+        "staleVehicles": null,
+        "totalVehicles": null,
+        "ndtp": null,
+        "pipelineLatencyMs": null
+      },
+      "api": {
+        "status": null,
+        "stale": null
+      },
+      "ws": {
+        "messages": 25980,
+        "heartbeats": 1335,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 381.4,
+        "backend": 182,
+        "ml": 357.6
+      }
+    },
+    {
+      "at": "2026-09-27T15:02:49.026Z",
+      "elapsedSec": 106,
+      "http": {
+        "backendStatusMs": 3061.19,
+        "backendStatusOk": true,
+        "apiStatusMs": 3052.18,
+        "apiStatusOk": true,
+        "forecastMs": 426.28,
+        "forecastOk": true,
+        "mlHealthMs": 16.5,
+        "mlHealthOk": false
+      },
+      "errors": {
+        "mlHealth": "UND_ERR_SOCKET"
+      },
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 3247.38,
+        "inferenceMs": 1031.14,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 38976,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 36000,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521370.7881553,
+          "lastPacketAgeSec": 0,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 38976,
+          "unmappedPackets": 0,
+          "coalescedPackets": 38946,
+          "forecastPending": true
+        },
+        "pipelineLatencyMs": {
+          "samples": 31,
+          "p50": 3659.25,
+          "p95": 4716.51,
+          "p99": 5026.01
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": true
+      },
+      "ws": {
+        "messages": 26280,
+        "heartbeats": 1410,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 424.4,
+        "backend": 182,
+        "ml": 357.8
+      }
+    },
+    {
+      "at": "2026-09-27T15:02:54.106Z",
+      "elapsedSec": 111,
+      "http": {
+        "backendStatusMs": 2825.97,
+        "backendStatusOk": true,
+        "apiStatusMs": 2861.71,
+        "apiStatusOk": true,
+        "forecastMs": 766.36,
+        "forecastOk": true,
+        "mlHealthMs": 119.94,
+        "mlHealthOk": true
+      },
+      "errors": {},
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 3638.3,
+        "inferenceMs": 930.71,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 38976,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 36000,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521370.7881553,
+          "lastPacketAgeSec": 4.6,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 38976,
+          "unmappedPackets": 0,
+          "coalescedPackets": 38946,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 32,
+          "p50": 3648.78,
+          "p95": 4706.67,
+          "p99": 5022.99
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": false
+      },
+      "ws": {
+        "messages": 29595,
+        "heartbeats": 1485,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 453.1,
+        "backend": 182,
+        "ml": 357.9
+      }
+    },
+    {
+      "at": "2026-09-27T15:03:00.292Z",
+      "elapsedSec": 117,
+      "http": {
+        "backendStatusMs": 105.69,
+        "backendStatusOk": false,
+        "apiStatusMs": 3963.14,
+        "apiStatusOk": true,
+        "forecastMs": 833.93,
+        "forecastOk": true,
+        "mlHealthMs": 105.39,
+        "mlHealthOk": true
+      },
+      "errors": {
+        "backendStatus": "UND_ERR_SOCKET"
+      },
+      "backend": {
+        "mode": null,
+        "status": null,
+        "pipelineMs": null,
+        "inferenceMs": null,
+        "predictedVehicles": null,
+        "freshVehicles": null,
+        "staleVehicles": null,
+        "totalVehicles": null,
+        "ndtp": null,
+        "pipelineLatencyMs": null
+      },
+      "api": {
+        "status": "connected",
+        "stale": true
+      },
+      "ws": {
+        "messages": 31410,
+        "heartbeats": 1560,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 524.1,
+        "backend": 182.1,
+        "ml": 357.8
+      }
+    },
+    {
+      "at": "2026-09-27T15:03:04.916Z",
+      "elapsedSec": 122,
+      "http": {
+        "backendStatusMs": 2533.97,
+        "backendStatusOk": true,
+        "apiStatusMs": 2547.06,
+        "apiStatusOk": true,
+        "forecastMs": 259.26,
+        "forecastOk": true,
+        "mlHealthMs": 4.48,
+        "mlHealthOk": false
+      },
+      "errors": {
+        "mlHealth": "UND_ERR_SOCKET"
+      },
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 3170.39,
+        "inferenceMs": 890.61,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 39273,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 36000,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521383.7947721,
+          "lastPacketAgeSec": 1.5,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 39273,
+          "unmappedPackets": 0,
+          "coalescedPackets": 39240,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 34,
+          "p50": 3648.78,
+          "p95": 4686.99,
+          "p99": 5016.96
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": true
+      },
+      "ws": {
+        "messages": 31650,
+        "heartbeats": 1620,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 481.3,
+        "backend": 182.1,
+        "ml": 357.8
+      }
+    },
+    {
+      "at": "2026-09-27T15:03:09.963Z",
+      "elapsedSec": 127,
+      "http": {
+        "backendStatusMs": 2983.95,
+        "backendStatusOk": true,
+        "apiStatusMs": 2998.99,
+        "apiStatusOk": true,
+        "forecastMs": 743.44,
+        "forecastOk": true,
+        "mlHealthMs": 112.29,
+        "mlHealthOk": true
+      },
+      "errors": {},
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 3635.8,
+        "inferenceMs": 919.28,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 39372,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 36000,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521388.3885064,
+          "lastPacketAgeSec": 1.6,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 39372,
+          "unmappedPackets": 0,
+          "coalescedPackets": 39338,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 35,
+          "p50": 3638.3,
+          "p95": 4677.15,
+          "p99": 5013.95
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": false
+      },
+      "ws": {
+        "messages": 33450,
+        "heartbeats": 1695,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 524.2,
+        "backend": 182.1,
+        "ml": 358
+      }
+    },
+    {
+      "at": "2026-09-27T15:03:15.124Z",
+      "elapsedSec": 132,
+      "http": {
+        "backendStatusMs": 1994.49,
+        "backendStatusOk": true,
+        "apiStatusMs": 3034.76,
+        "apiStatusOk": true,
+        "forecastMs": 758.42,
+        "forecastOk": true,
+        "mlHealthMs": 88.28,
+        "mlHealthOk": true
+      },
+      "errors": {},
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 3698.32,
+        "inferenceMs": 970.63,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 39471,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 36000,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521392.9683294,
+          "lastPacketAgeSec": 2.6,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 39471,
+          "unmappedPackets": 0,
+          "coalescedPackets": 39436,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 36,
+          "p50": 3648.78,
+          "p95": 4667.31,
+          "p99": 5010.93
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": false
+      },
+      "ws": {
+        "messages": 35190,
+        "heartbeats": 1755,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 574.5,
+        "backend": 182.1,
+        "ml": 358
+      }
+    },
+    {
+      "at": "2026-09-27T15:03:20.173Z",
+      "elapsedSec": 137,
+      "http": {
+        "backendStatusMs": 2914.7,
+        "backendStatusOk": true,
+        "apiStatusMs": 2918.04,
+        "apiStatusOk": true,
+        "forecastMs": 780.09,
+        "forecastOk": true,
+        "mlHealthMs": 79.72,
+        "mlHealthOk": true
+      },
+      "errors": {},
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 3816.79,
+        "inferenceMs": 924.47,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 39570,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 36000,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521399.424357,
+          "lastPacketAgeSec": 2,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 39570,
+          "unmappedPackets": 0,
+          "coalescedPackets": 39534,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 37,
+          "p50": 3659.25,
+          "p95": 4657.47,
+          "p99": 5007.91
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": true
+      },
+      "ws": {
+        "messages": 37365,
+        "heartbeats": 1830,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 518.8,
+        "backend": 182.2,
+        "ml": 357.9
+      }
+    },
+    {
+      "at": "2026-09-27T15:03:23.900Z",
+      "elapsedSec": 141,
+      "http": {
+        "backendStatusMs": 1676.6,
+        "backendStatusOk": true,
+        "apiStatusMs": 1679.27,
+        "apiStatusOk": true,
+        "forecastMs": 259.3,
+        "forecastOk": true,
+        "mlHealthMs": 3.71,
+        "mlHealthOk": true
+      },
+      "errors": {},
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 3440.7,
+        "inferenceMs": 955.75,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 39669,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 36000,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521404.21672,
+          "lastPacketAgeSec": 0.6,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 39669,
+          "unmappedPackets": 0,
+          "coalescedPackets": 39632,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 38,
+          "p50": 3648.78,
+          "p95": 4647.63,
+          "p99": 5004.9
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": true
+      },
+      "ws": {
+        "messages": 37545,
+        "heartbeats": 1875,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 521.4,
+        "backend": 182.2,
+        "ml": 357.9
+      }
+    },
+    {
+      "at": "2026-09-27T15:03:30.030Z",
+      "elapsedSec": 147,
+      "http": {
+        "backendStatusMs": 2977.91,
+        "backendStatusOk": true,
+        "apiStatusMs": 3969.06,
+        "apiStatusOk": true,
+        "forecastMs": 771.29,
+        "forecastOk": true,
+        "mlHealthMs": 71.26,
+        "mlHealthOk": true
+      },
+      "errors": {},
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 3713.09,
+        "inferenceMs": 977.48,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 39768,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 36000,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521408.800146,
+          "lastPacketAgeSec": 0.7,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 39768,
+          "unmappedPackets": 0,
+          "coalescedPackets": 39730,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 39,
+          "p50": 3659.25,
+          "p95": 4637.79,
+          "p99": 5001.88
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": false
+      },
+      "ws": {
+        "messages": 39630,
+        "heartbeats": 1965,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 480.2,
+        "backend": 182.2,
+        "ml": 357.9
+      }
+    },
+    {
+      "at": "2026-09-27T15:03:35.375Z",
+      "elapsedSec": 152,
+      "http": {
+        "backendStatusMs": 2958.73,
+        "backendStatusOk": true,
+        "apiStatusMs": 3109.2,
+        "apiStatusOk": true,
+        "forecastMs": 794.57,
+        "forecastOk": true,
+        "mlHealthMs": 85.6,
+        "mlHealthOk": false
+      },
+      "errors": {
+        "mlHealth": "UND_ERR_SOCKET"
+      },
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 3790.74,
+        "inferenceMs": 1037.49,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 39867,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 36000,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521413.389048,
+          "lastPacketAgeSec": 1.8,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 39867,
+          "unmappedPackets": 0,
+          "coalescedPackets": 39828,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 40,
+          "p50": 3661.78,
+          "p95": 4627.95,
+          "p99": 4998.87
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": false
+      },
+      "ws": {
+        "messages": 41595,
+        "heartbeats": 2040,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 476.9,
+        "backend": 186.8,
+        "ml": 358
+      }
+    },
+    {
+      "at": "2026-09-27T15:03:38.965Z",
+      "elapsedSec": 156,
+      "http": {
+        "backendStatusMs": 1638.34,
+        "backendStatusOk": true,
+        "apiStatusMs": 1640.44,
+        "apiStatusOk": true,
+        "forecastMs": 405.34,
+        "forecastOk": true,
+        "mlHealthMs": 5.98,
+        "mlHealthOk": true
+      },
+      "errors": {},
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 3323.85,
+        "inferenceMs": 891.12,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 39966,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 36000,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521417.9640527,
+          "lastPacketAgeSec": 0.7,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 39966,
+          "unmappedPackets": 0,
+          "coalescedPackets": 39926,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 41,
+          "p50": 3659.25,
+          "p95": 4618.11,
+          "p99": 4995.85
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": true
+      },
+      "ws": {
+        "messages": 41775,
+        "heartbeats": 2085,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 473.5,
+        "backend": 181.2,
+        "ml": 358
+      }
+    },
+    {
+      "at": "2026-09-27T15:03:44.785Z",
+      "elapsedSec": 162,
+      "http": {
+        "backendStatusMs": 2716.98,
+        "backendStatusOk": true,
+        "apiStatusMs": 3756.87,
+        "apiStatusOk": true,
+        "forecastMs": 1095.53,
+        "forecastOk": true,
+        "mlHealthMs": 31.56,
+        "mlHealthOk": true
+      },
+      "errors": {},
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 3540.58,
+        "inferenceMs": 1011.5,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 40065,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 36000,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521422.7188325,
+          "lastPacketAgeSec": 0.5,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 40065,
+          "unmappedPackets": 0,
+          "coalescedPackets": 40024,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 42,
+          "p50": 3648.78,
+          "p95": 4613.02,
+          "p99": 4992.84
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": false
+      },
+      "ws": {
+        "messages": 43830,
+        "heartbeats": 2160,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 459.4,
+        "backend": 187.7,
+        "ml": 358
+      }
+    },
+    {
+      "at": "2026-09-27T15:03:48.618Z",
+      "elapsedSec": 165,
+      "http": {
+        "backendStatusMs": 1869.75,
+        "backendStatusOk": true,
+        "apiStatusMs": 1871.68,
+        "apiStatusOk": true,
+        "forecastMs": 404.16,
+        "forecastOk": true,
+        "mlHealthMs": 3.11,
+        "mlHealthOk": false
+      },
+      "errors": {
+        "mlHealth": "UND_ERR_SOCKET"
+      },
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 3644.33,
+        "inferenceMs": 1029.73,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 40164,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 36000,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521429.5714598,
+          "lastPacketAgeSec": 0.4,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 40164,
+          "unmappedPackets": 0,
+          "coalescedPackets": 40122,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 43,
+          "p50": 3644.33,
+          "p95": 4607.92,
+          "p99": 4989.82
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": true
+      },
+      "ws": {
+        "messages": 44070,
+        "heartbeats": 2220,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 469.6,
+        "backend": 183.1,
+        "ml": 358
+      }
+    },
+    {
+      "at": "2026-09-27T15:03:54.475Z",
+      "elapsedSec": 171,
+      "http": {
+        "backendStatusMs": 2844.73,
+        "backendStatusOk": true,
+        "apiStatusMs": 3709.01,
+        "apiStatusOk": true,
+        "forecastMs": 1163.49,
+        "forecastOk": true,
+        "mlHealthMs": 61.16,
+        "mlHealthOk": true
+      },
+      "errors": {},
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 3576.49,
+        "inferenceMs": 918.88,
+        "predictedVehicles": 99,
+        "freshVehicles": 99,
+        "staleVehicles": 1,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 40263,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 36000,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521434.1512632,
+          "lastPacketAgeSec": 0.4,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 40263,
+          "unmappedPackets": 0,
+          "coalescedPackets": 40220,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 44,
+          "p50": 3641.32,
+          "p95": 4602.83,
+          "p99": 4986.8
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": false
+      },
+      "ws": {
+        "messages": 46425,
+        "heartbeats": 2295,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 496.2,
+        "backend": 183.1,
+        "ml": 357.1
+      }
+    },
+    {
+      "at": "2026-09-27T15:03:59.655Z",
+      "elapsedSec": 176,
+      "http": {
+        "backendStatusMs": 2914.83,
+        "backendStatusOk": true,
+        "apiStatusMs": 2930.84,
+        "apiStatusOk": true,
+        "forecastMs": 730.65,
+        "forecastOk": true,
+        "mlHealthMs": 87.44,
+        "mlHealthOk": false
+      },
+      "errors": {
+        "mlHealth": "UND_ERR_SOCKET"
+      },
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 3783.35,
+        "inferenceMs": 936.23,
+        "predictedVehicles": 99,
+        "freshVehicles": 99,
+        "staleVehicles": 1,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 40362,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 36000,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521438.7791984,
+          "lastPacketAgeSec": 1.3,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 40362,
+          "unmappedPackets": 0,
+          "coalescedPackets": 40318,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 45,
+          "p50": 3644.33,
+          "p95": 4597.73,
+          "p99": 4983.79
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": false
+      },
+      "ws": {
+        "messages": 48735,
+        "heartbeats": 2370,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 465.8,
+        "backend": 183.1,
+        "ml": 357.2
+      }
+    },
+    {
+      "at": "2026-09-27T15:04:04.954Z",
+      "elapsedSec": 182,
+      "http": {
+        "backendStatusMs": 2978.05,
+        "backendStatusOk": true,
+        "apiStatusMs": 3016.09,
+        "apiStatusOk": true,
+        "forecastMs": 725.85,
+        "forecastOk": true,
+        "mlHealthMs": 87.64,
+        "mlHealthOk": true
+      },
+      "errors": {},
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 3937.44,
+        "inferenceMs": 1083.51,
+        "predictedVehicles": 99,
+        "freshVehicles": 99,
+        "staleVehicles": 1,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 40461,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 36000,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521443.489939,
+          "lastPacketAgeSec": 1.6,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 40461,
+          "unmappedPackets": 0,
+          "coalescedPackets": 40416,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 46,
+          "p50": 3651.79,
+          "p95": 4592.64,
+          "p99": 4980.77
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": false
+      },
+      "ws": {
+        "messages": 50655,
+        "heartbeats": 2445,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 469.5,
+        "backend": 183.1,
+        "ml": 357.2
+      }
+    },
+    {
+      "at": "2026-09-27T15:04:10.163Z",
+      "elapsedSec": 187,
+      "http": {
+        "backendStatusMs": 2985.19,
+        "backendStatusOk": true,
+        "apiStatusMs": 3003.58,
+        "apiStatusOk": true,
+        "forecastMs": 781.34,
+        "forecastOk": true,
+        "mlHealthMs": 86.45,
+        "mlHealthOk": true
+      },
+      "errors": {},
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 3719.08,
+        "inferenceMs": 905.93,
+        "predictedVehicles": 99,
+        "freshVehicles": 99,
+        "staleVehicles": 1,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 40560,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 36000,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521448.10698,
+          "lastPacketAgeSec": 1.8,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 40560,
+          "unmappedPackets": 0,
+          "coalescedPackets": 40514,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 47,
+          "p50": 3659.25,
+          "p95": 4587.55,
+          "p99": 4977.76
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": false
+      },
+      "ws": {
+        "messages": 52470,
+        "heartbeats": 2505,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 514,
+        "backend": 183.1,
+        "ml": 367.8
+      }
+    },
+    {
+      "at": "2026-09-27T15:04:15.244Z",
+      "elapsedSec": 192,
+      "http": {
+        "backendStatusMs": 2963.63,
+        "backendStatusOk": true,
+        "apiStatusMs": 2989.27,
+        "apiStatusOk": true,
+        "forecastMs": 744.58,
+        "forecastOk": true,
+        "mlHealthMs": 83.78,
+        "mlHealthOk": true
+      },
+      "errors": {},
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 3813.11,
+        "inferenceMs": 956.09,
+        "predictedVehicles": 99,
+        "freshVehicles": 99,
+        "staleVehicles": 1,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 40659,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 36000,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521452.854541,
+          "lastPacketAgeSec": 1.8,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 40659,
+          "unmappedPackets": 0,
+          "coalescedPackets": 40612,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 48,
+          "p50": 3661.78,
+          "p95": 4582.45,
+          "p99": 4974.74
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": false
+      },
+      "ws": {
+        "messages": 55545,
+        "heartbeats": 2580,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 483.9,
+        "backend": 183,
+        "ml": 356.1
+      }
+    },
+    {
+      "at": "2026-09-27T15:04:20.609Z",
+      "elapsedSec": 197,
+      "http": {
+        "backendStatusMs": 3136.8,
+        "backendStatusOk": true,
+        "apiStatusMs": 3141.23,
+        "apiStatusOk": true,
+        "forecastMs": 866.19,
+        "forecastOk": true,
+        "mlHealthMs": 96,
+        "mlHealthOk": true
+      },
+      "errors": {},
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 4195.96,
+        "inferenceMs": 1129.14,
+        "predictedVehicles": 99,
+        "freshVehicles": 99,
+        "staleVehicles": 1,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 40758,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 36000,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521459.994502,
+          "lastPacketAgeSec": 2.2,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 40758,
+          "unmappedPackets": 0,
+          "coalescedPackets": 40710,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 49,
+          "p50": 3664.3,
+          "p95": 4577.36,
+          "p99": 4971.73
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": true
+      },
+      "ws": {
+        "messages": 57510,
+        "heartbeats": 2655,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 548.2,
+        "backend": 183,
+        "ml": 357.1
+      }
+    },
+    {
+      "at": "2026-09-27T15:04:25.684Z",
+      "elapsedSec": 202,
+      "http": {
+        "backendStatusMs": 2918.08,
+        "backendStatusOk": true,
+        "apiStatusMs": 2921.17,
+        "apiStatusOk": true,
+        "forecastMs": 318.42,
+        "forecastOk": true,
+        "mlHealthMs": 4.17,
+        "mlHealthOk": false
+      },
+      "errors": {
+        "mlHealth": "UND_ERR_SOCKET"
+      },
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 3639.15,
+        "inferenceMs": 1150.13,
+        "predictedVehicles": 99,
+        "freshVehicles": 99,
+        "staleVehicles": 1,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 40858,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 35958,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521464.650464,
+          "lastPacketAgeSec": 2.3,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 40858,
+          "unmappedPackets": 0,
+          "coalescedPackets": 40809,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 50,
+          "p50": 3661.78,
+          "p95": 4572.26,
+          "p99": 4968.71
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": true
+      },
+      "ws": {
+        "messages": 57810,
+        "heartbeats": 2730,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 465.6,
+        "backend": null,
+        "ml": 358
+      }
+    },
+    {
+      "at": "2026-09-27T15:04:31.301Z",
+      "elapsedSec": 208,
+      "http": {
+        "backendStatusMs": 2826.77,
+        "backendStatusOk": true,
+        "apiStatusMs": 3845.8,
+        "apiStatusOk": true,
+        "forecastMs": 911.77,
+        "forecastOk": true,
+        "mlHealthMs": 101.87,
+        "mlHealthOk": true
+      },
+      "errors": {},
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 4130.86,
+        "inferenceMs": 1218.54,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 40958,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 35958,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521469.6546836,
+          "lastPacketAgeSec": 1.5,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 40958,
+          "unmappedPackets": 0,
+          "coalescedPackets": 40908,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 51,
+          "p50": 3664.3,
+          "p95": 4567.17,
+          "p99": 4965.69
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": false
+      },
+      "ws": {
+        "messages": 59760,
+        "heartbeats": 2805,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 472.5,
+        "backend": null,
+        "ml": 358
+      }
+    },
+    {
+      "at": "2026-09-27T15:04:36.901Z",
+      "elapsedSec": 214,
+      "http": {
+        "backendStatusMs": 2982.75,
+        "backendStatusOk": true,
+        "apiStatusMs": 3823.63,
+        "apiStatusOk": true,
+        "forecastMs": 872.11,
+        "forecastOk": true,
+        "mlHealthMs": 79.93,
+        "mlHealthOk": false
+      },
+      "errors": {
+        "mlHealth": "UND_ERR_SOCKET"
+      },
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "fallback",
+        "pipelineMs": 4297.44,
+        "inferenceMs": 1218.54,
+        "predictedVehicles": 99,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 41058,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 35958,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521474.783228,
+          "lastPacketAgeSec": 1.7,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 41058,
+          "unmappedPackets": 0,
+          "coalescedPackets": 41007,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 52,
+          "p50": 3681.31,
+          "p95": 4562.08,
+          "p99": 4962.68
+        }
+      },
+      "api": {
+        "status": "fallback",
+        "stale": false
+      },
+      "ws": {
+        "messages": 61590,
+        "heartbeats": 2880,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 482.1,
+        "backend": null,
+        "ml": 358
+      }
+    },
+    {
+      "at": "2026-09-27T15:04:42.368Z",
+      "elapsedSec": 219,
+      "http": {
+        "backendStatusMs": 2578.38,
+        "backendStatusOk": true,
+        "apiStatusMs": 3513.91,
+        "apiStatusOk": true,
+        "forecastMs": 844.62,
+        "forecastOk": true,
+        "mlHealthMs": 118.75,
+        "mlHealthOk": true
+      },
+      "errors": {},
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 4100.75,
+        "inferenceMs": 1048.83,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 41158,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 35958,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521480.2621558,
+          "lastPacketAgeSec": 1.3,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 41158,
+          "unmappedPackets": 0,
+          "coalescedPackets": 41106,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 53,
+          "p50": 3698.32,
+          "p95": 4556.98,
+          "p99": 4959.66
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": false
+      },
+      "ws": {
+        "messages": 64845,
+        "heartbeats": 2940,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 515.9,
+        "backend": 183.1,
+        "ml": 358.1
+      }
+    },
+    {
+      "at": "2026-09-27T15:04:47.436Z",
+      "elapsedSec": 224,
+      "http": {
+        "backendStatusMs": 2881.41,
+        "backendStatusOk": true,
+        "apiStatusMs": 2897.12,
+        "apiStatusOk": true,
+        "forecastMs": 739.96,
+        "forecastOk": true,
+        "mlHealthMs": 75.66,
+        "mlHealthOk": false
+      },
+      "errors": {
+        "mlHealth": "UND_ERR_SOCKET"
+      },
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 3691.76,
+        "inferenceMs": 952.46,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 41258,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 35958,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521485.019686,
+          "lastPacketAgeSec": 2.1,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 41258,
+          "unmappedPackets": 0,
+          "coalescedPackets": 41205,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 54,
+          "p50": 3695.04,
+          "p95": 4551.89,
+          "p99": 4956.65
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": false
+      },
+      "ws": {
+        "messages": 68160,
+        "heartbeats": 3015,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 478.5,
+        "backend": 183.1,
+        "ml": 358.2
+      }
+    },
+    {
+      "at": "2026-09-27T15:04:52.203Z",
+      "elapsedSec": 229,
+      "http": {
+        "backendStatusMs": 2714.34,
+        "backendStatusOk": true,
+        "apiStatusMs": 2725.6,
+        "apiStatusOk": true,
+        "forecastMs": 742.29,
+        "forecastOk": true,
+        "mlHealthMs": 107.86,
+        "mlHealthOk": true
+      },
+      "errors": {},
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 3505.26,
+        "inferenceMs": 822.99,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 41358,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 35958,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521490.067068,
+          "lastPacketAgeSec": 3.5,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 41358,
+          "unmappedPackets": 0,
+          "coalescedPackets": 41304,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 55,
+          "p50": 3691.76,
+          "p95": 4546.79,
+          "p99": 4953.63
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": false
+      },
+      "ws": {
+        "messages": 69990,
+        "heartbeats": 3075,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 503.3,
+        "backend": 183.2,
+        "ml": 358.2
+      }
+    },
+    {
+      "at": "2026-09-27T15:04:57.445Z",
+      "elapsedSec": 234,
+      "http": {
+        "backendStatusMs": 3060.4,
+        "backendStatusOk": true,
+        "apiStatusMs": 3066.73,
+        "apiStatusOk": true,
+        "forecastMs": 736.49,
+        "forecastOk": true,
+        "mlHealthMs": 67.41,
+        "mlHealthOk": true
+      },
+      "errors": {},
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 3996.24,
+        "inferenceMs": 970.6,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 41458,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 35958,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521496.4413164,
+          "lastPacketAgeSec": 2.1,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 41458,
+          "unmappedPackets": 0,
+          "coalescedPackets": 41403,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 56,
+          "p50": 3695.04,
+          "p95": 4541.7,
+          "p99": 4950.62
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": true
+      },
+      "ws": {
+        "messages": 71805,
+        "heartbeats": 3150,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 470.1,
+        "backend": 183.3,
+        "ml": 358.2
+      }
+    },
+    {
+      "at": "2026-09-27T15:05:02.273Z",
+      "elapsedSec": 239,
+      "http": {
+        "backendStatusMs": 2641.96,
+        "backendStatusOk": true,
+        "apiStatusMs": 2644.37,
+        "apiStatusOk": true,
+        "forecastMs": 248.92,
+        "forecastOk": true,
+        "mlHealthMs": 3.79,
+        "mlHealthOk": true
+      },
+      "errors": {},
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 3515.06,
+        "inferenceMs": 851.96,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 41558,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 35958,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521501.0565226,
+          "lastPacketAgeSec": 2,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 41558,
+          "unmappedPackets": 0,
+          "coalescedPackets": 41502,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 57,
+          "p50": 3691.76,
+          "p95": 4536.61,
+          "p99": 4947.6
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": true
+      },
+      "ws": {
+        "messages": 72045,
+        "heartbeats": 3210,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 495.7,
+        "backend": 183.3,
+        "ml": 358.3
+      }
+    },
+    {
+      "at": "2026-09-27T15:05:07.528Z",
+      "elapsedSec": 244,
+      "http": {
+        "backendStatusMs": 2050.71,
+        "backendStatusOk": true,
+        "apiStatusMs": 3011.92,
+        "apiStatusOk": true,
+        "forecastMs": 796.86,
+        "forecastOk": true,
+        "mlHealthMs": 80.74,
+        "mlHealthOk": true
+      },
+      "errors": {},
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 3847.31,
+        "inferenceMs": 911.36,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 41658,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 35958,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521505.8703978,
+          "lastPacketAgeSec": 1.2,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 41658,
+          "unmappedPackets": 0,
+          "coalescedPackets": 41601,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 58,
+          "p50": 3695.04,
+          "p95": 4531.51,
+          "p99": 4944.59
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": false
+      },
+      "ws": {
+        "messages": 74265,
+        "heartbeats": 3285,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 487.3,
+        "backend": 183.3,
+        "ml": 358.2
+      }
+    },
+    {
+      "at": "2026-09-27T15:05:12.818Z",
+      "elapsedSec": 250,
+      "http": {
+        "backendStatusMs": 3110.81,
+        "backendStatusOk": true,
+        "apiStatusMs": 3127.42,
+        "apiStatusOk": true,
+        "forecastMs": 786.41,
+        "forecastOk": true,
+        "mlHealthMs": 86.62,
+        "mlHealthOk": true
+      },
+      "errors": {},
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 3968.74,
+        "inferenceMs": 985.8,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 41758,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 35958,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521510.7569811,
+          "lastPacketAgeSec": 2.1,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 41758,
+          "unmappedPackets": 0,
+          "coalescedPackets": 41700,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 59,
+          "p50": 3698.32,
+          "p95": 4526.42,
+          "p99": 4941.57
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": false
+      },
+      "ws": {
+        "messages": 76860,
+        "heartbeats": 3360,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 469.2,
+        "backend": 183.3,
+        "ml": 358.3
+      }
+    },
+    {
+      "at": "2026-09-27T15:05:18.379Z",
+      "elapsedSec": 255,
+      "http": {
+        "backendStatusMs": 3258.44,
+        "backendStatusOk": true,
+        "apiStatusMs": 3262.32,
+        "apiStatusOk": true,
+        "forecastMs": 858.72,
+        "forecastOk": true,
+        "mlHealthMs": 71.55,
+        "mlHealthOk": false
+      },
+      "errors": {
+        "mlHealth": "UND_ERR_SOCKET"
+      },
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 3929.39,
+        "inferenceMs": 986.15,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 41858,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 35958,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521515.6752148,
+          "lastPacketAgeSec": 2.4,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 41858,
+          "unmappedPackets": 0,
+          "coalescedPackets": 41799,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 60,
+          "p50": 3705.7,
+          "p95": 4521.32,
+          "p99": 4938.55
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": true
+      },
+      "ws": {
+        "messages": 78990,
+        "heartbeats": 3435,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 459.2,
+        "backend": 188,
+        "ml": 358.2
+      }
+    },
+    {
+      "at": "2026-09-27T15:05:22.009Z",
+      "elapsedSec": 259,
+      "http": {
+        "backendStatusMs": 1640.63,
+        "backendStatusOk": true,
+        "apiStatusMs": 1642.71,
+        "apiStatusOk": true,
+        "forecastMs": 310.94,
+        "forecastOk": true,
+        "mlHealthMs": 6.99,
+        "mlHealthOk": true
+      },
+      "errors": {},
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 3384.51,
+        "inferenceMs": 961.91,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 41958,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 35958,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521518.099251,
+          "lastPacketAgeSec": 3.9,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 41958,
+          "unmappedPackets": 0,
+          "coalescedPackets": 41898,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 61,
+          "p50": 3698.32,
+          "p95": 4516.23,
+          "p99": 4935.54
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": true
+      },
+      "ws": {
+        "messages": 79170,
+        "heartbeats": 3480,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 461,
+        "backend": 188,
+        "ml": 358.2
+      }
+    },
+    {
+      "at": "2026-09-27T15:05:26.586Z",
+      "elapsedSec": 263,
+      "http": {
+        "backendStatusMs": 2535.79,
+        "backendStatusOk": true,
+        "apiStatusMs": 2538.37,
+        "apiStatusOk": true,
+        "forecastMs": 272.72,
+        "forecastOk": true,
+        "mlHealthMs": 4.52,
+        "mlHealthOk": true
+      },
+      "errors": {},
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 3296.19,
+        "inferenceMs": 1061.47,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 42058,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 35958,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521526.5048199,
+          "lastPacketAgeSec": 1.4,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 42058,
+          "unmappedPackets": 0,
+          "coalescedPackets": 41997,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 62,
+          "p50": 3695.04,
+          "p95": 4515.8,
+          "p99": 4932.52
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": true
+      },
+      "ws": {
+        "messages": 79470,
+        "heartbeats": 3555,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 470.2,
+        "backend": 188,
+        "ml": 358.3
+      }
+    },
+    {
+      "at": "2026-09-27T15:05:31.826Z",
+      "elapsedSec": 269,
+      "http": {
+        "backendStatusMs": 2840.02,
+        "backendStatusOk": true,
+        "apiStatusMs": 3237.41,
+        "apiStatusOk": true,
+        "forecastMs": 323.58,
+        "forecastOk": true,
+        "mlHealthMs": 4.49,
+        "mlHealthOk": true
+      },
+      "errors": {},
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "fallback",
+        "pipelineMs": 3584.87,
+        "inferenceMs": 1061.47,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 42158,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 35958,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521530.8695056,
+          "lastPacketAgeSec": 1.6,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 42158,
+          "unmappedPackets": 0,
+          "coalescedPackets": 42096,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 63,
+          "p50": 3691.76,
+          "p95": 4515.38,
+          "p99": 4929.51
+        }
+      },
+      "api": {
+        "status": "fallback",
+        "stale": false
+      },
+      "ws": {
+        "messages": 81986,
+        "heartbeats": 3615,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 453.6,
+        "backend": 188,
+        "ml": 358.2
+      }
+    },
+    {
+      "at": "2026-09-27T15:05:36.730Z",
+      "elapsedSec": 274,
+      "http": {
+        "backendStatusMs": 2924.83,
+        "backendStatusOk": true,
+        "apiStatusMs": 1237.72,
+        "apiStatusOk": true,
+        "forecastMs": 392.47,
+        "forecastOk": true,
+        "mlHealthMs": 6.07,
+        "mlHealthOk": true
+      },
+      "errors": {},
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "fallback",
+        "pipelineMs": 3408.38,
+        "inferenceMs": 1061.47,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 42258,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 35958,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521535.8489442,
+          "lastPacketAgeSec": 1.6,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 42258,
+          "unmappedPackets": 0,
+          "coalescedPackets": 42195,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 64,
+          "p50": 3678.03,
+          "p95": 4514.95,
+          "p99": 4926.49
+        }
+      },
+      "api": {
+        "status": "disconnected",
+        "stale": true
+      },
+      "ws": {
+        "messages": 85245,
+        "heartbeats": 3690,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 545,
+        "backend": 183.3,
+        "ml": 358.2
+      }
+    },
+    {
+      "at": "2026-09-27T15:05:42.755Z",
+      "elapsedSec": 280,
+      "http": {
+        "backendStatusMs": 4008.25,
+        "backendStatusOk": false,
+        "apiStatusMs": 3874.22,
+        "apiStatusOk": true,
+        "forecastMs": 765.1,
+        "forecastOk": true,
+        "mlHealthMs": 96.68,
+        "mlHealthOk": true
+      },
+      "errors": {
+        "backendStatus": "The operation was aborted due to timeout"
+      },
+      "backend": {
+        "mode": null,
+        "status": null,
+        "pipelineMs": null,
+        "inferenceMs": null,
+        "predictedVehicles": null,
+        "freshVehicles": null,
+        "staleVehicles": null,
+        "totalVehicles": null,
+        "ndtp": null,
+        "pipelineLatencyMs": null
+      },
+      "api": {
+        "status": "disconnected",
+        "stale": true
+      },
+      "ws": {
+        "messages": 87120,
+        "heartbeats": 3765,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 455.1,
+        "backend": 183.3,
+        "ml": 358.2
+      }
+    },
+    {
+      "at": "2026-09-27T15:05:48.844Z",
+      "elapsedSec": 286,
+      "http": {
+        "backendStatusMs": 4008.82,
+        "backendStatusOk": false,
+        "apiStatusMs": 4008.74,
+        "apiStatusOk": false,
+        "forecastMs": 933.52,
+        "forecastOk": true,
+        "mlHealthMs": 76.22,
+        "mlHealthOk": false
+      },
+      "errors": {
+        "backendStatus": "The operation was aborted due to timeout",
+        "apiStatus": "The operation was aborted due to timeout",
+        "mlHealth": "UND_ERR_SOCKET"
+      },
+      "backend": {
+        "mode": null,
+        "status": null,
+        "pipelineMs": null,
+        "inferenceMs": null,
+        "predictedVehicles": null,
+        "freshVehicles": null,
+        "staleVehicles": null,
+        "totalVehicles": null,
+        "ndtp": null,
+        "pipelineLatencyMs": null
+      },
+      "api": {
+        "status": null,
+        "stale": null
+      },
+      "ws": {
+        "messages": 88995,
+        "heartbeats": 3855,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 454.3,
+        "backend": 183.3,
+        "ml": 358.2
+      }
+    },
+    {
+      "at": "2026-09-27T15:05:53.860Z",
+      "elapsedSec": 291,
+      "http": {
+        "backendStatusMs": 2828.01,
+        "backendStatusOk": true,
+        "apiStatusMs": 2951.61,
+        "apiStatusOk": true,
+        "forecastMs": 298.54,
+        "forecastOk": true,
+        "mlHealthMs": 23.23,
+        "mlHealthOk": true
+      },
+      "errors": {},
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 3505.64,
+        "inferenceMs": 945.85,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 42558,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 35958,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521548.8654015,
+          "lastPacketAgeSec": 4.4,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 42558,
+          "unmappedPackets": 0,
+          "coalescedPackets": 42492,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 67,
+          "p50": 3691.76,
+          "p95": 4513.66,
+          "p99": 4917.44
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": true
+      },
+      "ws": {
+        "messages": 89295,
+        "heartbeats": 3930,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 457.7,
+        "backend": 183.3,
+        "ml": 358.2
+      }
+    },
+    {
+      "at": "2026-09-27T15:05:59.052Z",
+      "elapsedSec": 296,
+      "http": {
+        "backendStatusMs": 3062.16,
+        "backendStatusOk": true,
+        "apiStatusMs": 3073.16,
+        "apiStatusOk": true,
+        "forecastMs": 760.94,
+        "forecastOk": true,
+        "mlHealthMs": 90.48,
+        "mlHealthOk": true
+      },
+      "errors": {},
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 3823.5,
+        "inferenceMs": 953.69,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 42658,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 35958,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521553.2775788,
+          "lastPacketAgeSec": 7.1,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 42658,
+          "unmappedPackets": 0,
+          "coalescedPackets": 42591,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 68,
+          "p50": 3695.04,
+          "p95": 4513.24,
+          "p99": 4914.43
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": true
+      },
+      "ws": {
+        "messages": 92550,
+        "heartbeats": 3990,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 517.3,
+        "backend": 183.3,
+        "ml": 358
+      }
+    },
+    {
+      "at": "2026-09-27T15:06:02.785Z",
+      "elapsedSec": 300,
+      "http": {
+        "backendStatusMs": 1657.08,
+        "backendStatusOk": true,
+        "apiStatusMs": 1659.22,
+        "apiStatusOk": true,
+        "forecastMs": 484.9,
+        "forecastOk": true,
+        "mlHealthMs": 4.03,
+        "mlHealthOk": true
+      },
+      "errors": {},
+      "backend": {
+        "mode": "official-ndtp",
+        "status": "connected",
+        "pipelineMs": 3520.28,
+        "inferenceMs": 1040.81,
+        "predictedVehicles": 100,
+        "freshVehicles": 100,
+        "staleVehicles": 0,
+        "totalVehicles": 100,
+        "ndtp": {
+          "frames": 42758,
+          "errors": 0,
+          "connections": 1,
+          "units": 100,
+          "historyPackets": 35958,
+          "maxHistoryPacketsPerUnit": 360,
+          "lastPacketAt": 1790521560.3697255,
+          "lastPacketAgeSec": 3.5,
+          "outOfOrderFrames": 0,
+          "staleFrames": 32600,
+          "ignoredUnits": 0,
+          "mappedPackets": 42758,
+          "unmappedPackets": 0,
+          "coalescedPackets": 42690,
+          "forecastPending": false
+        },
+        "pipelineLatencyMs": {
+          "samples": 69,
+          "p50": 3691.76,
+          "p95": 4512.81,
+          "p99": 4911.41
+        }
+      },
+      "api": {
+        "status": "connected",
+        "stale": true
+      },
+      "ws": {
+        "messages": 92790,
+        "heartbeats": 4050,
+        "unexpectedCloses": 0
+      },
+      "rssMiB": {
+        "frontend": 5.8,
+        "api": 464.1,
+        "backend": 187.9,
+        "ml": 358
+      }
+    }
+  ]
+}
