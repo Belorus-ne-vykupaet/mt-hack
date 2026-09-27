@@ -1,5 +1,7 @@
 # Transit Control — Development Guide & Definition of Done
 
+> **Архивный development guide.** Это ранний план разработки и Definition of Done; примеры зависимостей, scripts и чек-листы ниже не следует трактовать как текущий обязательный CI. Актуальные команды запуска и проверки находятся в [README](../README.md), [DOCUMENTATION.md](../DOCUMENTATION.md) и [JURY_QUICKSTART.md](../JURY_QUICKSTART.md).
+
 ## Часть A. Development Guide
 
 ### 1. Prerequisites
