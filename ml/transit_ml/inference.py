@@ -15,6 +15,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from .features import FEATURES
 from mt_hack.features import PLAN_COLUMNS, TRAFFIC_COLUMNS, build_features, seconds
 from mt_hack.runtime import SelectedDelayModel
+from mt_hack.external_features import get_osm_store
 
 
 class Item(BaseModel):
@@ -82,6 +83,11 @@ async def lifespan(app):
     app.state.clf.load_model(str(root / "late.cbm"))
     app.state.sasha = SelectedDelayModel(root / "sasha")
     app.state.metrics = json.loads((root / "metrics.json").read_text())
+    if app.state.sasha.feature_names != app.state.metrics["features"]:
+        raise RuntimeError("Model artifact and published feature schema differ")
+    if "OpenStreetMap" in app.state.metrics.get("externalFeatureSources", []):
+        if not get_osm_store().available:
+            raise RuntimeError("The selected OSM model requires its historical road dataset")
     app.state.requests = 0
     app.state.last_ms = 0
     yield

@@ -9,6 +9,8 @@ import json
 import numpy as np
 import pandas as pd
 
+from mt_hack.external_features import get_osm_store
+
 PLAN_COLUMNS = ['tt_action_item_id', 'tr_id', 'time_begin', 'geom']
 TRAFFIC_COLUMNS = ['tr_id', 'event_time', 'location_valid', 'lon', 'lat', 'speed', 'heading']
 SEQ_NAMES = ['speed_mean', 'speed_max', 'stopped_fraction', 'target_dx_km',
@@ -50,6 +52,7 @@ def build_features(points, traffic, plan, *, include_sequence=True):
     tg = {k: g for k,g in tr.groupby('tr_id',sort=False)}
     pg = {k: g.sort_values('_t') for k,g in plan.groupby('tr_id',sort=False)}
     records, sequences = [], []
+    osm = get_osm_store()
     for row in p.to_dict('records'):
         t, tid = row['_t'], row['tr_id']
         target = stop_lookup.loc[(tid,row['target_stop_id'])] if (tid,row['target_stop_id']) in stop_lookup.index else None
@@ -70,6 +73,19 @@ def build_features(points, traffic, plan, *, include_sequence=True):
         f['gps_age_s'] = t-valid['_t'].iloc[-1] if len(valid) else 3600.
         f['last_speed'] = hist.speed.dropna().iloc[-1] if hist.speed.notna().any() else np.nan
         f['target_distance_km'] = float(np.hypot((valid.lon.iloc[-1]-tx)*62.5,(valid.lat.iloc[-1]-ty)*111.2)) if len(valid) else np.nan
+        if osm.available:
+            if len(valid):
+                f.update(osm.features(float(valid.lon.iloc[-1]), float(valid.lat.iloc[-1])))
+            else:
+                f.update(osm.features(np.nan, np.nan))
+            target_features = osm.features(tx, ty)
+            f.update({
+                'target_osm_road_count': target_features['osm_road_count'],
+                'target_osm_signal_count': target_features['osm_signal_count'],
+                'target_osm_intersection_count': target_features['osm_intersection_count'],
+                'target_osm_busway_count': target_features['osm_busway_count'],
+                'target_osm_major_road_frac': target_features['osm_major_road_frac'],
+            })
         for window in [60,180,300,600,900,1800]:
             h=hist[hist['_t']>t-window]
             speed=h.speed.dropna()

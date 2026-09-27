@@ -225,7 +225,7 @@ def test_live_ndtp_features_to_real_sasha_model(tmp_path, monkeypatch):
             assert engine.status == "connected" and len(result["vehicles"]) == 1
             v = result["vehicles"][0]
             assert (
-            v["id"] == "vehicle-1" and v["forecast_model"] == "sasha-extra-trees-v2"
+                v["id"] == "vehicle-1" and v["forecast_model"] == "olya-extra-trees-osm-v1"
             )
             assert 600 < v["forecast_horizon_sec"] <= 900 and np.isfinite(
                 v["predicted_delay_sec"]

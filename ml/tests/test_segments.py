@@ -192,3 +192,11 @@ def test_colocated_previous_and_future_stops_do_not_suppress_future_target():
     result = match_segment(p, h, 370)
     assert result["observed_stop_ids"] == ["1"]
     assert "2" not in result["observed_stop_ids"]
+
+@pytest.mark.parametrize("missing", [None, float("nan"), pd.NA, "", "  "])
+def test_missing_stop_address_has_readable_fallback(missing):
+    schedule = plan()
+    schedule["building_address"] = schedule["building_address"].astype(object)
+    schedule.loc[0, "building_address"] = missing
+    matcher = SegmentMatcher(schedule)
+    assert matcher.stops[0]["name"] == "Остановка 1"

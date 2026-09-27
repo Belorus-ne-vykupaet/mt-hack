@@ -1,0 +1,28 @@
+{
+  "sourceBranch": "osm-extra-trees-51",
+  "sourceCommit": "f6b64cccabc9c10882babdd72f0b98b57de06f9c",
+  "featureCount": 64,
+  "testRows": 353,
+  "maeSec": 52.19818696883853,
+  "artifactSha256": "59c9bde7f2fe68ab95c75132959c4a223e925d83aebc387897116be7e17400c0",
+  "externalSource": "historical OpenStreetMap",
+  "snapshotDate": "2026-01-06T02:04:59Z",
+  "verifiedAt": "2026-09-27T14:18:06.707275+00:00",
+  "activeModelVersion": "olya-extra-trees-osm-v1",
+  "originalArtifactUnchanged": true,
+  "submissionRows": 151,
+  "submissionSha256": "65a1a39a07b54dbff7fa6b6350501f967c727f2e9083ed81b3034ad438ebf571",
+  "checks": {
+    "pythonTestsPassed": 126,
+    "typescriptApiTestsPassed": 147,
+    "browserScenariosPassed": 14,
+    "frontendTypecheck": true,
+    "apiTypecheck": true,
+    "lint": true,
+    "productionBuild": true,
+    "liveMlService": true,
+    "liveForecastsWithOlyaModel": 10,
+    "externalFeaturesReportedByApi": true
+  },
+  "evaluation": "Provided test used for model selection; the prior confirmed platform score belongs to best-6-of-6.csv."
+}

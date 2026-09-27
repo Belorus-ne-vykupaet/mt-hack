@@ -281,6 +281,7 @@ export function createApi(options: ServerOptions = {}) {
           status: string;
           asOf: string;
           modelVersion: string;
+          metrics?: { externalFeaturesUsed?: boolean };
         }>("/status");
         return json(res, 200, {
           mode: state.mode,
@@ -308,7 +309,7 @@ export function createApi(options: ServerOptions = {}) {
             source: "Яндекс Router API",
           },
           authenticated: !!options.token,
-          externalFeaturesUsed: false,
+          externalFeaturesUsed: state.metrics?.externalFeaturesUsed === true,
         });
       }
       if (req.method === "GET" && path === "/integrations")

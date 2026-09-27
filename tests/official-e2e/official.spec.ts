@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { WEATHER_LOCATIONS } from "../../src/entities/weather-current";
-test("official Sasha predictions, archive clock, map and themes", async ({
+test("official Olya OSM predictions, archive clock, map and themes", async ({
   page,
   request,
 }) => {
@@ -9,7 +9,9 @@ test("official Sasha predictions, archive clock, map and themes", async ({
   const state = await (await request.get("/api/v1/ml/status")).json();
   expect(state.status).toBe("connected");
   expect(state.metrics.testRows).toBe(353);
-  expect(state.metrics.maeSec).toBeCloseTo(58.1, 1);
+  expect(state.metrics.features).toHaveLength(64);
+  expect(state.metrics.externalFeatureSources).toEqual(["OpenStreetMap"]);
+  expect(state.metrics.maeSec).toBeCloseTo(52.198, 2);
   expect(state.totalVehicles).toBe(30);
   expect(state.scheduledVehicles).toBe(13);
   expect(state.contextVehicles).toBe(17);
@@ -29,7 +31,7 @@ test("official Sasha predictions, archive clock, map and themes", async ({
       (v: any) =>
         v.forecast_horizon_sec > 600 &&
         v.forecast_horizon_sec <= 900 &&
-        v.forecast_model === "sasha-extra-trees-v2",
+        v.forecast_model === "olya-extra-trees-osm-v1",
     ),
   ).toBeTruthy();
   expect(
@@ -119,6 +121,7 @@ test("all GPS buses remain available in 2D, 3D and cards without a forecast", as
   await page.goto("/overview?source=official");
   await expect(page.locator(".network-totals")).toContainText(`${items.length} / 30`);
   await expect(page.locator(".network-totals")).toContainText("GPS-позиции на карте");
+  await expect(page.locator(".summary-strip")).toContainText("GPS-позиций на карте");
   await expect(page.locator("[data-visible-vehicles]")).toHaveAttribute("data-visible-vehicles", String(items.length));
   await expect(page.locator("[data-road-paths]")).toHaveAttribute("data-road-paths", /[1-9][0-9]/);
   for (const mode of ["3D", "2D", "3D"]) {

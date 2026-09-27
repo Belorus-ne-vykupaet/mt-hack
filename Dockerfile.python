@@ -10,6 +10,7 @@ RUN --mount=type=cache,id=transit-pip-cache,target=/root/.cache/pip \
       echo "Retrying Python dependencies (attempt $attempt failed)" >&2; \
     done; exit 1
 COPY ml/transit_ml ./ml/transit_ml
+COPY ml/data/external ./ml/data/external
 COPY docker/local-data/test/schedule.csv docker/local-data/test/traffic.csv ./ml/data/official/test/
 COPY docker/local-data/live ./ml/data/live
 COPY ml/artifacts/delay.cbm ml/artifacts/late.cbm ml/artifacts/metrics.json ./ml/artifacts/
