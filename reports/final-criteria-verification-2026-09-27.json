@@ -1,0 +1,244 @@
+{
+  "verifiedAtUtc": "2026-09-27T16:49:14.865167+00:00",
+  "scope": "Final regression checks and available evidence; not an awarded jury score",
+  "codeCommit": "752405a6a1792c55d464a5b805b0351fa3301dc9",
+  "baseEvidenceCommit": "c0cc766",
+  "mergedMainCommit": "1ebb5cc",
+  "environment": {
+    "os": "Darwin",
+    "architecture": "arm64",
+    "python": "Python 3.12.12",
+    "node": "v24.19.0",
+    "docker": "Docker version 28.5.1, build e180ab8",
+    "browser": "Google Chrome / Playwright",
+    "telemetry": "official archive replay",
+    "replayStart": "2026-01-06 07:27:00",
+    "replaySpeed": 0
+  },
+  "automatedTests": {
+    "typescriptApi": 155,
+    "python": 149,
+    "browser": 15,
+    "total": 319,
+    "browserStats": {
+      "startTime": "2026-09-27T16:41:03.210Z",
+      "duration": 36165.379,
+      "expected": 15,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0
+    },
+    "browserCases": [
+      {
+        "file": "attention.spec.ts",
+        "name": "two late warnings and one early bus produce three consistent attention entries",
+        "status": "passed",
+        "durationMs": 1484,
+        "attempts": 1
+      },
+      {
+        "file": "daily-reports.spec.ts",
+        "name": "daily report and history show real coverage, save Ultra result and fit mobile",
+        "status": "passed",
+        "durationMs": 1179,
+        "attempts": 1
+      },
+      {
+        "file": "dispatch-advice.spec.ts",
+        "name": "dispatcher shows per-bus delays, test dispatch delivery and GigaChat route advice",
+        "status": "passed",
+        "durationMs": 2936,
+        "attempts": 1
+      },
+      {
+        "file": "forecast-evaluation.spec.ts",
+        "name": "the forecast journal renders real paired outcomes in both themes",
+        "status": "passed",
+        "durationMs": 1125,
+        "attempts": 1
+      },
+      {
+        "file": "forecast-evaluation.spec.ts",
+        "name": "a journal outage is visible and can be retried",
+        "status": "passed",
+        "durationMs": 2151,
+        "attempts": 1
+      },
+      {
+        "file": "official.spec.ts",
+        "name": "official Olya OSM predictions, archive clock, map and themes",
+        "status": "passed",
+        "durationMs": 7464,
+        "attempts": 1
+      },
+      {
+        "file": "official.spec.ts",
+        "name": "official header has no model badge and forecast slider remains available during fallback",
+        "status": "passed",
+        "durationMs": 1716,
+        "attempts": 1
+      },
+      {
+        "file": "official.spec.ts",
+        "name": "all GPS buses remain available in 2D, 3D and cards without a forecast",
+        "status": "passed",
+        "durationMs": 3919,
+        "attempts": 1
+      },
+      {
+        "file": "official.spec.ts",
+        "name": "GPS risk positions remain visible when the external map is unavailable",
+        "status": "passed",
+        "durationMs": 1033,
+        "attempts": 1
+      },
+      {
+        "file": "official.spec.ts",
+        "name": "official 3D map restores current weather without changing archive forecasts",
+        "status": "passed",
+        "durationMs": 2581,
+        "attempts": 1
+      },
+      {
+        "file": "performance.spec.ts",
+        "name": "hidden dashboard releases WebGL and live stream, then restores the selected 3D view",
+        "status": "passed",
+        "durationMs": 2800,
+        "attempts": 1
+      },
+      {
+        "file": "road-events.spec.ts",
+        "name": "test road incident shows unknown delay and GigaChat advice, also on overview",
+        "status": "passed",
+        "durationMs": 1314,
+        "attempts": 1
+      },
+      {
+        "file": "source-status.spec.ts",
+        "name": "header identifies archive replay and NDTP without confusing either with live city service",
+        "status": "passed",
+        "durationMs": 1868,
+        "attempts": 1
+      },
+      {
+        "file": "stops.spec.ts",
+        "name": "opens only forecast stops promptly, deduplicates visits and keeps each stop’s risk",
+        "status": "passed",
+        "durationMs": 1205,
+        "attempts": 1
+      },
+      {
+        "file": "timeline.spec.ts",
+        "name": "forecast buses move while the slider is held in both map views",
+        "status": "passed",
+        "durationMs": 2269,
+        "attempts": 1
+      }
+    ],
+    "commands": [
+      "pnpm check",
+      "pnpm ml:test",
+      "OFFICIAL_BASE_URL=http://127.0.0.1:19080 pnpm exec playwright test --config playwright.official.config.ts"
+    ],
+    "initialBrowserRun": {
+      "passed": 13,
+      "failed": 2,
+      "cause": "Two selectors still used the old official-mode transport button label; aligned to current accessible name before the full rerun."
+    }
+  },
+  "docker": {
+    "build": "passed",
+    "services": [
+      "frontend",
+      "api",
+      "backend",
+      "ml"
+    ],
+    "apiBackendMlHealthy": true
+  },
+  "activeModel": {
+    "version": "olya-extra-trees-osm-v1",
+    "features": 64,
+    "testRows": 353,
+    "maeSec": 52.19818696883853,
+    "artifactSha256": "59c9bde7f2fe68ab95c75132959c4a223e925d83aebc387897116be7e17400c0",
+    "dockerArtifactMatchesRepository": true,
+    "submissionSha256": "65a1a39a07b54dbff7fa6b6350501f967c727f2e9083ed81b3034ad438ebf571",
+    "platformScore": {
+      "value": 1.0,
+      "evidence": "participant confirmation; platform screenshot does not expose uploaded filename or artifact hash"
+    }
+  },
+  "archiveWarningReproduction": {
+    "command": "PYTHONPATH=ml:src ml/.venv/bin/python scripts/audit-early-warnings.py",
+    "measuredAtUtc": "2026-09-27T16:42:36.577945+00:00",
+    "sourceReport": "reports/early-warning-audit-2026-09-27-osm.json",
+    "allObservedOutcomesEqualPublishedReport": true,
+    "summary": {
+      "distinct_first_warnings": 96,
+      "false_alerts": 4,
+      "late_events": 120,
+      "late_events_warned_in_event_window": 92,
+      "minimum_lead_to_plan_sec": 630.0,
+      "maximum_lead_to_plan_sec": 780.0,
+      "ready_first_warnings": 96,
+      "fallback_first_warnings": 0,
+      "late_events_missed_in_event_window": 28
+    },
+    "confirmedRisksWithoutExistingDelay": 7
+  },
+  "liveOnTimeScenario": {
+    "report": "reports/ndtp-live-on-time-osm-2026-09-27.json",
+    "passed": false,
+    "result": "No first warning before 10-minute boundary; observations preserved",
+    "previousStopOffsetSec": 30,
+    "requireNoExistingDelay": true
+  },
+  "remoteFleetRun": {
+    "durationSec": 1800,
+    "vehicles": 100,
+    "webSocketClients": 15,
+    "reportedResult": "passed",
+    "evidenceSource": "participant confirmation, separate computer",
+    "sourceReportAvailable": false,
+    "locallyVerified": false,
+    "repeated": false,
+    "reasonNotRepeated": "participant explicitly cancelled repeat",
+    "expectedReport": "reports/reliability-fleet-osm-2026-09-27.json",
+    "numericMeasurements": null
+  },
+  "currentSchedule": {
+    "verifiedCurrentSourceAvailable": false,
+    "documentation": "docs/27-live-ndtp-plan-source.md"
+  },
+  "screenshot": "reports/official-dashboard-final-2026-09-27.png",
+  "sourceSha256": {
+    "ml/transit_ml/backend.py": "b386156b6136371a18195c601ae50776cecc87eca0346192c94ad4c6f37a8906",
+    "ml/transit_ml/inference.py": "9cd5a363f00d299ef2e7f0ded8e8d437639abb6b0c9f20cad31b8b78d2fbae08",
+    "ml/transit_ml/ndtp.py": "5e11acf7ad2693eff915bed9a8ecba700f92570a8567be988077cd6012a86f2f",
+    "scripts/audit-live-ndtp-emulator.py": "4acb2e1fac9c8132b63f6c7e8167e34238df918bbc5b9b1c921c366875be51d6",
+    "scripts/prepare-ndtp-smoke.py": "eed50c816c968a212ee33a44df809179f15f43a71047f71695be62fbbf440c69",
+    "ml/tests/test_live_audit_script.py": "e0dbf971972455fb7dd92013ca51a231b0c401c900ca2afd935db4fb36ab323e",
+    "tests/official-e2e/official.spec.ts": "175b2468e33df2a0c33e2aac0367c6c2f4031d1b35691ca90290e4124f6ca4fa",
+    "tests/official-e2e/timeline.spec.ts": "ed790f8f216c064ed43abe297163fb515515ff783f5a1a9670893186c1c644ab",
+    "tests/official-e2e/source-status.spec.ts": "24a34510238d83089f5293bf8c4d10abd31f2e452205b9a5fbbf77cfd912dc00"
+  },
+  "buildChecks": {
+    "frontendTypecheck": "passed",
+    "apiTypecheck": "passed",
+    "lint": "passed",
+    "productionBuild": "passed",
+    "dockerBuild": "passed"
+  },
+  "localLogSha256": {
+    "final-criteria-check.log": "25fa03b6f5eefc24464d9efd25ad98cb9be538df141ca86514fb518c82207d1b",
+    "final-criteria-python.log": "2acebf1b1b6b4f741d13f0e1e424ce2307e1ffa6997fac2ff3b13ac43c8e3138",
+    "final-official-e2e.json": "98f78a093f92ccad547c8f87b4900c7ecc9e03836604784a1cb04f3418d6fd5c",
+    "final-docker-build.log": "7390f3c92efa244d2688d75d9077b81762f00cea3824474e11e72718d9c5575a"
+  },
+  "evidenceSha256": {
+    "reports/ndtp-live-on-time-osm-2026-09-27.json": "7c9572273da58421c30776c334ba4667e87b80b43d9a5f2c42c75d045700d62f",
+    "reports/official-dashboard-final-2026-09-27.png": "acc70262a0618653b0c4d4adf97ee9b31a47a4d8864686c4625b3633bc1c3dcf",
+    "reports/early-warning-audit-2026-09-27-osm.json": "125c06925353de9fec14110d4bfdd4847cdbfb2632c3cc8d0e11afd4294f7a70"
+  }
+}

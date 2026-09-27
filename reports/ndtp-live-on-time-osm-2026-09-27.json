@@ -1,0 +1,857 @@
+{
+  "scope": "Official Docker NDTP emulator, synthetic current plan, real clock and selected trained ML; not a model-accuracy evaluation",
+  "startedAt": "2026-09-27T16:39:20.439729+00:00",
+  "requireNoExistingDelay": true,
+  "previousStopPlannedAt": "2026-09-27 16:39:43",
+  "planSha256": "0f0c3cd97f2ed97a5688a6d7049a8f37e78e7b4f9c14e523a13f5d34670ae7ce",
+  "targetStopId": "99110002",
+  "targetAt": "2026-09-27T16:51:43+00:00",
+  "arrivalDelaySecConfigured": 130,
+  "stage": "first_warning",
+  "warningWindowEndsAt": "2026-09-27T16:41:43+00:00",
+  "predictionObservations": [
+    {
+      "observedAt": "2026-09-27T16:39:23.764661+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": -0.86125,
+      "risk_probability": 0.08976102120097372,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 741.9863603115082,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 1.0
+    },
+    {
+      "observedAt": "2026-09-27T16:39:26.771667+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": 0.02875,
+      "risk_probability": 0.0896552954526776,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 739.2552320957184,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.7
+    },
+    {
+      "observedAt": "2026-09-27T16:39:29.777381+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": 0.05625,
+      "risk_probability": 0.0896552954526776,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 736.2479794025421,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.8
+    },
+    {
+      "observedAt": "2026-09-27T16:39:32.785420+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": 0.27125,
+      "risk_probability": 0.09061414263234827,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 733.2548744678497,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.7
+    },
+    {
+      "observedAt": "2026-09-27T16:39:35.791313+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": 1.845,
+      "risk_probability": 0.09664013100497068,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 727.2517826557159,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.7
+    },
+    {
+      "observedAt": "2026-09-27T16:39:38.800516+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": 1.845,
+      "risk_probability": 0.09664013100497068,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 727.2517826557159,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.7
+    },
+    {
+      "observedAt": "2026-09-27T16:39:41.808296+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": 1.8175,
+      "risk_probability": 0.098799341024259,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 721.2477338314056,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.8
+    },
+    {
+      "observedAt": "2026-09-27T16:39:44.816368+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": 0.22375,
+      "risk_probability": 0.098799341024259,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 718.2475199699402,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.8
+    },
+    {
+      "observedAt": "2026-09-27T16:39:47.820520+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": 0.66,
+      "risk_probability": 0.09912542399469787,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 715.2451524734497,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.8
+    },
+    {
+      "observedAt": "2026-09-27T16:39:50.831194+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": -0.52625,
+      "risk_probability": 0.09912542399469787,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 712.2509353160858,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.7
+    },
+    {
+      "observedAt": "2026-09-27T16:39:53.836367+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": -0.61875,
+      "risk_probability": 0.09856584193494977,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 709.2473456859589,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.8
+    },
+    {
+      "observedAt": "2026-09-27T16:39:56.840503+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": -0.84,
+      "risk_probability": 0.09856584193494977,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 706.2472863197327,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.8
+    },
+    {
+      "observedAt": "2026-09-27T16:39:59.849433+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": -0.34,
+      "risk_probability": 0.09856584193494977,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 703.255035161972,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.7
+    },
+    {
+      "observedAt": "2026-09-27T16:40:02.858250+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": -0.34,
+      "risk_probability": 0.1001891012536251,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 700.2474186420441,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.8
+    },
+    {
+      "observedAt": "2026-09-27T16:40:05.867134+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": -0.7275,
+      "risk_probability": 0.1001891012536251,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 697.251904964447,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.7
+    },
+    {
+      "observedAt": "2026-09-27T16:40:08.877534+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": -0.87375,
+      "risk_probability": 0.1001891012536251,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 694.2453372478485,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.8
+    },
+    {
+      "observedAt": "2026-09-27T16:40:11.884069+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": -1.2625,
+      "risk_probability": 0.1001891012536251,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 691.2505180835724,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.7
+    },
+    {
+      "observedAt": "2026-09-27T16:40:14.890065+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": -0.72125,
+      "risk_probability": 0.1001891012536251,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 688.2381527423859,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.8
+    },
+    {
+      "observedAt": "2026-09-27T16:40:17.900391+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": -1.24875,
+      "risk_probability": 0.1001891012536251,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 685.2453336715698,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.8
+    },
+    {
+      "observedAt": "2026-09-27T16:40:20.904875+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": -1.70875,
+      "risk_probability": 0.1001891012536251,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 682.2461757659912,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.8
+    },
+    {
+      "observedAt": "2026-09-27T16:40:23.914190+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": -1.34875,
+      "risk_probability": 0.1001891012536251,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 679.2514173984528,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.7
+    },
+    {
+      "observedAt": "2026-09-27T16:40:26.926886+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": -0.135,
+      "risk_probability": 0.1001891012536251,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 676.2484891414642,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.8
+    },
+    {
+      "observedAt": "2026-09-27T16:40:29.939057+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": -0.135,
+      "risk_probability": 0.10057031978791464,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 673.251478433609,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.7
+    },
+    {
+      "observedAt": "2026-09-27T16:40:32.948991+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": -0.28,
+      "risk_probability": 0.10057031978791464,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 670.2512576580048,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.7
+    },
+    {
+      "observedAt": "2026-09-27T16:40:35.959037+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": -0.585,
+      "risk_probability": 0.10106337092915418,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 667.2466604709625,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.8
+    },
+    {
+      "observedAt": "2026-09-27T16:40:38.969038+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": 0.1425,
+      "risk_probability": 0.10106337092915418,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 664.2489192485809,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.8
+    },
+    {
+      "observedAt": "2026-09-27T16:40:41.979097+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": 0.2775,
+      "risk_probability": 0.0903378750249695,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 661.2538030147552,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.7
+    },
+    {
+      "observedAt": "2026-09-27T16:40:44.992827+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": -0.21875,
+      "risk_probability": 0.10769351388188787,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 658.2537894248962,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.7
+    },
+    {
+      "observedAt": "2026-09-27T16:40:48.006981+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": -0.09875,
+      "risk_probability": 0.10194620967197125,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 655.2536747455597,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.7
+    },
+    {
+      "observedAt": "2026-09-27T16:40:51.022579+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": 0.09875,
+      "risk_probability": 0.10194620967197125,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 652.2543857097626,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.7
+    },
+    {
+      "observedAt": "2026-09-27T16:40:54.031322+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": 0.9225,
+      "risk_probability": 0.10194620967197125,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 649.2501022815704,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.7
+    },
+    {
+      "observedAt": "2026-09-27T16:40:57.042054+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": 0.5525,
+      "risk_probability": 0.10194620967197125,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 646.2543087005615,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.7
+    },
+    {
+      "observedAt": "2026-09-27T16:41:00.057866+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": -0.28375,
+      "risk_probability": 0.10194620967197125,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 643.2562148571014,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.7
+    },
+    {
+      "observedAt": "2026-09-27T16:41:03.067418+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": -0.38375,
+      "risk_probability": 0.1035339569024214,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 640.2560875415802,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.7
+    },
+    {
+      "observedAt": "2026-09-27T16:41:06.077214+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": -0.42875,
+      "risk_probability": 0.1035339569024214,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 637.2514517307281,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.7
+    },
+    {
+      "observedAt": "2026-09-27T16:41:09.085729+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": 1.08375,
+      "risk_probability": 0.1035339569024214,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 634.2526955604553,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.7
+    },
+    {
+      "observedAt": "2026-09-27T16:41:12.096674+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": 1.08375,
+      "risk_probability": 0.1035339569024214,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 631.2556042671204,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.7
+    },
+    {
+      "observedAt": "2026-09-27T16:41:15.111509+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": 1.25625,
+      "risk_probability": 0.10380996119621602,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 628.2496914863586,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.8
+    },
+    {
+      "observedAt": "2026-09-27T16:41:18.122578+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": 1.48625,
+      "risk_probability": 0.10380996119621602,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 625.2495985031128,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.8
+    },
+    {
+      "observedAt": "2026-09-27T16:41:21.137534+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": 1.99875,
+      "risk_probability": 0.10830504616660218,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 622.253226518631,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.7
+    },
+    {
+      "observedAt": "2026-09-27T16:41:24.152525+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": 3.9725,
+      "risk_probability": 0.10830504616660218,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 619.2536385059357,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.7
+    },
+    {
+      "observedAt": "2026-09-27T16:41:27.162458+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": 4.3025,
+      "risk_probability": 0.10830504616660218,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 616.2560091018677,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.7
+    },
+    {
+      "observedAt": "2026-09-27T16:41:30.168956+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": 3.7925,
+      "risk_probability": 0.10830504616660218,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 613.2532930374146,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.7
+    },
+    {
+      "observedAt": "2026-09-27T16:41:33.176628+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": 3.9025,
+      "risk_probability": 0.10830504616660218,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 610.2563712596893,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.7
+    },
+    {
+      "observedAt": "2026-09-27T16:41:36.183985+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": 3.905,
+      "risk_probability": 0.10830504616660218,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 607.242448091507,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.8
+    },
+    {
+      "observedAt": "2026-09-27T16:41:39.195448+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": 3.695,
+      "risk_probability": 0.10830504616660218,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 604.2488667964935,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.8
+    },
+    {
+      "observedAt": "2026-09-27T16:41:42.207760+00:00",
+      "id": "vehicle-99116336",
+      "current_delay_sec": -23.0,
+      "predicted_delay_sec": 4.1575,
+      "risk_probability": 0.10830504616660218,
+      "forecast_status": "ready",
+      "forecast_horizon_sec": 601.2464640140533,
+      "forecast_model": "olya-extra-trees-osm-v1",
+      "telemetry_age_sec": 0.8
+    }
+  ],
+  "passed": false,
+  "failure": "no first warning before the 10-minute boundary",
+  "statusAtFailure": {
+    "mode": "official-ndtp",
+    "status": "no_targets",
+    "asOf": "2026-09-27T16:41:44.750960112Z",
+    "modelVersion": "persistence-fallback",
+    "metrics": {
+      "modelVersion": "olya-extra-trees-osm-v1",
+      "modelFamily": "ExtraTreesRegressor",
+      "featureVersion": 3,
+      "trainRows": 4434,
+      "testRows": 353,
+      "maeSec": 52.19818696883853,
+      "persistenceMaeSec": 93.35977337110482,
+      "zeroMaeSec": 103.33711048158641,
+      "chronologicalHoldoutMaeSec": 55.55234929078014,
+      "riskBrier": 0.106890779073252,
+      "riskThresholdSec": 120,
+      "riskModel": "catboost-official-v1",
+      "riskProbabilityCalibrated": false,
+      "horizon": "(600, 900] seconds",
+      "features": [
+        "cur_dev_s",
+        "horizon_s",
+        "hour_sin",
+        "hour_cos",
+        "target_lon",
+        "target_lat",
+        "telemetry_age_s",
+        "gps_age_s",
+        "last_speed",
+        "target_distance_km",
+        "osm_road_count",
+        "osm_signal_count",
+        "osm_intersection_count",
+        "osm_busway_count",
+        "osm_major_road_frac",
+        "osm_link_road_frac",
+        "osm_roundabout_count",
+        "osm_lanes_median",
+        "osm_maxspeed_median",
+        "target_osm_road_count",
+        "target_osm_signal_count",
+        "target_osm_intersection_count",
+        "target_osm_busway_count",
+        "target_osm_major_road_frac",
+        "count_60",
+        "valid_frac_60",
+        "speed_mean_60",
+        "speed_std_60",
+        "speed_max_60",
+        "stop_frac_60",
+        "count_180",
+        "valid_frac_180",
+        "speed_mean_180",
+        "speed_std_180",
+        "speed_max_180",
+        "stop_frac_180",
+        "count_300",
+        "valid_frac_300",
+        "speed_mean_300",
+        "speed_std_300",
+        "speed_max_300",
+        "stop_frac_300",
+        "count_600",
+        "valid_frac_600",
+        "speed_mean_600",
+        "speed_std_600",
+        "speed_max_600",
+        "stop_frac_600",
+        "count_900",
+        "valid_frac_900",
+        "speed_mean_900",
+        "speed_std_900",
+        "speed_max_900",
+        "stop_frac_900",
+        "count_1800",
+        "valid_frac_1800",
+        "speed_mean_1800",
+        "speed_std_1800",
+        "speed_max_1800",
+        "stop_frac_1800",
+        "target_prev_gap_s",
+        "planned_stops_ahead",
+        "nearest_plan_distance_km",
+        "position_delay_proxy_s"
+      ],
+      "sequenceFeatures": [
+        "speed_mean",
+        "speed_max",
+        "stopped_fraction",
+        "target_dx_km",
+        "target_dy_km",
+        "count",
+        "gps_fraction",
+        "observed"
+      ],
+      "submissionSha256": "65a1a39a07b54dbff7fa6b6350501f967c727f2e9083ed81b3034ad438ebf571",
+      "evaluation": "52.20 s is on the provided test split used to select ExtraTrees; the hidden evaluation score is separate. The chronological audit is from a model trained before its audit window.",
+      "externalFeaturesUsed": true,
+      "externalFeatureSources": [
+        "OpenStreetMap"
+      ],
+      "modelAuthor": "Olya",
+      "sourceBranch": "osm-extra-trees-51",
+      "sourceCommit": "f6b64cccabc9c10882babdd72f0b98b57de06f9c",
+      "osmSnapshotDate": "2026-01-06T02:04:59Z"
+    },
+    "pipelineMs": 8.69,
+    "inferenceMs": 38.49,
+    "ndtp": {
+      "frames": 78,
+      "errors": 0,
+      "connections": 2,
+      "units": 1,
+      "historyPackets": 49,
+      "maxHistoryPacketsPerUnit": 49,
+      "lastPacketAt": 1790527304.7508452,
+      "lastPacketAgeSec": 0.5,
+      "outOfOrderFrames": 0,
+      "staleFrames": 0,
+      "ignoredUnits": 29,
+      "mappedPackets": 49,
+      "unmappedPackets": 29,
+      "coalescedPackets": 0,
+      "forecastPending": false
+    },
+    "pipelineLatencyMs": {
+      "samples": 50,
+      "p50": 64.05,
+      "p95": 93.2,
+      "p99": 113.05
+    },
+    "lastError": null,
+    "clockNote": "Время NDTP и текущего плана сравнивается в UTC; требуется согласованная временная шкала.",
+    "predictedVehicles": 0,
+    "locatedVehicles": 1,
+    "freshVehicles": 1,
+    "staleVehicles": 0,
+    "totalVehicles": 1,
+    "scheduledVehicles": 1,
+    "contextVehicles": 0,
+    "scheduledWithoutPosition": 0,
+    "scheduledStale": 0,
+    "scheduledWithoutTarget": 1,
+    "warningsIssued": 0,
+    "warningEvent": {
+      "type": "late_threshold",
+      "latenessThresholdSec": 120,
+      "definition": "Potential lateness threshold breach at planned arrival + 120 seconds",
+      "firstPublicationLeadSec": {
+        "minExclusive": 600,
+        "maxInclusive": 900
+      },
+      "actualArrivalKnownAtPublication": false
+    }
+  },
+  "snapshotAtFailure": {
+    "routes": [
+      {
+        "id": "duty-99116336",
+        "number": "99116336",
+        "name": "План ТС 99116336 · текущий план NDTP",
+        "transport_type": "bus",
+        "stops": [
+          {
+            "id": "99110001",
+            "name": "Интеграционный стенд · предыдущая остановка",
+            "sequence": 0,
+            "position": {
+              "lon": 37.617321,
+              "lat": 55.7551234
+            }
+          },
+          {
+            "id": "99110002",
+            "name": "Интеграционный стенд · цель 1",
+            "sequence": 1,
+            "position": {
+              "lon": 37.617321,
+              "lat": 55.8251234
+            }
+          }
+        ],
+        "vehicle_count": 1,
+        "current_delay_sec": -23.0,
+        "predicted_delay_sec": null,
+        "risk_probability": null,
+        "risk_level": "unknown",
+        "forecast_status": "no_target"
+      }
+    ],
+    "vehicles": [
+      {
+        "id": "vehicle-99116336",
+        "route_id": "duty-99116336",
+        "position": {
+          "lat": 55.7551234,
+          "lon": 37.617321
+        },
+        "bearing_deg": 0.0,
+        "speed_kmh": 0.0,
+        "doors_open": null,
+        "current_delay_sec": -23.0,
+        "predicted_delay_sec": null,
+        "risk_probability": null,
+        "risk_level": "unknown",
+        "status": "active",
+        "telemetry_age_sec": 0.8,
+        "forecast_status": "no_target",
+        "forecast_horizon_sec": null,
+        "forecast_target_time": null,
+        "forecast_model": null,
+        "observed_factor": null,
+        "suspected_cause": null,
+        "current_segment_id": "segment-duty-99116336-99110001-99110002",
+        "segment_match_status": "matched",
+        "segment_match_reason": null,
+        "next_stop": null,
+        "updated_at": "2026-09-27T16:41:44Z"
+      }
+    ],
+    "alerts": [],
+    "segments": [
+      {
+        "id": "segment-duty-99116336-99110001-99110002",
+        "route_id": "duty-99116336",
+        "from_stop_id": "99110001",
+        "to_stop_id": "99110002",
+        "from_stop_name": "Интеграционный стенд · предыдущая остановка",
+        "to_stop_name": "Интеграционный стенд · цель 1",
+        "from_sequence": 0,
+        "to_sequence": 1,
+        "name": "Интеграционный стенд · предыдущая остановка → Интеграционный стенд · цель 1",
+        "started_at": 1790527160.0,
+        "ended_at": null,
+        "current_delay_sec": -23.0,
+        "matching_method": "ordered_stop_visits",
+        "geometry_source": "observed_gps",
+        "is_current": true,
+        "complete": false,
+        "geometry": {
+          "type": "LineString",
+          "coordinates": []
+        },
+        "observed_paths": [],
+        "mean_speed_kmh": 0.0,
+        "dwell_sec": 144.0,
+        "observed_distance_m": 0.0,
+        "coverage_sec": 144.0,
+        "sample_count": 49,
+        "progress": null,
+        "predicted_delay_sec": null,
+        "risk_probability": null,
+        "risk_level": "unknown",
+        "risk_scope": "vehicle_target_stop"
+      }
+    ],
+    "summary": {
+      "timestamp": "2026-09-27T16:41:44.750960112Z",
+      "vehicles_total": 1,
+      "vehicles_active": 1,
+      "vehicles_located": 1,
+      "vehicles_stale": 0,
+      "vehicles_predicted": 0,
+      "vehicles_assessed": 0,
+      "vehicles_without_position": 0,
+      "routes_active": 1,
+      "on_time_percent": 0.0,
+      "at_risk_percent": 0.0,
+      "delayed_percent": 0.0,
+      "average_delay_sec": -23.0,
+      "average_predicted_delay_sec": 0
+    },
+    "points": [
+      {
+        "timestamp": "2026-09-27T16:39:29.745125532Z",
+        "actual_delay_sec": -23.0,
+        "predicted_delay_sec": null
+      },
+      {
+        "timestamp": "2026-09-27T16:39:59.744964838Z",
+        "actual_delay_sec": -23.0,
+        "predicted_delay_sec": null
+      },
+      {
+        "timestamp": "2026-09-27T16:40:29.748521566Z",
+        "actual_delay_sec": -23.0,
+        "predicted_delay_sec": null
+      },
+      {
+        "timestamp": "2026-09-27T16:40:59.743785143Z",
+        "actual_delay_sec": -23.0,
+        "predicted_delay_sec": null
+      },
+      {
+        "timestamp": "2026-09-27T16:41:29.746706963Z",
+        "actual_delay_sec": -23.0,
+        "predicted_delay_sec": null
+      },
+      {
+        "timestamp": "2026-09-27T16:41:44.750960112Z",
+        "actual_delay_sec": -23.0,
+        "predicted_delay_sec": null
+      }
+    ],
+    "geometries": [
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": []
+        },
+        "properties": {
+          "route_id": "duty-99116336",
+          "observed_paths": []
+        }
+      }
+    ]
+  },
+  "warningsAtFailure": {
+    "asOf": "2026-09-27T16:41:44.750960112Z",
+    "items": []
+  },
+  "completedAt": "2026-09-27T16:41:45.247474+00:00"
+}
