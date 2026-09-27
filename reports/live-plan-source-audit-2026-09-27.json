@@ -1,0 +1,108 @@
+{
+  "checkedAtUtc": "2026-09-27T15:16:44.474327+00:00",
+  "publicFolder": "https://disk.yandex.ru/d/CA6tsj4aJJ4Aaw",
+  "archiveSha256": "fce28b4121dbaae793eee855b8efa523484c91ac203d782ff33853884c527760",
+  "archiveSize": 147448993,
+  "scope": "Public archive inventory and aggregate dates/ID cardinalities; no current assignment certified.",
+  "publicFolderItems": [
+    {
+      "name": "dataset.zip",
+      "type": "file",
+      "size": 147448993,
+      "modified": "2026-09-22T10:45:46+00:00",
+      "sha256": "fce28b4121dbaae793eee855b8efa523484c91ac203d782ff33853884c527760"
+    }
+  ],
+  "matchesPublishedArchive": true,
+  "splits": {
+    "train": {
+      "scheduleRows": 16674,
+      "scheduleVehicles": 39,
+      "planMinRaw": "2026-01-06 02:11:56.876587200",
+      "planMaxRaw": "2026-01-07 04:21:00.000000000",
+      "telemetryRows": 287849,
+      "telemetryMinRaw": "2026-01-05 23:46:15.880133799",
+      "telemetryMaxRaw": "2026-01-07 00:25:58.268893882",
+      "units": 56,
+      "vehicles": 56,
+      "distinctPairs": 56,
+      "unitsWithMultipleVehicles": 0,
+      "vehiclesWithMultipleUnits": 0,
+      "plannedVehiclesMissingTelemetry": 0,
+      "scheduleColumns": [
+        "tt_action_item_id",
+        "time_begin",
+        "time_fact_begin",
+        "order_date",
+        "manual_fill",
+        "tr_id",
+        "geom",
+        "building_address"
+      ]
+    },
+    "test": {
+      "scheduleRows": 5558,
+      "scheduleVehicles": 13,
+      "planMinRaw": "2026-01-06 02:18:00",
+      "planMaxRaw": "2026-01-07 04:21:00",
+      "telemetryRows": 105945,
+      "telemetryMinRaw": "2026-01-06 00:00:02.000000",
+      "telemetryMaxRaw": "2026-01-06 23:59:59.000000",
+      "units": 30,
+      "vehicles": 30,
+      "distinctPairs": 30,
+      "unitsWithMultipleVehicles": 0,
+      "vehiclesWithMultipleUnits": 0,
+      "plannedVehiclesMissingTelemetry": 0,
+      "scheduleColumns": [
+        "tt_action_item_id",
+        "time_begin",
+        "time_fact_begin",
+        "order_date",
+        "manual_fill",
+        "tr_id",
+        "geom",
+        "building_address"
+      ]
+    },
+    "validate": {
+      "scheduleRows": 5558,
+      "scheduleVehicles": 13,
+      "planMinRaw": "2026-01-06 02:18:00",
+      "planMaxRaw": "2026-01-07 04:21:00",
+      "telemetryRows": 105945,
+      "telemetryMinRaw": "2026-01-06 00:00:02.000000",
+      "telemetryMaxRaw": "2026-01-06 23:59:59.000000",
+      "units": 30,
+      "vehicles": 30,
+      "distinctPairs": 30,
+      "unitsWithMultipleVehicles": 0,
+      "vehiclesWithMultipleUnits": 0,
+      "plannedVehiclesMissingTelemetry": 0,
+      "scheduleColumns": [
+        "tt_action_item_id",
+        "time_begin",
+        "order_date",
+        "manual_fill",
+        "tr_id",
+        "geom",
+        "building_address"
+      ]
+    }
+  },
+  "archiveFiles": [
+    "ndtp-telemetry-emulator.tar",
+    "README.md",
+    "sample_submission.csv",
+    "docs/Emulator-and-Telematic-Packets-Specification.md",
+    "labels/labels_test.csv",
+    "labels/labels_train.csv",
+    "test/schedule.csv",
+    "test/traffic.csv",
+    "train/schedule.csv",
+    "train/traffic.csv",
+    "validate/points.csv",
+    "validate/schedule_plan.csv",
+    "validate/traffic.csv"
+  ]
+}
