@@ -104,3 +104,50 @@ it("anchors a bus to its nearest observed GPS section", () => {
   expect(withoutPrediction.positionEstimated).toBe(false);
   expect(projectVehicle({...anchored, vehicle: {...vehicle, hasForecast: false, bearingDeg: 87}}, 15).headingDeg).toBe(87);
 });
+
+
+const officialVehicle = {
+  ...vehicle,
+  hasForecast: true,
+  forecastHorizonSec: 660,
+  predictedDelaySec: 120,
+  speedKmh: 0,
+  nextStop: { id: "target", name: "Target", sequence: 1, position: { lon: 37.01, lat: 55.01 } },
+};
+it("follows the road to the official target at model arrival time, even from a stopped GPS fix", () => {
+  const a = anchorVehicles([officialVehicle], paths)[0];
+  const halfway = projectVehicle(a, 6.5);
+  expect(halfway.forecastDistanceM).toBeCloseTo(a.path!.length / 2);
+  expect(halfway.position.lon).toBe(37.01);
+  expect(halfway.position.lat).toBeGreaterThan(55);
+  expect(projectVehicle(a, 13).position).toEqual(officialVehicle.nextStop.position);
+  expect(projectVehicle(a, 15).position).toEqual(officialVehicle.nextStop.position);
+  const later = projectVehicle(a, 6.51);
+  expect(later.forecastDistanceM).toBeGreaterThan(halfway.forecastDistanceM);
+  expect(later.forecastDistanceM - halfway.forecastDistanceM).toBeLessThan(2);
+  expect(projectVehicle({...a, vehicle: {...officialVehicle, predictedDelaySec: 240}}, 6.5).forecastDistanceM)
+    .toBeLessThan(halfway.forecastDistanceM);
+});
+it("moves backwards along geometry when the target is behind and returns exactly to GPS at zero", () => {
+  const v = {...officialVehicle, position: {lon: 37.01, lat: 55.005}, nextStop: {...officialVehicle.nextStop, position: vehicle.position}};
+  const a = anchorVehicles([v], paths)[0];
+  const midway = projectVehicle(a, 1);
+  expect(midway.position.lat).toBeLessThan(v.position.lat);
+  expect(midway.headingDeg).toBeCloseTo(180);
+  expect(projectVehicle(a, 13).position).toEqual(vehicle.position);
+  expect(projectVehicle(a, 0).position).toEqual(v.position);
+});
+it("preserves continuity from an off-road GPS fix and holds stale or missing-target buses", () => {
+  const v = {...officialVehicle, position: {lon: 37, lat: 55.0005}};
+  const a = anchorVehicles([v], paths)[0];
+  const first = projectVehicle(a, 0.00001);
+  expect(first.position.lon).toBeCloseTo(v.position.lon, 6);
+  expect(first.position.lat).toBeCloseTo(v.position.lat, 6);
+  for (const unavailable of [
+    {...officialVehicle, telemetryStale: true},
+    {...officialVehicle, hasForecast: false},
+    {...officialVehicle, nextStop: null},
+  ]) {
+    expect(projectVehicle(anchorVehicles([unavailable], paths)[0], 15).position).toEqual(unavailable.position);
+  }
+});

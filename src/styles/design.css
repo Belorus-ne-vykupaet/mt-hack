@@ -211,6 +211,7 @@
   align-items: flex-start;
   gap: 8px;
 }
+.summary-strip > div { align-items: center; }
 .summary-strip > div:last-child,
 .kpi-card:last-child { border-right: 0; }
 .summary-strip > div > strong {
@@ -223,7 +224,7 @@
 .summary-strip > div > strong small { font-size: 18px; }
 .summary-strip > div > span {
   max-width: 125px;
-  padding-top: 4px;
+  padding-top: 0;
   color: var(--secondary);
   font-size: 11px;
   line-height: 1.35;
@@ -245,23 +246,12 @@
 .summary-strip > div > button:hover { transform: translate(2px, -2px); }
 .summary-strip .summary-risk {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 8px;
   border-color: var(--border);
   background: transparent;
 }
-.summary-risk-dot { width: 7px; height: 7px; margin-top: 14px; }
-.summary-strip .summary-risk > span:not(.summary-risk-dot) {
-  max-width: 160px;
-  font-size: 11px;
-  color: var(--secondary);
-}
-.summary-risk > span > strong {
-  font-family: "IBM Plex Sans Condensed", "IBM Plex Sans", sans-serif;
-  font-size: 34px;
-  line-height: 1;
-  vertical-align: -3px;
-}
+.summary-strip .summary-risk > strong { color: var(--red); }
 .filter-bar { padding-bottom: 8px; border-bottom: 1px solid var(--border); }
 .filter-controls select { color: var(--text); font-size: 12px; }
 .filter-controls > svg { color: var(--blue); }
@@ -620,7 +610,8 @@
   .summary-strip > div,
   .summary-strip .summary-risk {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
+    align-items: center;
     min-height: 86px;
     padding: 11px 11px 25px;
     gap: 2px;
@@ -630,10 +621,7 @@
   .summary-strip > div:nth-child(2n) { border-right: 0; }
   .summary-strip > div:nth-child(n+3) { border-bottom: 0; }
   .summary-strip > div > strong { font-size: 30px; }
-  .summary-strip > div > span,
-  .summary-strip .summary-risk > span:not(.summary-risk-dot) { font-size: 10px; max-width: none; }
-  .summary-risk-dot { display: none; }
-  .summary-risk > span > strong { display: block; font-size: 28px; }
+  .summary-strip > div > span { font-size: 10px; max-width: none; }
   .summary-strip > div > button { right: 5px; bottom: 5px; }
   .overview-workspace .center-column { order: -1; }
   .left-column { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -826,3 +814,33 @@
 
 .app .risk-help-content h2 { font-size: 22px; }
 @media (max-width: 680px) { .filter-controls { flex-wrap: wrap; min-width: 0; } }
+
+/* Give route details enough room beside the analytics charts. */
+@media (min-width: 1101px) {
+  .analytics-workspace { grid-template-columns: minmax(0, 1fr) 310px; }
+}
+.analytics-workspace > .right-column {
+  max-height: none;
+}
+.analytics-workspace .detail-panel {
+  height: auto;
+  max-height: none;
+}
+.analytics-workspace .alert-tabs {
+  flex-wrap: wrap;
+  column-gap: 14px;
+}
+.official-detail-note {
+  margin: 14px 0;
+  color: var(--secondary);
+  font-size: 11px;
+  line-height: 1.6;
+}
+.official-detail-note > strong {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--text);
+  font-size: 12px;
+}
+.official-detail-note > p { margin: 5px 0; }
+.official-detail-note > small { display: block; font-size: 10px; }

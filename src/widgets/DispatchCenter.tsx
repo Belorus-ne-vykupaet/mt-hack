@@ -14,7 +14,7 @@ import {
   AlertTriangle,
   CircleCheck,
 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useDispatch } from "../app/dispatch-store";
 import { useUi, useConnection } from "../app/store";
 import { config } from "../shared/config/env";
@@ -272,12 +272,8 @@ export default function DispatchCenter({
   };
   return (
     <section className="dispatch-center">
-      {config.dispatchApi && (
+      {config.dispatchApi && (api.commands.isError || api.recommendations.isError) && (
         <div className="api-dispatch-notice">
-          <Link className="dispatch-connections-link" to="/integrations">
-            Состояние подключений <ArrowRight size={16} aria-hidden="true" />
-          </Link>
-          {(api.commands.isError || api.recommendations.isError) && (
             <p role="alert">
               {api.commands.error?.message ||
                 api.recommendations.error?.message}{" "}
@@ -285,7 +281,6 @@ export default function DispatchCenter({
                 Повторить подключение
               </button>
             </p>
-          )}
         </div>
       )}
       <div className="dispatch-toolbar">
@@ -645,7 +640,7 @@ export default function DispatchCenter({
         )}
         <p className="dispatch-footnote">
           {config.dispatchApi
-            ? "Серверный журнал. Принятие и применение команды подтверждает учебный API-исполнитель."
+            ? "Серверный журнал."
             : "Журнал хранится в этом браузере. Реальные команды в диспетчерскую систему не отправляются."}
         </p>
       </div>

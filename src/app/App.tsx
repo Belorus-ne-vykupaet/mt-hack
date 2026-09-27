@@ -1,7 +1,6 @@
 import { matchesSearch } from "../shared/lib/search";
 import { Dialog } from "../shared/ui/Dialog";
 import { RouteFilter } from "../widgets/RouteFilter";
-import { RiskHelp } from "../widgets/RiskHelp";
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
@@ -26,7 +25,7 @@ import {
 import { useNetwork, useGeometries, queryClient } from "../entities/queries";
 import { useUi } from "./store";
 import { config } from "../shared/config/env";
-import { activeModel, modelDisplayName, modelHeaderLabel, useOfficialModelStatus } from "../entities/official-model-status";
+import { modelHeaderLabel, useOfficialModelStatus } from "../entities/official-model-status";
 
 import { AlertsPanel } from "../widgets/AlertsPanel";
 import { Timeline } from "../widgets/Timeline";
@@ -274,7 +273,7 @@ export default function App() {
                       : mode === "integrations"
                         ? "04"
                         : mode === "reports"
-                          ? "05"
+                          ? "04"
                         : "03"}
                 </span>
                 {mode === "overview"
@@ -309,7 +308,7 @@ export default function App() {
             <div
               className="search-container"
               style={
-                mode === "dispatch" || mode === "integrations" || mode === "reports"
+                mode !== "overview"
                   ? { display: "none" }
                   : undefined
               }
@@ -420,20 +419,17 @@ export default function App() {
                 </button>
               </div>
               <div className="summary-risk">
-                <span className="summary-risk-dot" />
-                <span>
-                  <strong>
-                    {
-                      alerts.filter(
-                        (a) =>
-                          config.officialMode ||
-                          a.severity === "critical" ||
-                          a.severity === "high",
-                      ).length
-                    }
-                  </strong>{" "}
-                  события требуют внимания
-                </span>
+                <strong>
+                  {
+                    alerts.filter(
+                      (a) =>
+                        config.officialMode ||
+                        a.severity === "critical" ||
+                        a.severity === "high",
+                    ).length
+                  }
+                </strong>
+                <span>события требуют внимания</span>
                 <button
                   aria-label="Посмотреть события, требующие внимания"
                   onClick={() => setListView("alerts")}
@@ -482,23 +478,7 @@ export default function App() {
                 </button>
               )}
             </div>
-            <RiskHelp />
-            <span className="demo-caption">
-              <span className="status-dot" />
-              {config.officialMode
-                ? `Официальные данные · ${activeModel(officialModel.data, officialModel.isError)
-                  ? modelDisplayName()
-                  : modelHeaderLabel(officialModel.data, officialModel.isError).toLocaleLowerCase("ru-RU")}`
-                : config.csvMode
-                  ? "Воспроизведение CSV"
-                  : config.dataSource === "mock"
-                    ? "Демонстрационный поток"
-                    : "Телематика NDTP"}{" "}
-              ·{" "}
-              {config.csvMode
-                ? "базовый прогноз"
-                : "обновление в реальном времени"}
-            </span>
+
           </div>
           {!!activePlanCount &&
             !config.csvMode &&
@@ -630,7 +610,7 @@ export default function App() {
                 ) : (
                   <DetailsPanel
                     key={`${ui.rightPanel}-${ui.selectedRouteId}-${ui.selectedVehicleId}`}
-                    forecastControl={mode === "analytics"}
+                    forecastControl={mode === "analytics" && !config.officialMode}
                     routes={routes}
                     vehicles={vehicles}
                     segments={net.segments.data || []}

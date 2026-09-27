@@ -39,10 +39,7 @@ test("official Sasha predictions, archive clock, map and themes", async ({
   ).toBeTruthy();
   await page.goto("/overview?source=official");
   await expect(page.locator(".demo-badge")).toHaveText("ПРЕДСКАЗАНИЕ МОДЕЛИ · АРХИВ");
-  await expect(page.getByLabel("Горизонт прогноза в минутах")).toHaveCount(0);
-  await page
-    .getByRole("button", { name: "Предсказание модели", exact: true })
-    .click();
+  await page.getByLabel("Горизонт прогноза в минутах").fill("15");
   await page
     .getByRole("button", { name: "Переключить карту в 3D", exact: true })
     .click();
@@ -88,7 +85,9 @@ test("official header and forecast controls show a generic model label and fallb
   }));
   await page.goto("/overview?source=official");
   await expect(page.locator(".demo-badge")).toHaveText("ПРЕДСКАЗАНИЕ МОДЕЛИ · АРХИВ");
-  await expect(page.getByRole("button", { name: "Предсказание модели", exact: true })).toBeVisible();
+  await expect(page.getByLabel("Горизонт прогноза в минутах")).toHaveValue("0");
+  await page.getByLabel("Горизонт прогноза в минутах").fill("7.35");
+  await expect(page.locator(".map-shell")).toHaveAttribute("data-forecast-offset", "7.35");
 
   await page.unroute("**/api/v1/ml/status");
   await page.route("**/api/v1/ml/status", (route) => route.fulfill({
@@ -96,7 +95,7 @@ test("official header and forecast controls show a generic model label and fallb
   }));
   await page.reload();
   await expect(page.locator(".demo-badge")).toHaveText("РЕЗЕРВНЫЙ ПРОГНОЗ");
-  await expect(page.getByRole("button", { name: "Резервная оценка", exact: true })).toBeVisible();
+  await expect(page.getByLabel("Горизонт прогноза в минутах")).toBeVisible();
 });
 
 

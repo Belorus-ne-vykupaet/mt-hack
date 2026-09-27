@@ -23,7 +23,6 @@ import {
   projectVehicle,
 } from "../entities/vehicle-motion";
 import type { ProjectedVehicle } from "../entities/vehicle-motion";
-import { useAnimatedHorizon } from "./useAnimatedHorizon";
 import { useDocumentVisible } from "../shared/lib/document-visibility";
 import { delayAt, riskAt } from "../entities/forecast";
 import {
@@ -99,25 +98,17 @@ export default function NetworkMap({
     "(prefers-reduced-motion: reduce)",
   ).matches;
   const duration = config.visualTest || reducedMotion ? 0 : 800;
-  const animatedHorizon = useAnimatedHorizon(
-    ui.forecastOffsetMin,
-    !!reducedMotion || config.visualTest,
-  );
-  // In official replay the model predicts delay, not coordinates. Searching
-  // every static road vertex for every GPS refresh is both misleading and costly.
   const paths = useMemo(
-    () => prepareRoutePaths(config.officialMode ? [] : geometries),
+    () => prepareRoutePaths(geometries),
     [geometries],
   );
   const anchors = useMemo(
-    () => config.officialMode
-      ? vehicles.map((vehicle) => ({vehicle, distance: 0}))
-      : anchorVehicles(vehicles, paths),
+    () => anchorVehicles(vehicles, paths),
     [vehicles, paths],
   );
   const displayedVehicles = useMemo(
-    () => anchors.map((a) => projectVehicle(a, animatedHorizon)),
-    [anchors, animatedHorizon],
+    () => anchors.map((a) => projectVehicle(a, ui.forecastOffsetMin)),
+    [anchors, ui.forecastOffsetMin],
   );
   // A last-known GPS fix is not evidence that the bus is still parked there.
   // Keep it inspectable as a muted point, never as a current bus icon/model.
@@ -967,11 +958,9 @@ export default function NetworkMap({
           ))}
         </div>
       </div>
-      {ui.forecastOffsetMin > 0 && (
+      {ui.forecastOffsetMin > 0 && !config.officialMode && (
         <div className="map-position-caption">
-          {config.officialMode
-            ? "Позиции по GPS · цвет по прогнозу"
-            : `Расчётные позиции · ${horizonLabel(ui.forecastOffsetMin)}`}
+          {`Расчётные позиции · ${horizonLabel(ui.forecastOffsetMin)}`}
         </div>
       )}
       {mode === "flow" && busFailed && (

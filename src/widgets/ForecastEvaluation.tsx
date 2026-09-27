@@ -18,7 +18,7 @@ export function ForecastEvaluation() {
         : data && <>
           <div className="evaluation-summary">
             <span>Подтверждено <strong>{data.summary.observed}</strong> из {data.summary.total}</span>
-            <span>Средняя абсолютная ошибка <strong>{data.summary.maeSec === null ? "—" : `${data.summary.maeSec.toFixed(1)} с`}</strong></span>
+            <span>Средняя абсолютная ошибка <strong>{data.summary.maeSec === null ? "Нет подтверждённых прибытий" : `${data.summary.maeSec.toFixed(1)} с`}</strong></span>
             <span>До планового срока <strong>{data.summary.pending}</strong></span>
             <span>Ожидают наблюдения <strong>{data.summary.awaitingObservation}</strong></span>
           </div>

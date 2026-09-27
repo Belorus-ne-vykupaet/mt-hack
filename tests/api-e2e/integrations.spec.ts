@@ -17,9 +17,7 @@ test("API mode connects REST/WS, uses server recommendations and survives reload
     timeout: 30000,
   });
   await page.getByRole("link", { name: "Диспетчер", exact: true }).click();
-  await expect(page.locator(".api-dispatch-notice")).toContainText(
-    "Состояние подключений",
-  );
+  await expect(page.getByRole("link", { name: "Состояние подключений" })).toHaveCount(0);
   await expect(page.locator(".dispatch-queue-item")).toHaveCount(15);
   await page.getByLabel("Плановое количество автобусов").fill("10");
   await page.getByLabel("Плановая стоянка").fill("20");

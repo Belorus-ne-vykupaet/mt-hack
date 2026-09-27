@@ -34,6 +34,7 @@ export interface VehicleAnchor {
   path?: RoutePath;
   distance: number;
   headingDeg?: number;
+  targetDistance?: number;
 }
 /** Nearest point of a route path: distance along it, offset from it and local heading. */
 export function locateOnPath(
@@ -92,11 +93,15 @@ export function anchorVehicles(
       }
     }
     // Missing/incompatible geometry must not move a vehicle onto an unrelated track.
+    const target = best && vehicle.nextStop && vehicle.forecastHorizonSec !== undefined
+      ? locateOnPath(best, vehicle.nextStop.position)
+      : undefined;
     return {
       vehicle,
       path: closest <= 150 ? best : undefined,
       distance: along,
       headingDeg,
+      targetDistance: target && target.separation <= 150 ? target.along : undefined,
     };
   });
 }
@@ -116,8 +121,6 @@ export function projectVehicle(
     : 0;
   const base = {
     ...vehicle,
-    // Archived road geometry is reference context, not a causal movement
-    // forecast: a bus may be parked or on a nearby parallel road.
     headingDeg:
       vehicle.hasForecast === false || vehicle.forecastHorizonSec !== undefined
         ? vehicle.bearingDeg ?? anchor.headingDeg ?? 0
@@ -128,20 +131,49 @@ export function projectVehicle(
   };
   if (
     vehicle.hasForecast === false ||
-    vehicle.forecastHorizonSec !== undefined ||
+    vehicle.telemetryStale ||
     !path ||
-    !minutes ||
-    !Number.isFinite(vehicle.speedKmh) ||
-    vehicle.speedKmh <= 0
+    !minutes
   )
     return base;
   const seconds = minutes * 60;
+  if (vehicle.forecastHorizonSec !== undefined) {
+    const arrivalSec = vehicle.forecastHorizonSec + vehicle.predictedDelaySec;
+    if (anchor.targetDistance === undefined || !Number.isFinite(arrivalSec) || arrivalSec <= 0)
+      return base;
+    const progress = Math.min(1, seconds / arrivalSec);
+    const target = anchor.distance + (anchor.targetDistance - anchor.distance) * progress;
+    const projected = pointOnPath(path, target);
+    const origin = pointOnPath(path, anchor.distance);
+    // Fade the initial GPS-to-road offset continuously; at zero the GPS fix is exact.
+    const offsetWeight = 1 - Math.min(1, seconds / Math.min(30, arrivalSec));
+    return {
+      ...base,
+      headingDeg: (projected.headingDeg + (anchor.targetDistance < anchor.distance ? 180 : 0)) % 360,
+      position: {
+        lon: projected.position.lon + (vehicle.position.lon - origin.position.lon) * offsetWeight,
+        lat: projected.position.lat + (vehicle.position.lat - origin.position.lat) * offsetWeight,
+      },
+      forecastDistanceM: Math.abs(target - anchor.distance),
+      positionEstimated: true,
+    };
+  }
+  if (!Number.isFinite(vehicle.speedKmh) || vehicle.speedKmh <= 0) return base;
   const extraDelay =
     (Math.max(0, vehicle.predictedDelaySec - vehicle.currentDelaySec) *
       minutes) /
     15;
   const travel = (vehicle.speedKmh / 3.6) * Math.max(0, seconds - extraDelay);
   const target = Math.min(path.length, anchor.distance + travel);
+  return {
+    ...base,
+    ...pointOnPath(path, target),
+    forecastDistanceM: Math.max(0, target - anchor.distance),
+    positionEstimated: true,
+  };
+}
+
+function pointOnPath(path: RoutePath, target: number) {
   let low = 1,
     high = path.distances.length - 1;
   while (low < high) {
@@ -155,14 +187,11 @@ export function projectVehicle(
     (target - path.distances[low - 1]) /
     (path.distances[low] - path.distances[low - 1] || 1);
   return {
-    ...base,
     headingDeg: trackHeading(a, b),
     position: {
       lon: a[0] + (b[0] - a[0]) * fraction,
       lat: a[1] + (b[1] - a[1]) * fraction,
     },
-    forecastDistanceM: Math.max(0, target - anchor.distance),
-    positionEstimated: true,
   };
 }
 

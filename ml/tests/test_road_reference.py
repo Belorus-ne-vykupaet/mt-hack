@@ -74,3 +74,30 @@ def test_road_reference_is_near_each_bus_at_replay_start():
         assert builder.REFERENCE - gps.ts <= 180
         assert route["window"][0] <= "2026-01-06T07:27:00+00:00" <= route["window"][1]
         assert builder.distance_to_paths((gps.lon, gps.lat), route["paths"]) <= 120
+
+
+def test_bad_waypoint_does_not_discard_neighboring_road_sections(monkeypatch):
+    root = Path(__file__).resolve().parents[2]
+    spec = importlib.util.spec_from_file_location(
+        "build_official_road_routes", root / "scripts/build-official-road-routes.py"
+    )
+    builder = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(builder)
+    points = [(37.6 + i * .001, 55.7) for i in range(5)]
+    bad = points[2]
+    monkeypatch.setattr(builder, "request_road", lambda piece: None if bad in piece else piece)
+    assert list(builder.route_pieces([points])) == [points[:2], points[3:]]
+    # A two-point tail is still a road section, not an omitted final leg.
+    assert list(builder.route_pieces([points[:2]])) == [points[:2]]
+
+
+def test_context_bus_on_third_ring_has_its_own_road_line():
+    root = Path(__file__).resolve().parents[2]
+    spec = importlib.util.spec_from_file_location(
+        "build_official_road_routes", root / "scripts/build-official-road-routes.py"
+    )
+    builder = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(builder)
+    reference = json.loads((root / "public/data/official-road-routes.json").read_text())
+    road = next(route for route in reference["routes"] if route["routeId"] == "duty-131542")
+    assert builder.distance_to_paths((37.576397, 55.714535), road["paths"]) < 30

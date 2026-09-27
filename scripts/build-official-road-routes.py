@@ -134,16 +134,25 @@ def request_road(points):
 
 
 def route_pieces(points):
+    def route_piece(piece):
+        road = request_road(piece)
+        if road and len(road) >= 2:
+            yield road
+        elif len(piece) > 2:
+            # One bad GPS fix or an impossible turn must not erase the whole
+            # duty. Retry smaller overlapping sections and preserve gaps.
+            middle = len(piece) // 2
+            yield from route_piece(piece[:middle + 1])
+            yield from route_piece(piece[middle:])
+
     for chunk in points:
         # The public demo accepts a limited number of waypoints. Overlap one
         # point to preserve continuity without creating a straight bridge.
         for start in range(0, len(chunk) - 1, 39):
             piece = chunk[start : start + 40]
-            if len(piece) < 3:
+            if len(piece) < 2:
                 continue
-            road = request_road(piece)
-            if road and len(road) >= 2:
-                yield road
+            yield from route_piece(piece)
 
 
 def main():

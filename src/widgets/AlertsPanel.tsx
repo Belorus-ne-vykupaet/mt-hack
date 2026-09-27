@@ -1,7 +1,7 @@
 import { incidentTiming } from "../entities/incident";
 import { config } from "../shared/config/env";
 import { useState, useEffect } from "react";
-import { TriangleAlert, ChevronRight, MapPin, CheckCheck } from "lucide-react";
+import { TriangleAlert, ChevronRight, MapPin } from "lucide-react";
 import type { Alert, Segment } from "../entities/models";
 import { Panel, Empty } from "../shared/ui/primitives";
 import { minutes, percent, time } from "../shared/ui/format";
@@ -18,6 +18,7 @@ export function AlertsPanel({ alerts, segments = [] }: { alerts: Alert[]; segmen
   const sorted = [...alerts].sort(
     (a, b) => b.riskProbability - a.riskProbability,
   );
+  const criticalCount = alerts.filter((a) => a.severity === "critical").length;
   const shown = sorted.filter((a) => filter === "all" || a.severity === filter);
   const currentSegments = new Map(segments.filter((s) => s.isCurrent).map((s) => [s.routeId, s.name]));
   return (
@@ -38,8 +39,8 @@ export function AlertsPanel({ alerts, segments = [] }: { alerts: Alert[]; segmen
           onClick={() => setFilter("critical")}
         >
           Критические{" "}
-          <span className="red-text">
-            {alerts.filter((a) => a.severity === "critical").length}
+          <span className={criticalCount > 0 ? "red-text" : undefined}>
+            {criticalCount}
           </span>
         </button>
         <button
@@ -136,10 +137,6 @@ export function AlertsPanel({ alerts, segments = [] }: { alerts: Alert[]; segmen
             description="Для выбранного уровня риска событий нет"
           />
         )}
-      </div>
-      <div className="alerts-foot">
-        <CheckCheck size={14} />
-        События обновляются автоматически
       </div>
     </Panel>
   );

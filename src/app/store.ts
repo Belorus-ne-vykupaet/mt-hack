@@ -1,4 +1,3 @@
-import { config } from "../shared/config/env";
 import { create } from "zustand";
 import type { RiskLevel } from "../entities/models";
 export type Panel =
@@ -34,7 +33,7 @@ export const useUi = create<Ui>((set) => ({
   selectedVehicleId: null,
   selectedStopId: null,
   rightPanel: "alerts",
-  forecastOffsetMin: config.officialMode ? 15 : 0,
+  forecastOffsetMin: 0,
   mapMode: "overview",
   routeFilters: [],
   riskFilter: "all",
