@@ -101,6 +101,17 @@ def observed_factor(features, current_delay):
     return "отклонение и телеметрия до момента прогноза"
 
 
+def suspected_cause(features, current_delay):
+    """A dispatch hypothesis from past telemetry, never a causal model claim."""
+    if features["dwell_s"] > 90:
+        return "продолжительная стоянка у остановки"
+    if features["speed_mean_120"] < 8:
+        return "замедленное движение на подходе"
+    if current_delay is not None and current_delay > 120:
+        return "ранее накопленное опоздание"
+    return None
+
+
 def observed_paths(gps, cutoff):
     """Causal GPS trails; split gaps and jumps instead of drawing across streets."""
     if gps.empty:
@@ -486,6 +497,7 @@ class Engine:
                         "forecast_target_time": None,
                         "forecast_model": None,
                         "observed_factor": None,
+                        "suspected_cause": None,
                         "current_segment_id": matched["current_segment_id"],
                         "segment_match_status": "matched" if matched["status"] == "matched" else "unavailable",
                         "segment_match_reason": matched["reason"],
@@ -573,6 +585,9 @@ class Engine:
                     else "persistence-fallback"
                 )
                 v["observed_factor"] = observed_factor(
+                    features[v["id"]], v["current_delay_sec"]
+                )
+                v["suspected_cause"] = suspected_cause(
                     features[v["id"]], v["current_delay_sec"]
                 )
             self.journal.issue([
@@ -678,6 +693,7 @@ class Engine:
                         "risk_probability_at_issue": v["risk_probability"],
                         "telemetry_age_sec_at_issue": v["telemetry_age_sec"],
                         "observed_factor_at_issue": reason,
+                        "suspected_cause_at_issue": v["suspected_cause"],
                     })
                 lead_time = target["ts"] - cutoff
                 assert 600 < lead_time <= 900
@@ -708,6 +724,7 @@ class Engine:
                         "expected_arrival_at": iso(eta),
                         "lead_time_sec": round(target["ts"] - first_issue, 1),
                         "observed_factor": reason,
+                        "suspected_cause": v["suspected_cause"],
                         "model_status": v["forecast_status"],
                     }
                 )

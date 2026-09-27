@@ -34,6 +34,7 @@ const fields: Record<string, string> = {
   current_forecast_horizon_sec: "currentForecastHorizonSec",
   current_event_lead_time_sec: "currentEventLeadTimeSec",
   observed_factor: "observedFactor",
+  suspected_cause: "suspectedCause",
   model_status: "modelStatus",
   forecast_horizon_sec: "forecastHorizonSec",
   forecast_target_time: "forecastTargetTime",

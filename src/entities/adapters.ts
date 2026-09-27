@@ -38,6 +38,7 @@ export const mapVehicle = (d: VehicleDto): Vehicle => ({
   segmentMatchStatus: d.segment_match_status,
   segmentMatchReason: d.segment_match_reason ?? undefined,
   observedFactor: d.observed_factor ?? undefined,
+  suspectedCause: d.suspected_cause ?? undefined,
   hasForecast: d.predicted_delay_sec !== null,
   currentDelayKnown: d.current_delay_sec !== null,
   forecastStatus: d.forecast_status,
@@ -76,6 +77,7 @@ export const mapAlert = (d: AlertDto): Alert => ({
   currentEventLeadTimeSec: d.current_event_lead_time_sec,
   forecastHorizonSec: d.forecast_horizon_sec,
   observedFactor: d.observed_factor,
+  suspectedCause: d.suspected_cause ?? undefined,
   modelStatus: d.model_status,
 });
 export const mapSummary = (d: NetworkSummaryDto): Summary => ({

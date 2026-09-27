@@ -78,6 +78,7 @@ export function DetailsPanel({
     .filter((v) => v.observedFactor)
     .sort((a, b) => b.riskProbability - a.riskProbability)[0];
   const observedFactor = factorVehicle?.observedFactor || relatedAlerts.find((alert) => alert.observedFactor)?.observedFactor;
+  const suspectedCause = factorVehicle?.suspectedCause || relatedAlerts.find((alert) => alert.suspectedCause)?.suspectedCause;
   const incident = relatedAlerts[0];
   const timing = incident ? incidentTiming(incident) : undefined;
   const currentSegment = routeSegments.find((segment) => segment.id === vehicle?.currentSegmentId);
@@ -335,9 +336,9 @@ export function DetailsPanel({
               <div className="explanation-placeholder">
                 <Info size={16} />
                 <div>
-                  <strong>Наблюдаемый фактор</strong>
-                  <p>{observedFactor || "Недостаточно данных, чтобы выделить наблюдаемый фактор задержки."}</p>
-                  {observedFactor && <small>Наблюдение по телеметрии; причинность моделью не установлена.</small>}
+                  <strong>Возможная причина</strong>
+                  <p>{suspectedCause || "Пока не определена: недостаточно признаков для гипотезы."}</p>
+                  {observedFactor && <small>Наблюдаемый признак: {observedFactor}. Это гипотеза по телеметрии, а не установленная причинность.</small>}
                 </div>
               </div>
               <button

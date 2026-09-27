@@ -17,6 +17,8 @@ it("streams new telemetry and risk without resending countdown-only changes", ()
   expect(vehicleStreamVersion({ ...initial, risk_level: "high" })).not.toBe(version);
   expect(vehicleStreamVersion({ ...initial, current_delay_sec: 130 })).not.toBe(version);
   expect(vehicleStreamVersion({ ...initial, doors_open: true })).not.toBe(version);
+  expect(vehicleStreamVersion({ ...initial, suspected_cause: "замедление" })).not.toBe(version);
+  expect(vehicleStreamVersion({ ...initial, observed_factor: "низкая скорость" })).not.toBe(version);
 });
 
 it("streams material route risk changes without broadcasting tiny forecast drift", () => {

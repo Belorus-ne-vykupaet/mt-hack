@@ -27,6 +27,11 @@ export interface AlertDto {
   lead_time_sec?: number;
   /** Observed signal, not a causal explanation of the model. */
   observed_factor?: string;
+  /**
+     * Dispatcher hypothesis from telemetry available at first warning; null when evidence is insufficient.
+     * @nullable
+     */
+  suspected_cause?: string | null;
   model_status?: AlertDtoModelStatus;
   /** Warning event: absence of arrival after scheduled arrival + 120 seconds. */
   event_type?: AlertDtoEventType;

@@ -29,6 +29,7 @@ const busDto: VehicleDto = {
   risk_level: "elevated", status: "active", next_stop: { id: "stop-target", name: "Цель", sequence: 3, position: { lat: 55.76, lon: 37.61 } },
   updated_at: "2026-01-06T12:00:00Z", forecast_horizon_sec: 720, forecast_target_time: "2026-01-06T12:12:00Z",
   current_segment_id: "segment-1", segment_match_status: "matched",
+  suspected_cause: "замедленное движение на подходе",
 };
 const routeDto: RouteDto = { id: "route-1", number: "1", name: "Улица — Площадь", transport_type: "bus",
   current_delay_sec: 10, predicted_delay_sec: 102, risk_probability: 0.71, risk_level: "elevated", vehicle_count: 1,
@@ -44,6 +45,7 @@ const alertDto: AlertDto = { id: "warning-1", severity: "warning", type: "delay-
   created_at: "2026-01-06T12:00:00Z", target_time: "2026-01-06T12:12:00Z", expected_arrival_at: "2026-01-06T12:13:42Z",
   lead_time_sec: 720, event_type: "late_threshold", event_time: "2026-01-06T12:14:00Z", event_lead_time_sec: 840,
   forecast_horizon_sec: 720, observed_factor: "Низкая средняя скорость: 12,5 км/ч", model_status: "ready",
+  suspected_cause: "замедленное движение на подходе",
 };
 beforeEach(() => { ui.rightPanel = "vehicle"; });
 
@@ -78,17 +80,21 @@ it("renders incident evidence and separates the event lead time from the schedul
     routes: [mapRoute(routeDto)], vehicles: [mapVehicle(busDto)], segments: [mapSegment(segmentDto)], alerts,
   }));
   expect(card).toContain("Низкая средняя скорость: 12,5 км/ч");
+  expect(card).toContain("Возможная причина");
+  expect(card).toContain("замедленное движение на подходе");
   expect(card).toContain("Улица → Площадь");
   expect(card).toContain("12.5 км/ч");
   expect(card).toContain("1.5 мин");
   expect(card).toContain("Первый сигнал за 14.0 мин до порога");
   expect(card).toContain("до плановой остановки: 12.0 мин");
   expect(card).not.toContain("после подключения модели");
-  const queue = renderToStaticMarkup(createElement(AlertsPanel, { alerts }));
+  const queue = renderToStaticMarkup(createElement(AlertsPanel, { alerts, segments: [mapSegment(segmentDto)] }));
   expect(queue).toContain("Риск опоздания &gt;2 мин");
   expect(queue).toContain("Порог опоздания &gt;2 мин: 12:14");
   expect(queue).toContain("План 12:12");
   expect(queue).toContain("Первый сигнал за 14.0 мин до порога");
+  expect(queue).toContain("Участок: Улица → Площадь");
+  expect(queue).toContain("Возможная причина: замедленное движение на подходе");
 });
 
 it("shows truthful unavailable segment and factor states instead of zero-of-zero or connect-model copy", () => {
@@ -97,7 +103,7 @@ it("shows truthful unavailable segment and factor states instead of zero-of-zero
     routes: [mapRoute(routeDto)], vehicles: [mapVehicle(busDto)], segments: [], alerts: [],
   }));
   expect(card).toContain("Участок не определён");
-  expect(card).toContain("Недостаточно данных");
+  expect(card).toContain("недостаточно признаков для гипотезы");
   expect(card).not.toContain("0 из 0");
   expect(card).not.toContain("после подключения модели");
 });

@@ -21,6 +21,8 @@ export function vehicleStreamVersion(vehicle: {
   next_stop?: unknown;
   predicted_delay_sec?: number | null;
   risk_probability?: number | null;
+  observed_factor?: string | null;
+  suspected_cause?: string | null;
   forecast_horizon_sec?: number | null;
   telemetry_age_sec?: number | null;
 }): string {
@@ -31,6 +33,7 @@ export function vehicleStreamVersion(vehicle: {
     vehicle.current_segment_id, vehicle.next_stop,
     vehicle.predicted_delay_sec == null ? null : Math.round(vehicle.predicted_delay_sec / 10),
     vehicle.risk_probability == null ? null : Math.round(vehicle.risk_probability * 20),
+    vehicle.observed_factor, vehicle.suspected_cause,
   ]);
 }
 

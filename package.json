@@ -31,7 +31,7 @@
     "ml:sasha:features": "PYTHONPATH=src ml/.venv/bin/python -m mt_hack.features --data ml/data/official --out ml/data/sasha-features",
     "ml:sasha:train": "PYTHONPATH=src ml/.venv/bin/python -m mt_hack.train --features ml/data/sasha-features --out ml/artifacts/sasha --reports reports",
     "ml:sasha:submission": "PYTHONPATH=src ml/.venv/bin/python -m mt_hack.predict --data ml/data/official --model ml/artifacts/sasha --out ml/artifacts/submission-sasha.csv",
-    "ml:test": "PYTHONPATH=ml:src ml/.venv/bin/python -m pytest ml/tests tests/test_causality.py tests/test_submission.py -q"
+    "ml:test": "PYTHONPATH=ml:src sh -c 'if [ -x ml/.venv/bin/python ]; then py=ml/.venv/bin/python; elif [ -x .venv/bin/python ]; then py=.venv/bin/python; else echo \"Create ml/.venv or .venv first\" >&2; exit 1; fi; exec \"$py\" -m pytest ml/tests tests/test_causality.py tests/test_submission.py -q'"
   },
   "dependencies": {
     "@deck.gl/core": "^9.3.0",

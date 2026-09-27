@@ -2,12 +2,12 @@ import { incidentTiming } from "../entities/incident";
 import { config } from "../shared/config/env";
 import { useState, useEffect } from "react";
 import { TriangleAlert, ChevronRight, MapPin, CheckCheck } from "lucide-react";
-import type { Alert } from "../entities/models";
+import type { Alert, Segment } from "../entities/models";
 import { Panel, Empty } from "../shared/ui/primitives";
 import { minutes, percent, time } from "../shared/ui/format";
 import { useUi } from "../app/store";
 import { modelDisplayName, useOfficialModelStatus } from "../entities/official-model-status";
-export function AlertsPanel({ alerts }: { alerts: Alert[] }) {
+export function AlertsPanel({ alerts, segments = [] }: { alerts: Alert[]; segments?: Segment[] }) {
   const [filter, setFilter] = useState("all");
   const [now, setNow] = useState(() => Date.now());
   const model = useOfficialModelStatus();
@@ -19,6 +19,7 @@ export function AlertsPanel({ alerts }: { alerts: Alert[] }) {
     (a, b) => b.riskProbability - a.riskProbability,
   );
   const shown = sorted.filter((a) => filter === "all" || a.severity === filter);
+  const currentSegments = new Map(segments.filter((s) => s.isCurrent).map((s) => [s.routeId, s.name]));
   return (
     <Panel
       title="Центр событий"
@@ -85,9 +86,15 @@ export function AlertsPanel({ alerts }: { alerts: Alert[] }) {
               <div className="alert-location">
                 <MapPin size={12} />
                 {config.officialMode && a.targetTime && a.expectedArrivalAt
-                  ? `План ${time(a.targetTime)} → ожидается ${time(a.expectedArrivalAt)}. Наблюдаемый фактор: ${a.observedFactor ?? "данные телеметрии"}. ${a.modelStatus === "fallback" ? "ML недоступен; резервная оценка." : `Прогноз ${modelDisplayName(model.data)}.`}`
+                  ? `План ${time(a.targetTime)} → ожидается ${time(a.expectedArrivalAt)}. ${a.modelStatus === "fallback" ? "ML недоступен; резервная оценка." : `Прогноз ${modelDisplayName(model.data)}.`}`
                   : a.description}
               </div>
+              {config.officialMode && (
+                <div className="alert-location">
+                  <MapPin size={12} />
+                  {`Участок: ${currentSegments.get(a.routeId) || "не определён"}. Возможная причина: ${a.suspectedCause || "пока не определена"}. ${a.suspectedCause ? `Признак: ${a.observedFactor || "телеметрия"}.` : ""}`}
+                </div>
+              )}
               {incidentTiming(a).event && (
                 <div className="alert-location">{incidentTiming(a).event}</div>
               )}

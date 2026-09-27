@@ -55,4 +55,9 @@ export interface VehicleDto {
      * @nullable
      */
   observed_factor?: string | null;
+  /**
+     * Dispatcher hypothesis from telemetry available at prediction time; null when evidence is insufficient.
+     * @nullable
+     */
+  suspected_cause?: string | null;
 }

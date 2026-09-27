@@ -632,6 +632,7 @@ export default function App() {
                 {ui.rightPanel === "alerts" || ui.rightPanel === "settings" ? (
                   <AlertsPanel
                     alerts={alerts.filter((a) => visibleIds.has(a.routeId))}
+                    segments={net.segments.data || []}
                   />
                 ) : (
                   <DetailsPanel

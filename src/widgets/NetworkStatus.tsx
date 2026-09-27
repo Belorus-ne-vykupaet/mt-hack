@@ -11,6 +11,7 @@ import { Panel, RouteBadge } from "../shared/ui/primitives";
 import { Chart } from "../shared/ui/Chart";
 import { riskHex, riskInk, minutes, time } from "../shared/ui/format";
 import { useConnection, useUi } from "../app/store";
+import { useOfficialModelStatus } from "../entities/official-model-status";
 export function DelayChart({
   points,
   height = 164,
@@ -100,6 +101,7 @@ export function NetworkStatus({
 }) {
   const selectRoute = useUi((s) => s.selectRoute);
   const connection = useConnection((s) => s.status);
+  const officialModel = useOfficialModelStatus();
   const current = connection === "connected";
   const top = routes
     .filter((r) => r.riskLevel !== "normal" && r.riskLevel !== "unknown")
@@ -112,7 +114,11 @@ export function NetworkStatus({
         action={
           <span className={`live-small ${current ? "" : "degraded"}`}>
             <i />
-            {current ? config.officialMode ? "АРХИВ" : "LIVE" : "СНИМОК"}
+            {current
+              ? config.officialMode
+                ? officialModel.data?.mode === "official-ndtp" ? "NDTP" : "АРХИВ"
+                : "LIVE"
+              : "СНИМОК"}
           </span>
         }
       >

@@ -34,6 +34,7 @@ export interface Vehicle extends PredictionAvailability {
   segmentMatchStatus?: "matched" | "unavailable";
   segmentMatchReason?: string;
   observedFactor?: string;
+  suspectedCause?: string;
   id: string;
   routeId: string;
   position: { lat: number; lon: number };
@@ -66,6 +67,7 @@ export interface Alert {
   currentEventLeadTimeSec?: number;
   forecastHorizonSec?: number;
   observedFactor?: string;
+  suspectedCause?: string;
   modelStatus?: "ready" | "fallback";
 }
 export interface Summary {

@@ -905,6 +905,11 @@
             "type": "string",
             "nullable": true,
             "description": "Observed telemetry factor; not a causal model attribution."
+          },
+          "suspected_cause": {
+            "type": "string",
+            "nullable": true,
+            "description": "Dispatcher hypothesis from telemetry available at prediction time; null when evidence is insufficient."
           }
         },
         "required": [
@@ -976,6 +981,11 @@
           "observed_factor": {
             "type": "string",
             "description": "Observed signal, not a causal explanation of the model."
+          },
+          "suspected_cause": {
+            "type": "string",
+            "nullable": true,
+            "description": "Dispatcher hypothesis from telemetry available at first warning; null when evidence is insufficient."
           },
           "model_status": {
             "type": "string",

@@ -58,7 +58,7 @@ services:
       REPLAY_START: ${REPLAY_START:-2026-01-06 07:27:00}
       REPLAY_SPEED: ${REPLAY_SPEED:-0.25}
     volumes:
-      - ./docker/local-data/live:/app/ml/data/live:ro
+      - ${LIVE_PLAN_BIND_DIR:-./docker/local-data/live}:/app/ml/data/live:ro
       - forecast-journal:/app/journal
     ports:
       - "127.0.0.1:${OFFICIAL_BACKEND_PORT:-8093}:8093"

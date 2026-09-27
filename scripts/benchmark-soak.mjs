@@ -184,6 +184,20 @@ try {
 const valid = (values) => values.filter((value) => Number.isFinite(value));
 const first = samples[0];
 const last = samples.at(-1);
+const warningAuditResponse = await getJson(backend, "/warnings/audit");
+const warningItems = warningAuditResponse.ok && Array.isArray(warningAuditResponse.body?.items)
+  ? warningAuditResponse.body.items : [];
+const warningAudit = {
+  available: warningAuditResponse.ok,
+  firstWarnings: warningItems.length,
+  observedOutcomes: warningItems.filter((item) => item.outcome_status === "observed").length,
+  pendingOutcomes: warningItems.filter((item) => item.outcome_status !== "observed").length,
+  invalidFirstWindow: warningItems.filter((item) =>
+    !(item.forecast_horizon_sec > 600 && item.forecast_horizon_sec <= 900 &&
+      item.event_lead_time_sec > 600 && item.event_lead_time_sec <= 900)).length,
+  issuedAfterArrival: warningItems.filter((item) => item.warning_after_arrival === true).length,
+  sourceModes: [...new Set(warningItems.map((item) => item.source))],
+};
 const elapsedSec = Math.round((performance.now() - started) / 1000);
 const sampledSec = first && last ? (Date.parse(last.at) - Date.parse(first.at)) / 1000 : null;
 const frameDelta = Number.isFinite(first?.backend.ndtp?.frames) && Number.isFinite(last?.backend.ndtp?.frames)
@@ -215,6 +229,7 @@ const result = {
     backendReportedPipelineLatencyMs: last?.backend.pipelineLatencyMs ?? null,
     wsMessages, wsHeartbeats, wsUnexpectedCloses, wsErrors,
     observedVehicles: observedVehicles.size,
+    warningAudit,
     eventToWebSocketMs: distribution(eventToBrowserMs),
     eventToWebSocketDefinition: "First received update for each new vehicle telemetry timestamp on each reading WS client; UTC generator event timestamp to client receipt, includes 1-second timestamp quantization and stream scheduling. Excludes warm history and repeated old positions.",
     freshVehicles: distribution(valid(samples.map(s => s.backend.freshVehicles))),
