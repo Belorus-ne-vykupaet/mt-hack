@@ -5,6 +5,7 @@ from pathlib import Path
 import httpx
 import numpy as np
 import pandas as pd
+import pytest
 from fastapi.testclient import TestClient
 from transit_ml.backend import Engine
 from transit_ml.features import FEATURES
@@ -14,7 +15,10 @@ ROOT = Path("ml/data/official")
 
 
 def test_saved_submission_has_exact_official_format():
-    submission = pd.read_csv("ml/artifacts/submission.csv", sep=";")
+    path = Path("ml/artifacts/submission.csv")
+    if not path.exists():
+        pytest.skip("ml/artifacts/submission.csv is written by `pnpm ml:train`; committed submissions are checked in tests/test_submission.py")
+    submission = pd.read_csv(path, sep=";")
     template = pd.read_csv(ROOT / "sample_submission.csv", sep=";")
     assert list(submission.columns) == ["sample_id", "prediction"]
     assert submission.sample_id.tolist() == template.sample_id.tolist()

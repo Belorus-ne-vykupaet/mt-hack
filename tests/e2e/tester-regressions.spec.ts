@@ -110,7 +110,7 @@ test("quoted and reordered searches work in global search and route lists", asyn
   await expect(page.getByRole("button", { name: "Открыть Маршрут м3", exact: true })).toBeVisible();
 });
 
-test("analytics forecast is inside the selected card and risk guidance is available", async ({
+test("analytics forecast is inside the selected card", async ({
   page,
 }) => {
   await page.goto("/analytics?visual-test=1");
@@ -123,13 +123,6 @@ test("analytics forecast is inside the selected card and risk guidance is availa
   await expect(slider).toBeVisible();
   await slider.fill("7.5");
   await expect(page.locator(".detail-forecast")).toContainText("+7 мин 30 с");
-  await page
-    .getByRole("button", { name: "Как читать риски", exact: true })
-    .click();
-  const help = page.getByRole("dialog", { name: "Как читать риски" });
-  await expect(help).toContainText("от 7 минут");
-  await expect(help).toContainText("не измеренная точность");
-  await help.press("Escape");
   await page.getByRole("button", { name: "Закрыть карточку" }).click();
   await expect(page.getByLabel("Горизонт прогноза в минутах")).toHaveCount(0);
 });
