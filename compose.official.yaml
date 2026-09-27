@@ -1,6 +1,14 @@
 name: transit-hub-official
+x-runtime: &runtime
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
 services:
   frontend:
+    <<: *runtime
     build:
       context: .
       dockerfile: Dockerfile
@@ -14,6 +22,7 @@ services:
       api:
         condition: service_healthy
   api:
+    <<: *runtime
     build:
       context: .
       dockerfile: Dockerfile.api
@@ -44,6 +53,7 @@ services:
       backend:
         condition: service_healthy
   backend:
+    <<: *runtime
     build:
       context: .
       dockerfile: Dockerfile.python
@@ -72,6 +82,7 @@ services:
       ml:
         condition: service_healthy
   ml:
+    <<: *runtime
     build:
       context: .
       dockerfile: Dockerfile.python

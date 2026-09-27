@@ -192,15 +192,20 @@ def test_ndtp_requires_observed_ordered_visit_and_freezes_first_arrival(engine, 
             assert len(engine.warning_audit) == 1
             clock[0] = NOW + 900
             engine.cache_at = 0
+            # This fixture has no lifespan forecast worker. Advance it explicitly;
+            # HTTP readers now serve the last complete NDTP snapshot immediately.
+            await engine.snapshot()
             missing = (await warning_audit())["items"][0]
             assert missing["outcome_status"] == "awaiting_observation"
             assert "delay_onset_at" not in missing
             # NDTP must ignore the future CSV truth even after its timestamp.
             clock[0] = NOW + 970
             engine.cache_at = 0
+            await engine.snapshot()
             assert (await warning_audit())["items"][0]["outcome_status"] == "awaiting_observation"
             engine.receiver.histories[1001].append(packet(970, 37.63, 55.76))
             engine.cache_at = 0
+            await engine.snapshot()
             confirmed = (await warning_audit())["items"][0]
             assert confirmed["outcome_source"] == "ndtp_ordered_stop_visit"
             assert confirmed["actual_delay_sec"] == 250
@@ -208,5 +213,6 @@ def test_ndtp_requires_observed_ordered_visit_and_freezes_first_arrival(engine, 
             clock[0] = NOW + 1000
             engine.receiver.histories[1001].append(packet(1000, 37.63, 55.76))
             engine.cache_at = 0
+            await engine.snapshot()
             assert (await warning_audit())["items"][0] == confirmed
     asyncio.run(run())

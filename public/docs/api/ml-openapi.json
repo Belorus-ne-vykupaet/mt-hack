@@ -1,0 +1,430 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Transit Hub · causal ML inference",
+    "version": "2.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/predict": {
+      "post": {
+        "summary": "Predict",
+        "description": "Signed fact-minus-plan seconds and independent probability of delay >120s.",
+        "operationId": "predict_predict_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Batch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/predict/raw": {
+      "post": {
+        "summary": "Predict Raw",
+        "description": "Sasha's selected model on causal telemetry; CatBoost estimates late risk.",
+        "operationId": "predict_raw_predict_raw_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RawBatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Batch": {
+        "properties": {
+          "asOf": {
+            "type": "string",
+            "title": "Asof"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            },
+            "type": "array",
+            "maxItems": 2000,
+            "minItems": 1,
+            "title": "Items"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "asOf",
+          "items"
+        ],
+        "title": "Batch"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "Item": {
+        "properties": {
+          "vehicleId": {
+            "type": "string",
+            "title": "Vehicleid"
+          },
+          "features": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Features"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "vehicleId",
+          "features"
+        ],
+        "title": "Item"
+      },
+      "RawBatch": {
+        "properties": {
+          "asOf": {
+            "type": "string",
+            "title": "Asof"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/RawItem"
+            },
+            "type": "array",
+            "maxItems": 2000,
+            "minItems": 1,
+            "title": "Items"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "asOf",
+          "items"
+        ],
+        "title": "RawBatch"
+      },
+      "RawItem": {
+        "properties": {
+          "vehicleId": {
+            "type": "string",
+            "title": "Vehicleid"
+          },
+          "point": {
+            "$ref": "#/components/schemas/RawPoint"
+          },
+          "telemetry": {
+            "items": {
+              "$ref": "#/components/schemas/RawTelemetry"
+            },
+            "type": "array",
+            "title": "Telemetry"
+          },
+          "schedule": {
+            "items": {
+              "$ref": "#/components/schemas/RawPlanStop"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Schedule"
+          },
+          "features": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Features"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "vehicleId",
+          "point",
+          "telemetry",
+          "schedule",
+          "features"
+        ],
+        "title": "RawItem"
+      },
+      "RawPlanStop": {
+        "properties": {
+          "tt_action_item_id": {
+            "type": "integer",
+            "title": "Tt Action Item Id"
+          },
+          "tr_id": {
+            "type": "integer",
+            "title": "Tr Id"
+          },
+          "time_begin": {
+            "type": "string",
+            "title": "Time Begin"
+          },
+          "geom": {
+            "type": "string",
+            "title": "Geom"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "tt_action_item_id",
+          "tr_id",
+          "time_begin",
+          "geom"
+        ],
+        "title": "RawPlanStop"
+      },
+      "RawPoint": {
+        "properties": {
+          "sample_id": {
+            "type": "string",
+            "title": "Sample Id"
+          },
+          "tr_id": {
+            "type": "integer",
+            "title": "Tr Id"
+          },
+          "T": {
+            "type": "string",
+            "title": "T"
+          },
+          "target_stop_id": {
+            "type": "integer",
+            "title": "Target Stop Id"
+          },
+          "target_time_begin": {
+            "type": "string",
+            "title": "Target Time Begin"
+          },
+          "cur_dev_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cur Dev S"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "sample_id",
+          "tr_id",
+          "T",
+          "target_stop_id",
+          "target_time_begin",
+          "cur_dev_s"
+        ],
+        "title": "RawPoint"
+      },
+      "RawTelemetry": {
+        "properties": {
+          "tr_id": {
+            "type": "integer",
+            "title": "Tr Id"
+          },
+          "event_time": {
+            "type": "string",
+            "title": "Event Time"
+          },
+          "location_valid": {
+            "type": "boolean",
+            "title": "Location Valid"
+          },
+          "lon": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lon"
+          },
+          "lat": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lat"
+          },
+          "speed": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speed"
+          },
+          "heading": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Heading"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "tr_id",
+          "event_time",
+          "location_valid",
+          "lon",
+          "lat",
+          "speed",
+          "heading"
+        ],
+        "title": "RawTelemetry"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

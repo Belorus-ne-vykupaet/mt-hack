@@ -54,6 +54,8 @@
 
 <dl><dt><a name="Engine-observe_warning_outcomes"><strong>observe_warning_outcomes</strong></a>(self, cutoff, segment_matches)</dt><dd><span class="code">Close&nbsp;warnings&nbsp;and&nbsp;model&nbsp;forecasts&nbsp;from&nbsp;past&nbsp;observations,&nbsp;independently&nbsp;of&nbsp;inference.</span></dd></dl>
 
+<dl><dt>async <a name="Engine-read_snapshot"><strong>read_snapshot</strong></a>(self)</dt><dd><span class="code">Serve&nbsp;complete&nbsp;state&nbsp;while&nbsp;the&nbsp;single&nbsp;forecast&nbsp;worker&nbsp;refreshes&nbsp;it.</span></dd></dl>
+
 <dl><dt>async <a name="Engine-snapshot"><strong>snapshot</strong></a>(self)</dt></dl>
 
 <dl><dt>async <a name="Engine-stream_forecasts"><strong>stream_forecasts</strong></a>(self)</dt><dd><span class="code">Coalesce&nbsp;live&nbsp;NDTP&nbsp;frames&nbsp;into&nbsp;at&nbsp;most&nbsp;one&nbsp;forecast&nbsp;per&nbsp;second.</span></dd></dl>

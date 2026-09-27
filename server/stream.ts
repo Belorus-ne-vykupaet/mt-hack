@@ -56,14 +56,15 @@ export function routeStreamVersion(route: {
 
 // Wait for each frame to leave the socket before enqueueing the next one. A
 // healthy client's first fleet snapshot can exceed the queue limit in total.
-// The deadline still bounds how long a client can retain a snapshot in memory.
+// Allow a large batch to make progress without treating it as a stalled client.
+// Both a per-frame timeout and an overall cap bound retained snapshot memory.
 export async function sendStreamBatch(
   ws: WebSocket,
   sequence: number,
   events: readonly (readonly [string, unknown])[],
   deadlineMs = 3000,
 ): Promise<number> {
-  const deadline = Date.now() + deadlineMs;
+  const deadline = Date.now() + deadlineMs * 10;
   for (const [type, payload] of events) {
     if (ws.readyState !== WebSocket.OPEN) break;
     if (ws.bufferedAmount > MAX_STREAM_BUFFER_BYTES || Date.now() >= deadline) {
@@ -85,7 +86,7 @@ export async function sendStreamBatch(
         resolve(ok);
       };
       const onClose = () => finish(false);
-      const timer = setTimeout(() => finish(false), Math.max(1, deadline - Date.now()));
+      const timer = setTimeout(() => finish(false), Math.max(1, Math.min(deadlineMs, deadline - Date.now())));
       ws.once("close", onClose);
       try { ws.send(message, (error) => finish(!error)); }
       catch { finish(false); }

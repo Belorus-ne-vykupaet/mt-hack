@@ -18,6 +18,7 @@ MODULES = (
     "transit_ml.warnings",
     "transit_ml.outcomes",
     "transit_ml.evaluation",
+    "transit_ml.live_plan",
     "mt_hack.features",
 )
 
@@ -46,6 +47,8 @@ def main() -> None:
         github = f"https://github.com/Belorus-ne-vykupaet/mt-hack/blob/main/{source}"
         html = page.read_text(encoding="utf-8")
         html = re.sub(r'<a href="file:[^"]+">[^<]+</a>', f'<a href="{github}">Исходный код</a>', html)
+        # Pydantic embeds process-specific object IDs in its internal schema refs.
+        html = re.sub(r"(transit_ml\.inference\.\w+):\d+", r"\1", html)
         html = "\n".join(line.rstrip() for line in html.splitlines()) + "\n"
         page.write_text(html, encoding="utf-8")
     links = "\n".join(
@@ -61,7 +64,8 @@ def main() -> None:
         '<h1>Python API · Transit Hub</h1>'
         '<p>Сгенерированная документация PyDoc для Backend, ML и NDTP-приёмника.</p>'
         f'<ul>{links}</ul>'
-        '<p><a href="/">Вернуться к дашборду</a></p></html>\n',
+        '<p><a href="/docs/">Каталог документации</a> · '
+        '<a href="/overview?source=official">Дашборд</a></p></html>\n',
         encoding="utf-8",
     )
 

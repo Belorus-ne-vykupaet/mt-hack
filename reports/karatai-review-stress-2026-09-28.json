@@ -1,0 +1,29 @@
+{
+  "startedAt": "2026-09-27T16:01:37.094Z",
+  "completedAt": "2026-09-27T16:02:37.515Z",
+  "scope": "Local jury Nginx entry point, reading WS clients, HTTP load and abandoned connections; not a city-wide capacity guarantee",
+  "config": {
+    "site": "http://127.0.0.1:19080/",
+    "seconds": 60,
+    "workers": 8,
+    "clients": 10,
+    "pauseMs": 200
+  },
+  "summary": {
+    "elapsedSec": 60,
+    "requests": 1550,
+    "failedRequests": 0,
+    "p50Ms": 46.75,
+    "p95Ms": 550.25,
+    "p99Ms": 851.8,
+    "maxMs": 2238.08,
+    "messages": 17980,
+    "wsErrors": 0,
+    "unexpectedCloses": 0,
+    "minHeartbeatsPerClient": 58,
+    "oversizedFrameRejected": true,
+    "interrupted": false
+  },
+  "errors": [],
+  "passed": true
+}

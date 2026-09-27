@@ -124,6 +124,62 @@ def test_backend_ml_failure_fallback_and_recovery(monkeypatch):
     asyncio.run(run())
 
 
+def test_http_reads_keep_last_complete_snapshot_while_ml_refresh_is_pending(monkeypatch):
+    """A slow full-fleet refresh must not queue every health/UI request behind ML."""
+    from transit_ml.backend import app as backend_app
+
+    monkeypatch.setenv("REPLAY_SPEED", "0")
+
+    async def run():
+        engine = Engine()
+        monkeypatch.setattr(backend_app.state, "engine", engine, raising=False)
+        entered, release = asyncio.Event(), asyncio.Event()
+        calls = 0
+
+        async def predict(request):
+            nonlocal calls
+            calls += 1
+            if calls == 2:
+                entered.set()
+                await release.wait()
+            body = json.loads(request.content)
+            return httpx.Response(200, json={
+                "asOf": body["asOf"], "modelVersion": "test", "latencyMs": 1,
+                "predictions": [{"vehicleId": item["vehicleId"], "delaySec": calls * 100,
+                                 "lateProbability": .2} for item in body["items"]],
+            })
+
+        async with httpx.AsyncClient(transport=httpx.MockTransport(predict)) as ml_client:
+            engine.client = ml_client
+            previous = await engine.snapshot()
+            previous_cutoff = engine.last_cutoff
+            engine.start += 30
+            engine.cache_at = 0
+            refresh = asyncio.create_task(engine.snapshot())
+            try:
+                await asyncio.wait_for(entered.wait(), timeout=5)
+                async with httpx.AsyncClient(transport=httpx.ASGITransport(app=backend_app),
+                                            base_url="http://backend") as ui:
+                    responses = await asyncio.wait_for(asyncio.gather(
+                        *(ui.get("/snapshot") for _ in range(20)), ui.get("/status"),
+                        ui.get("/warnings/audit"), ui.get("/analytics/forecast-evaluation")), timeout=5)
+                assert all(r.status_code == 200 for r in responses)
+                assert all(r.json() == previous for r in responses[:20])
+                assert responses[20].json()["status"] == "connected"
+                assert responses[21].json()["asOf"] == previous["summary"]["timestamp"]
+                assert engine.last_cutoff == previous_cutoff
+                assert calls == 2
+            finally:
+                release.set()
+                updated = await refresh
+            assert updated is not previous
+            assert engine.last_cutoff == previous_cutoff + 30
+            assert {v["predicted_delay_sec"] for v in updated["vehicles"]
+                    if v["forecast_status"] == "ready"} == {200}
+
+    asyncio.run(run())
+
+
 def test_observed_segments_locate_vehicle_risk_without_inventing_segment_forecasts(monkeypatch):
     monkeypatch.setenv("REPLAY_SPEED", "0")
     engine = Engine()

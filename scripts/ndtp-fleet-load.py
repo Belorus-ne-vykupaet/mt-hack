@@ -41,9 +41,9 @@ def prepare(args):
     base = int(time.time())
     config = {"synthetic": True, "vehicles": args.vehicles, "intervalSec": args.interval,
               "createdAt": base, "firstPlannedAt": base - 2400}
-    (args.plan / "load-config.json").write_text(json.dumps(config, indent=2))
-    (args.plan / "unit-map.json").write_text(json.dumps({str(700000+i): 900000+i for i in range(args.vehicles)}))
-    with (args.plan / "schedule_plan.csv").open("w", newline="") as stream:
+    (args.plan / "load-config.json").write_text(json.dumps(config, indent=2), encoding="utf-8")
+    (args.plan / "unit-map.json").write_text(json.dumps({str(700000+i): 900000+i for i in range(args.vehicles)}), encoding="utf-8")
+    with (args.plan / "schedule_plan.csv").open("w", encoding="utf-8", newline="") as stream:
         writer = csv.writer(stream)
         writer.writerow(["tt_action_item_id", "tr_id", "time_begin", "geom", "building_address"])
         for i in range(args.vehicles):
@@ -57,7 +57,7 @@ def prepare(args):
 
 
 async def feed(args):
-    config = json.loads((args.plan / "load-config.json").read_text())
+    config = json.loads((args.plan / "load-config.json").read_text(encoding="utf-8"))
     _, writer = await asyncio.open_connection(args.host, args.port)
     sent = 0
     warm_end = int(time.time())

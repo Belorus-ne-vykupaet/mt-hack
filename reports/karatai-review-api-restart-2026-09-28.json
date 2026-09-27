@@ -1,0 +1,19 @@
+{
+  "measuredAt": "2026-09-27T16:03:00.178Z",
+  "project": "transit-karatai-review",
+  "site": "http://127.0.0.1:19080/",
+  "before": {
+    "restartCount": 0,
+    "running": true,
+    "health": "healthy",
+    "policy": "unless-stopped"
+  },
+  "after": {
+    "restartCount": 1,
+    "running": true,
+    "health": "healthy",
+    "policy": "unless-stopped"
+  },
+  "recoveredAtSec": 7.1,
+  "passed": true
+}

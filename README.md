@@ -2,6 +2,17 @@
 
 Диспетчерский сайт для раннего прогнозирования задержек городского транспорта. Разработан на основе существующего [moscow-hack](https://github.com/Belorus-ne-vykupaet/moscow-hack).
 
+## Материалы для сдачи
+
+| Поле формы | Материал |
+|---|---|
+| Рабочая система ML + Backend + BI в Docker | Этот репозиторий; запуск ниже |
+| Инструкция для жюри | [Пошаговый запуск, поток, прогнозы и алерты](JURY_QUICKSTART.md) |
+| Документация PyDoc / OpenAPI / Swagger | [Единая техническая документация](DOCUMENTATION.md); после запуска — [/docs/](http://127.0.0.1:8080/docs/) |
+| Производительность и дополнительные функции | [Описание девяти возможностей и измеренные показатели](docs/additional-features-report.md) |
+
+[Готовые ссылки и текст для формы](SUBMISSION.md) · [Проверка по критериям](docs/22-criteria-evidence.md).
+
 ## Для жюри: официальный режим
 
 Основной способ запуска — **четыре контейнера**: React-сайт, Node API, Python Backend с NDTP-приёмником и Python ML. Нужны Docker Compose, Node.js 22+ и разрешённый организаторами архив данных. Обученные веса уже в репозитории; сырой архив и секреты в Git не включены.
@@ -15,7 +26,7 @@ docker compose -f compose.official.yaml ps
 
 Если архив уже скачан, замените первую команду на `python3 scripts/prepare-official-data.py --archive /путь/к/архиву.zip`. Ожидаются работающие `frontend`, `api`, `backend`, `ml`, а `api`, `backend`, `ml` — в состоянии `healthy`. Откройте [официальный обзор](http://127.0.0.1:8080/overview?source=official). Источник отмечен как **воспроизведение архивного test CSV**, часы архива — январь 2026 года. Swagger: [Backend](http://127.0.0.1:8093/docs), [ML](http://127.0.0.1:8092/docs); [HTML-документация Python](http://127.0.0.1:8080/docs/python/). Проверка: `curl -f http://127.0.0.1:8081/api/v1/health` и `curl -f http://127.0.0.1:8093/status`.
 
-Команда `docker compose up --build` без `-f compose.official.yaml` запускает только **синтетический frontend**, не официальный контур. Полный сценарий и проверка NDTP-эмулятора — в [JURY_QUICKSTART.md](JURY_QUICKSTART.md), а доказательства по каждому критерию — в [матрице основного этапа](docs/22-criteria-evidence.md). Баллы выставляет жюри.
+Команда `docker compose up --build` без `-f compose.official.yaml` запускает только **синтетический frontend**, не официальный контур. Полный сценарий и проверка NDTP-эмулятора — в [JURY_QUICKSTART.md](JURY_QUICKSTART.md), а доказательства по каждому критерию — в [матрице основного этапа](docs/22-criteria-evidence.md).
 
 ## Уточнение критериев после проверки
 
