@@ -139,7 +139,7 @@ test("all GPS buses remain available in 2D, 3D and cards without a forecast", as
       .locator(".map-gps-preview-point")).toHaveCount(items.length);
   }
   for (const vehicle of [noPlan, stale]) {
-    await page.getByRole("button", {name:"Посмотреть транспорт на линии", exact: true}).click();
+    await page.getByRole("button", {name:"Посмотреть транспорт на карте", exact: true}).click();
     await page.getByRole("button", {name: `Открыть ТС ${vehicle.id.replace("vehicle-", "")}`, exact: true}).click();
     await expect(page.getByRole("heading", {name:`ТС ${vehicle.id.replace("vehicle-", "")}`, exact:true})).toBeVisible();
     await expect(page.locator(".detail-panel")).toContainText(vehicle === noPlan ? "Нет расписания" : "GPS устарел");

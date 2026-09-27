@@ -21,7 +21,7 @@ test("forecast buses move while the slider is held in both map views", async ({ 
     routes: [{ routeId: vehicle.route_id, window: ["", ""], paths: [[[37.7, 55.7], [37.71, 55.7], [37.71, 55.71]]] }],
   } }));
   await page.goto("/overview?source=official");
-  await page.getByRole("button", { name: "Посмотреть транспорт на линии", exact: true }).click();
+  await page.getByRole("button", { name: "Посмотреть транспорт на карте", exact: true }).click();
   await page.getByRole("button", { name: `Открыть ТС ${vehicle.id.replace("vehicle-", "")}`, exact: true }).click();
   const slider = page.getByLabel("Горизонт прогноза в минутах");
   const map = page.locator(".map-shell");

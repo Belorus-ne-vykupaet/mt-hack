@@ -66,6 +66,9 @@ def main():
     control = args.emulator.rstrip("/") + "/api/config"
     backend = args.backend.rstrip("/")
     record = {"scope": "Official Docker NDTP emulator, synthetic current plan, real clock and selected trained ML; not a model-accuracy evaluation",
+              "startedAt": datetime.now(timezone.utc).isoformat(),
+              "requireNoExistingDelay": args.require_no_existing_delay,
+              "previousStopPlannedAt": stops[0]["time_begin"],
               "planSha256": hashlib.sha256(plan_path.read_bytes()).hexdigest(),
               "targetStopId": stops[1]["tt_action_item_id"],
               "targetAt": datetime.fromtimestamp(target_at, timezone.utc).isoformat(),
@@ -76,20 +79,32 @@ def main():
                    speedAvg=speed, speedMax=speed)
         post_json(control, config)
 
-    for attempt in range(30):
-        try:
-            get_json(control)
-            break
-        except OSError:
-            if attempt == 29:
-                raise RuntimeError("official NDTP emulator did not become ready")
-            time.sleep(1)
-
     try:
+        record["stage"] = "emulator_ready"
+        for attempt in range(30):
+            try:
+                get_json(control)
+                break
+            except OSError:
+                if attempt == 29:
+                    raise RuntimeError("official NDTP emulator did not become ready")
+                time.sleep(1)
+        record["stage"] = "first_warning"
         send_position(start_lon, start_lat, 0)
         warning = None
-        deadline = min(time.time() + 90, target_at - 600)
+        deadline = target_at - 600
+        record["warningWindowEndsAt"] = datetime.fromtimestamp(deadline, timezone.utc).isoformat()
+        record["predictionObservations"] = []
         while time.time() < deadline:
+            snapshot = get_json(backend + "/snapshot")
+            for vehicle in snapshot.get("vehicles", []):
+                record["predictionObservations"].append({
+                    "observedAt": datetime.now(timezone.utc).isoformat(),
+                    **{key: vehicle.get(key) for key in (
+                        "id", "current_delay_sec", "predicted_delay_sec", "risk_probability",
+                        "forecast_status", "forecast_horizon_sec", "forecast_model",
+                        "telemetry_age_sec")},
+                })
             rows = get_json(backend + "/warnings/audit")["items"]
             warning = next((row for row in rows if row["target_stop_id"] == record["targetStopId"]), None)
             if warning is not None:
@@ -108,6 +123,7 @@ def main():
                 and 600 < warning["event_lead_time_sec"] <= 900
                 and warning["source"] == "ndtp"):
             raise RuntimeError("first warning violates the live publication window")
+        record["stage"] = "observed_arrival"
         depart_at = time.time()
         # The next ordered visit is a real sequence of emulator GPS packets.
         # Five-second updates keep each coordinate step below the matcher's
@@ -140,15 +156,31 @@ def main():
                 and observed["issued_at"] == warning["issued_at"]):
             raise RuntimeError("the observed outcome does not confirm a timely first warning")
         record["passed"] = True
-        args.output.parent.mkdir(parents=True, exist_ok=True)
-        args.output.write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n")
+        record["stage"] = "complete"
         print(json.dumps({"passed": True, "output": str(args.output),
                           "leadToPlanSec": observed["forecast_horizon_sec"],
                           "leadToObservedArrivalSec": record["leadToObservedArrivalSec"],
                           "actualDelaySec": observed["actual_delay_sec"]}))
+    except Exception as error:
+        record["passed"] = False
+        record["failure"] = str(error)
+        for name, path in (("statusAtFailure", "/status"),
+                           ("snapshotAtFailure", "/snapshot"),
+                           ("warningsAtFailure", "/warnings/audit")):
+            try:
+                record[name] = get_json(backend + path)
+            except Exception as snapshot_error:
+                record[name] = {"error": str(snapshot_error)}
+        raise
     finally:
         config["units"] = []
-        post_json(control, config)
+        try:
+            post_json(control, config)
+        except Exception as cleanup_error:
+            record["cleanupError"] = str(cleanup_error)
+        record["completedAt"] = datetime.now(timezone.utc).isoformat()
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n")
 
 
 if __name__ == "__main__":
