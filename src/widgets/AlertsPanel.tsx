@@ -69,13 +69,13 @@ export function AlertsPanel({ alerts, segments = [] }: { alerts: Alert[]; segmen
                       : `Маршрут ${a.routeId}`}
                   </strong>
                 </div>
-                <span className="probability">
+                {a.attentionKind !== "early_arrival" && <span className="probability">
                   {config.csvMode
                     ? "CSV"
                     : config.dispatchApi && a.riskProbability === 0
                       ? "API"
                       : percent(a.riskProbability)}
-                </span>
+                </span>}
               </div>
               <div className="alert-main">
                 <span>{a.eventType === "late_threshold" ? "Риск опоздания >2 мин" : a.title}</span>
@@ -90,7 +90,7 @@ export function AlertsPanel({ alerts, segments = [] }: { alerts: Alert[]; segmen
                   ? `План ${time(a.targetTime)} → ожидается ${time(a.expectedArrivalAt)}. ${a.modelStatus === "fallback" ? "ML недоступен; резервная оценка." : `${modelDisplayName()}.`}`
                   : a.description}
               </div>
-              {config.officialMode && (
+              {config.officialMode && !a.attentionKind && (
                 <div className="alert-location">
                   <MapPin size={12} />
                   {`Участок: ${currentSegments.get(a.routeId) || "не определён"}. Возможная причина: ${a.suspectedCause || "пока не определена"}. ${a.suspectedCause ? `Признак: ${a.observedFactor || "телеметрия"}.` : ""}`}

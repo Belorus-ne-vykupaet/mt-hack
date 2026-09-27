@@ -1,8 +1,10 @@
 import { incidentTiming } from "../entities/incident";
 import { forecastAvailability, telemetryAge } from "../entities/availability";
+import { uniquePhysicalStops } from "../entities/map-stops";
+import { indexStopForecasts, stopForecastKey } from "../entities/stop-forecasts";
 import { matchesSearch } from "../shared/lib/search";
 import { Timeline } from "./Timeline";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   X,
   BusFront,
@@ -47,6 +49,11 @@ export function DetailsPanel({
   const [query, setQuery] = useState("");
   const [Debug, setDebug] = useState<React.ComponentType | null>(null);
   const route = routes.find((r) => r.id === ui.selectedRouteId);
+  const stopForecasts = useMemo(() => indexStopForecasts(vehicles), [vehicles]);
+  const routeStops = useMemo(() => route
+    ? (config.officialMode ? uniquePhysicalStops(route.stops, ui.selectedStopId) : route.stops)
+      .filter(stop => stopForecasts.has(stopForecastKey(route.id, stop)))
+    : [], [route, ui.selectedStopId, stopForecasts]);
   const vehicle = vehicles.find((v) => v.id === ui.selectedVehicleId);
   const isVehicle = ui.rightPanel === "vehicle";
   const entity = isVehicle ? vehicle : route;
@@ -358,12 +365,12 @@ export function DetailsPanel({
             <>
               <h3>Остановки маршрута</h3>
               <div className="stops-list">
-                {route.stops.map((s) => (
+                {routeStops.map((s) => (
                   <button
                     key={s.id}
                     onClick={() => {
                       navigate("/overview");
-                      ui.selectStop(s.id, route.id);
+                      ui.selectStop(stopForecasts.get(stopForecastKey(route.id, s))?.nextStop?.id || s.id, route.id);
                     }}
                   >
                     <i />
@@ -375,9 +382,7 @@ export function DetailsPanel({
                   </button>
                 ))}
               </div>
-              <p className="muted">
-                Прогноз по каждой остановке пока недоступен.
-              </p>
+              {!routeStops.length && <p className="muted">Нет остановок с доступным прогнозом.</p>}
             </>
           ) : (
             <>

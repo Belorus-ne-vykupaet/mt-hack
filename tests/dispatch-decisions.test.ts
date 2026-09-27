@@ -233,6 +233,27 @@ describe("dispatch decisions", () => {
     expect(byRoute.get("B")!.some((d) => d.kind === "add_bus")).toBe(false);
     expect([...reserveShort]).toEqual(["B"]);
   });
+  it("offers a stop action for a single-bus duty with a fresh forecast", () => {
+    const single = route("A", 1);
+    const vehicle = bus("A-1", "A", 450, 300);
+    const [rec] = recommendDispatch({
+      routes: [single], vehicles: [vehicle], geometries: [geometry("A")],
+      plans: [], asOf, demo: true,
+    });
+    expect(rec).toMatchObject({
+      status: "suggested", vehicleId: "A-1", decisionKind: "shorten_late",
+      currentFleet: 1, targetFleet: 1, currentDwellSec: 30, targetDwellSec: 20,
+    });
+    for (const invalid of [
+      {telemetryStale: true}, {hasForecast: false}, {currentDelayKnown: false},
+      {updatedAt: "2026-09-25T07:20:00Z"},
+    ]) {
+      const result = decide([single], [{...vehicle, ...invalid}]);
+      expect(result.analyses.get("A")!.status).toBe("insufficient");
+      expect(result.decisions).toEqual([]);
+    }
+    expect(decide([route("A", 8)], [vehicle]).analyses.get("A")!.status).toBe("insufficient");
+  });
   it("abstains on stale telemetry and on routes without geometry", () => {
     const stale = even("A").map((v) => ({
       ...v,

@@ -100,6 +100,9 @@ export function analyzeRoute(
       Number.isFinite(age) &&
       age >= 0 &&
       age <= settings.freshSec * 1000 &&
+      b.vehicle.hasForecast !== false &&
+      b.vehicle.currentDelayKnown !== false &&
+      !b.vehicle.telemetryStale &&
       Number.isFinite(b.vehicle.predictedDelaySec) &&
       Number.isFinite(b.vehicle.currentDelaySec)
     );
@@ -131,7 +134,7 @@ export function analyzeRoute(
   );
   const status = !line.path
     ? "no_geometry"
-    : fresh.length < Math.max(2, Math.ceil(fleet / 2))
+    : fresh.length < Math.max(1, Math.ceil(fleet / 2))
       ? "insufficient"
       : "ok";
   return {

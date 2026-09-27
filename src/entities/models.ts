@@ -47,6 +47,7 @@ export interface Vehicle extends PredictionAvailability {
   updatedAt: string;
 }
 export interface Alert {
+  attentionKind?: "early_arrival" | "forecast_risk";
   id: string;
   severity: "info" | "warning" | "high" | "critical";
   title: string;

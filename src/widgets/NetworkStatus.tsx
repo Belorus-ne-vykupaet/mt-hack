@@ -6,7 +6,7 @@ import {
   Route as RouteIcon,
   ChevronRight,
 } from "lucide-react";
-import type { Summary, Route, DelayPoint } from "../entities/models";
+import type { Summary, Route, DelayPoint, Alert } from "../entities/models";
 import { Panel, RouteBadge } from "../shared/ui/primitives";
 import { Chart } from "../shared/ui/Chart";
 import { riskHex, riskInk, minutes, time } from "../shared/ui/format";
@@ -92,19 +92,30 @@ export function NetworkStatus({
   summary,
   routes,
   points,
+  alerts,
   onShowRoutes,
 }: {
   summary: Summary;
   routes: Route[];
   points: DelayPoint[];
+  alerts: Alert[];
   onShowRoutes: () => void;
 }) {
   const selectRoute = useUi((s) => s.selectRoute);
   const connection = useConnection((s) => s.status);
   const officialModel = useOfficialModelStatus();
   const current = connection === "connected";
-  const top = routes
-    .filter((r) => r.riskLevel !== "normal" && r.riskLevel !== "unknown")
+  const attention = config.officialMode
+    ? alerts.map(event => ({
+        id: event.id,
+        routeId: event.routeId,
+        number: routes.find(route => route.id === event.routeId)?.number || event.vehicleId.replace("vehicle-", ""),
+        riskLevel: event.severity === "critical" ? "critical" as const : event.severity === "high" ? "high" as const : "elevated" as const,
+        predictedDelaySec: event.predictedDelaySec,
+      }))
+    : routes.filter(r => r.riskLevel !== "normal" && r.riskLevel !== "unknown")
+      .map(route => ({ ...route, routeId: route.id }));
+  const top = [...attention]
     .sort((a, b) => b.predictedDelaySec - a.predictedDelaySec)
     .slice(0, 5);
   return (
@@ -214,7 +225,7 @@ export function NetworkStatus({
         title="Требуют внимания"
         action={
           <span className="count">
-            {routes.filter((r) => r.riskLevel !== "normal" && r.riskLevel !== "unknown").length}
+            {attention.length}
           </span>
         }
       >
@@ -223,7 +234,7 @@ export function NetworkStatus({
             <button
               key={r.id}
               className="top-route"
-              onClick={() => selectRoute(r.id)}
+              onClick={() => selectRoute(r.routeId)}
             >
               <RouteBadge number={r.number} risk={r.riskLevel} />
               <div>
@@ -236,7 +247,7 @@ export function NetworkStatus({
                 <div className="bar-track">
                   <i
                     style={{
-                      width: `${Math.min(100, r.predictedDelaySec / 6)}%`,
+                      width: `${Math.min(100, Math.abs(r.predictedDelaySec) / 6)}%`,
                       background: riskHex[r.riskLevel],
                     }}
                   />

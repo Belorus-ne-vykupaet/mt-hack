@@ -1,8 +1,10 @@
 import { forecastAvailability, telemetryAge } from "../entities/availability";
+import { indexStopForecasts, stopForecastKey } from "../entities/stop-forecasts";
+import { uniquePhysicalStops } from "../entities/map-stops";
 import { matchesSearch } from "../shared/lib/search";
 import { useNavigate } from "react-router-dom";
 import { config } from "../shared/config/env";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   ArrowUpRight,
@@ -64,22 +66,31 @@ export function NetworkList({
     };
   }, []);
   const q = query.trim().toLocaleLowerCase("ru");
-  const routeName = (id: string) => routes.find((r) => r.id === id)?.name || id;
-  const rows =
+  const routeById = useMemo(() => new Map(routes.map(route => [route.id, route])), [routes]);
+  const routeStopsText = useMemo(() => kind === "stops" ? new Map<string, string>() : new Map(
+    routes.map(route => [route.id, route.stops.map(stop => stop.name).join(" ")]),
+  ), [routes, kind]);
+  const stopForecasts = useMemo(() => indexStopForecasts(vehicles), [vehicles]);
+  const rows = useMemo(() =>
     kind === "stops"
       ? routes.flatMap((r) =>
-          r.stops.map((stop) => ({
-            key: `${r.id}-${stop.id}`,
-            routeId: r.id,
-            number: r.number,
-            title: stop.name,
-            description: r.name,
-            delay: r.hasForecast === false ? null : r.predictedDelaySec,
-            risk: r.riskLevel,
-            probability: r.riskProbability,
-            info: `Маршрут ${r.number}`,
-            select: () => useUi.getState().selectStop(stop.id, r.id),
-          })),
+          (config.officialMode ? uniquePhysicalStops(r.stops, null) : r.stops)
+          .filter(stop => stopForecasts.has(stopForecastKey(r.id, stop)))
+          .map((stop) => {
+            const forecast = stopForecasts.get(stopForecastKey(r.id, stop));
+            return {
+              key: `${r.id}-${stop.id}`,
+              routeId: r.id,
+              number: r.number,
+              title: stop.name,
+              description: r.name,
+              delay: forecast?.predictedDelaySec ?? null,
+              risk: forecast?.riskLevel ?? "unknown" as const,
+              probability: forecast?.riskProbability ?? 0,
+              info: forecast ? `Прогноз ТС ${forecast.id.replace("vehicle-", "")}` : `Маршрут ${r.number}`,
+              select: () => useUi.getState().selectStop(forecast?.nextStop?.id || stop.id, r.id),
+            };
+          }),
         )
       : kind === "routes"
         ? routes.map((r) => ({
@@ -98,7 +109,7 @@ export function NetworkList({
           ? alerts
               .filter(
                 (a) =>
-                  kind === "events" ||
+                  kind === "events" || config.officialMode ||
                   a.severity === "critical" ||
                   a.severity === "high",
               )
@@ -118,7 +129,7 @@ export function NetworkList({
                         ? ("elevated" as const)
                         : ("normal" as const),
                 probability: a.riskProbability,
-                info: config.csvMode
+                info: a.attentionKind === "early_arrival" ? "Раннее прибытие" : config.csvMode
                   ? "Базовый прогноз"
                   : percent(a.riskProbability),
                 select: () => useUi.getState().selectRoute(a.routeId),
@@ -131,25 +142,20 @@ export function NetworkList({
                 routeId: v.routeId,
                 number: v.routeId,
                 title: `ТС ${v.id.replace("vehicle-", "")}`,
-                description: routeName(v.routeId),
+                description: routeById.get(v.routeId)?.name || v.routeId,
                 delay:
                   kind === "on-time" ? v.currentDelaySec : v.hasForecast === false ? null : v.predictedDelaySec,
                 risk: v.riskLevel,
                 probability: v.riskProbability,
                 info: config.officialMode ? `${telemetryAge(v)} · ${forecastAvailability(v)}` : `${Math.round(v.speedKmh)} км/ч`,
                 select: () => useUi.getState().selectVehicle(v.id, v.routeId),
-              }));
-  const filtered = rows.filter((r) =>
+              })), [kind, routes, vehicles, alerts, routeById, stopForecasts]);
+  const filtered = useMemo(() => !q ? rows : rows.filter((r) =>
     matchesSearch(
-      `${r.title} ${r.number} ${r.description} ${
-        routes
-          .find((route) => route.id === r.routeId)
-          ?.stops.map((stop) => stop.name)
-          .join(" ") || ""
-      }`,
+      `${r.title} ${r.number} ${r.description} ${routeStopsText.get(r.routeId) || ""}`,
       q,
     ),
-  );
+  ), [rows, q, routeStopsText]);
   const maxPage = Math.max(0, Math.ceil(filtered.length / 25) - 1);
   const currentPage = Math.min(page, maxPage);
   const shown = filtered.slice(currentPage * 25, (currentPage + 1) * 25);
@@ -203,8 +209,10 @@ export function NetworkList({
         <p className="network-list-description">
           {kind === "on-time"
             ? "Транспорт с задержкой менее 2 минут и низким риском."
+            : kind === "stops"
+              ? "Остановки с доступным прогнозом."
             : kind === "alerts" || kind === "events"
-              ? "События с высоким и критическим уровнем риска."
+              ? "События, требующие внимания."
               : "Полный список транспортной сети."}{" "}
           Выберите строку, чтобы открыть карточку на карте.
         </p>

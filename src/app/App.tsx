@@ -1,3 +1,4 @@
+import { attentionEvents } from "../entities/attention-events";
 import { matchesSearch } from "../shared/lib/search";
 import { Dialog } from "../shared/ui/Dialog";
 import { RouteFilter } from "../widgets/RouteFilter";
@@ -81,7 +82,10 @@ export default function App() {
   }, [location.pathname, location.search, navigate]);
   const routes = net.routes.data || EMPTY_ROUTES;
   const vehicles = net.vehicles.data || EMPTY_VEHICLES;
-  const alerts = net.alerts.data || [];
+  const alerts = useMemo(
+    () => config.officialMode ? attentionEvents(net.alerts.data || [], vehicles) : net.alerts.data || [],
+    [net.alerts.data, vehicles],
+  );
   const summary = net.summary.data;
   const points = net.series.data || [];
   const geometry = useGeometries(routes.map((r) => r.id));
@@ -102,6 +106,7 @@ export default function App() {
     () => vehicles.filter((v) => visibleIds.has(v.routeId)),
     [vehicles, visibleIds],
   );
+  const visibleAlerts = useMemo(() => alerts.filter(a => visibleIds.has(a.routeId)), [alerts, visibleIds]);
   const visibleRouteIdsKey = visibleRoutes.map((route) => route.id).join("|");
   const geometryTimestamp = summary?.timestamp;
   const visibleGeo = useMemo(
@@ -130,10 +135,10 @@ export default function App() {
       matchesSearch(`${v.id} тс ${v.id.replace("vehicle-", "")}`, search),
     )
     .slice(0, 3);
-  const searchStops = routes
+  const searchStops = search ? routes
     .flatMap((r) => r.stops.map((s) => ({ ...s, routeId: r.id })))
     .filter((s) => matchesSearch(s.name, search))
-    .slice(0, 3);
+    .slice(0, 3) : [];
   const navItems = [
     { icon: RouteIcon, label: "Маршруты", panel: "routes", path: undefined },
     { icon: BusFront, label: "Транспорт", panel: "vehicles", path: undefined },
@@ -415,7 +420,7 @@ export default function App() {
               <div className="summary-risk">
                 <strong>
                   {
-                    alerts.filter(
+                    visibleAlerts.filter(
                       (a) =>
                         config.officialMode ||
                         a.severity === "critical" ||
@@ -541,6 +546,7 @@ export default function App() {
                 <NetworkStatus
                   summary={summary}
                   routes={visibleRoutes}
+                  alerts={visibleAlerts}
                   points={points}
                   onShowRoutes={() => setListView("routes")}
                 />
@@ -598,7 +604,7 @@ export default function App() {
               <aside className="right-column">
                 {ui.rightPanel === "alerts" || ui.rightPanel === "settings" ? (
                   <AlertsPanel
-                    alerts={alerts.filter((a) => visibleIds.has(a.routeId))}
+                    alerts={visibleAlerts}
                     segments={net.segments.data || []}
                   />
                 ) : (
@@ -608,7 +614,7 @@ export default function App() {
                     routes={routes}
                     vehicles={vehicles}
                     segments={net.segments.data || []}
-                    alerts={alerts}
+                    alerts={visibleAlerts}
                   />
                 )}
               </aside>
@@ -645,7 +651,7 @@ export default function App() {
             routes={routes}
             vehicles={vehicles}
             segments={net.segments.data || []}
-                    alerts={alerts}
+                    alerts={visibleAlerts}
           />
         </Dialog>
       )}
@@ -654,7 +660,7 @@ export default function App() {
           kind={listView}
           routes={routes}
           vehicles={vehicles}
-          alerts={alerts}
+          alerts={visibleAlerts}
           onClose={() => setListView(null)}
         />
       )}

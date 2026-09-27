@@ -26,12 +26,11 @@ function oneEdit(a: string, b: string): boolean {
   return edits + Number(i < a.length || j < b.length) <= 1;
 }
 export function matchesSearch(value: string, query: string): boolean {
+  const tokens = normalizeSearch(query).split(" ").filter(Boolean);
+  if (!tokens.length) return true;
   const haystack = normalizeSearch(value);
   const words = haystack.split(" ");
-  return normalizeSearch(query)
-    .split(" ")
-    .filter(Boolean)
-    .every(
+  return tokens.every(
       (token) =>
         haystack.includes(token) ||
         (token.length >= 4 &&
