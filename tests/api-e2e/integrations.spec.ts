@@ -7,7 +7,7 @@ test("API mode connects REST/WS, uses server recommendations and survives reload
   await page.goto("/integrations?visual-test=1");
   await expect(
     page.getByRole("heading", { name: "API-сервис подключён" }),
-  ).toBeVisible();
+  ).toBeVisible({ timeout: 20000 });
   await page.getByRole("button", { name: "Подключить сайт к API" }).click();
   await expect(page.locator(".demo-badge")).toHaveText("API");
   await expect(

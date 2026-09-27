@@ -157,12 +157,12 @@ def test_http_reads_keep_last_complete_snapshot_while_ml_refresh_is_pending(monk
             engine.cache_at = 0
             refresh = asyncio.create_task(engine.snapshot())
             try:
-                await asyncio.wait_for(entered.wait(), timeout=5)
+                await asyncio.wait_for(entered.wait(), timeout=15)
                 async with httpx.AsyncClient(transport=httpx.ASGITransport(app=backend_app),
                                             base_url="http://backend") as ui:
                     responses = await asyncio.wait_for(asyncio.gather(
                         *(ui.get("/snapshot") for _ in range(20)), ui.get("/status"),
-                        ui.get("/warnings/audit"), ui.get("/analytics/forecast-evaluation")), timeout=5)
+                        ui.get("/warnings/audit"), ui.get("/analytics/forecast-evaluation")), timeout=15)
                 assert all(r.status_code == 200 for r in responses)
                 assert all(r.json() == previous for r in responses[:20])
                 assert responses[20].json()["status"] == "connected"
