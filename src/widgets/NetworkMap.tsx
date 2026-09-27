@@ -110,6 +110,26 @@ export default function NetworkMap({
     () => anchors.map((a) => projectVehicle(a, ui.forecastOffsetMin)),
     [anchors, ui.forecastOffsetMin],
   );
+  const gpsPreview = useMemo(() => {
+    const located = displayedVehicles.filter((vehicle) =>
+      Number.isFinite(vehicle.position.lon) && Number.isFinite(vehicle.position.lat),
+    );
+    if (!located.length) return [];
+    const observed = vehicles.filter((vehicle) =>
+      Number.isFinite(vehicle.position.lon) && Number.isFinite(vehicle.position.lat),
+    );
+    const lons = observed.map((vehicle) => vehicle.position.lon);
+    const lats = observed.map((vehicle) => vehicle.position.lat);
+    const left = Math.min(...lons) - 0.01;
+    const top = Math.max(...lats) + 0.01;
+    const width = Math.max(0.02, Math.max(...lons) - Math.min(...lons) + 0.02);
+    const height = Math.max(0.02, Math.max(...lats) - Math.min(...lats) + 0.02);
+    return located.map((vehicle) => ({
+      vehicle,
+      x: Math.max(8, Math.min(92, 12 + 76 * (vehicle.position.lon - left) / width)),
+      y: Math.max(8, Math.min(92, 14 + 72 * (top - vehicle.position.lat) / height)),
+    }));
+  }, [displayedVehicles, vehicles]);
   // A last-known GPS fix is not evidence that the bus is still parked there.
   // Keep it inspectable as a muted point, never as a current bus icon/model.
   const currentVehicles = useMemo(
@@ -836,6 +856,24 @@ export default function NetworkMap({
       data-columns={mode === "flow" && columnsVisible ? columns.length : 0}
     >
       <div className="map-canvas" ref={host} />
+      {config.officialMode && (loading || failed) && gpsPreview.length > 0 && (
+        <div className="map-gps-preview" role="group" aria-label="Схема GPS-позиций до загрузки карты">
+          {gpsPreview.map(({ vehicle, x, y }) => {
+            const color = vehicle.telemetryStale ? [127, 138, 145] : riskRgb[riskAt(vehicle, ui.forecastOffsetMin)];
+            return (
+              <button
+                key={vehicle.id}
+                className="map-gps-preview-point"
+                style={{ left: `${x}%`, top: `${y}%`, backgroundColor: `rgb(${color.join(",")})` }}
+                aria-label={`Открыть ТС ${vehicle.id.replace("vehicle-", "")} на схеме GPS`}
+                title={`ТС ${vehicle.id.replace("vehicle-", "")} · ${vehicle.telemetryStale ? "последняя известная позиция" : ui.forecastOffsetMin > 0 && vehicle.positionEstimated ? "прогнозное положение" : "текущая GPS-позиция"}`}
+                onClick={() => ui.selectVehicle(vehicle.id, vehicle.routeId)}
+              />
+            );
+          })}
+          <span className="map-gps-preview-caption">{ui.forecastOffsetMin > 0 ? `Схема · прогноз +${ui.forecastOffsetMin} мин` : "Схема по GPS"} · {gpsPreview.length} позиций</span>
+        </div>
+      )}
       <div className="map-top">
         <div className="map-location">
           <MapPin size={13} />
@@ -920,11 +958,11 @@ export default function NetworkMap({
           )}
         </div>
       )}
-      {loading && <div className="map-notice">Загрузка карты Москвы…</div>}
+      {loading && <div className="map-notice">Загрузка подложки Москвы · GPS-позиции показаны на схеме</div>}
       {failed && (
         <div className="map-notice" role="status">
           <TriangleAlert size={16} />
-          Картографическая подложка недоступна
+          Картографическая подложка недоступна · GPS-позиции показаны на схеме
           <button onClick={() => setGeneration((n) => n + 1)}>
             <RotateCcw size={14} />
             Повторить

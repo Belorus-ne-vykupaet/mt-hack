@@ -52,12 +52,17 @@ class SegmentMatcher:
                 planned = _number(row["ts"])
                 if planned is None:
                     continue
+                stop_id = _identifier(row["tt_action_item_id"])
+                raw_name = row.get("building_address")
+                name = str(raw_name).strip() if pd.notna(raw_name) else ""
+                if not name or name.lower() in {"nan", "none", "null"}:
+                    name = f"Остановка {stop_id}"
                 self.stops.append({
-                    "id": _identifier(row["tt_action_item_id"]),
+                    "id": stop_id,
                     "sequence": sequence,
                     "planned_at": planned,
                     "lon": _number(row["lon"]), "lat": _number(row["lat"]),
-                    "name": str(row.get("building_address") or row["tt_action_item_id"]),
+                    "name": name,
                 })
         self.times = np.array([s["planned_at"] for s in self.stops])
         self.route_id = route_id or (

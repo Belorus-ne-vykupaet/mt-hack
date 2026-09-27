@@ -71,6 +71,12 @@ test("dispatcher shows per-bus delays, test dispatch delivery and GigaChat route
   }
   await weather.getByRole("button", { name: "На карте" }).click();
   await expect(page).toHaveURL(/\/overview/);
-  await expect(page.getByRole("button", { name: "Погода на 3D-карте" })).toBeVisible();
+  const mapShell = page.locator(".map-shell");
+  await expect(mapShell).toHaveAttribute("data-map-mode", "flow");
+  if (await mapShell.getAttribute("data-map-ready") === "true") {
+    await expect(page.getByRole("button", { name: "Погода на 3D-карте" })).toBeVisible();
+  } else {
+    await expect(page.getByRole("group", { name: "Схема GPS-позиций до загрузки карты" })).toBeVisible();
+  }
   expect(errors).toEqual([]);
 });

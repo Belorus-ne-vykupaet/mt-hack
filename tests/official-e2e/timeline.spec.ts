@@ -14,6 +14,7 @@ test("forecast buses move while the slider is held in both map views", async ({ 
     predicted_delay_sec: 0,
     next_stop: { id: "slider-target", name: "Target", sequence: 1, position: { lon: 37.71, lat: 55.71 } },
   };
+  await page.route("https://tiles.openfreemap.org/**", route => route.abort());
   await page.routeWebSocket("**", () => {});
   await page.route("**/api/v1/vehicles", route => route.fulfill({ json: { ...network, items: [vehicle] } }));
   await page.route("**/data/official-road-routes.json", route => route.fulfill({ json: {
@@ -24,7 +25,10 @@ test("forecast buses move while the slider is held in both map views", async ({ 
   await page.getByRole("button", { name: `Открыть ТС ${vehicle.id.replace("vehicle-", "")}`, exact: true }).click();
   const slider = page.getByLabel("Горизонт прогноза в минутах");
   const map = page.locator(".map-shell");
-  await expect(map).toHaveAttribute("data-map-ready", "true");
+  await expect(map).toHaveAttribute("data-visible-vehicles", "1");
+  const projectedPoint = page.getByRole("group", { name: "Схема GPS-позиций до загрузки карты" })
+    .getByRole("button", { name: `Открыть ТС ${vehicle.id.replace("vehicle-", "")} на схеме GPS` });
+  await expect(projectedPoint).toBeVisible();
   for (const mode of ["2D", "3D"]) {
     if (mode === "3D") await page.getByRole("button", { name: "Переключить карту в 3D", exact: true }).click();
     await slider.fill("0");
@@ -34,11 +38,14 @@ test("forecast buses move while the slider is held in both map views", async ({ 
     await page.mouse.down();
     try {
       let previous = await map.getAttribute("data-selected-vehicle-position");
+      let previousPoint = await projectedPoint.getAttribute("style");
       for (const fraction of [0.2, 0.4, 0.6, 0.3]) {
         await page.mouse.move(box.x + box.width * fraction, box.y + box.height / 2, { steps: 8 });
         // Assert every update before mouseup, including reversing the drag.
         await expect.poll(() => map.getAttribute("data-selected-vehicle-position"), { timeout: 1000 }).not.toBe(previous);
+        await expect.poll(() => projectedPoint.getAttribute("style"), { timeout: 1000 }).not.toBe(previousPoint);
         previous = await map.getAttribute("data-selected-vehicle-position");
+        previousPoint = await projectedPoint.getAttribute("style");
       }
     } finally {
       await page.mouse.up();

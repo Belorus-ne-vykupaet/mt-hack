@@ -117,17 +117,24 @@ test("all GPS buses remain available in 2D, 3D and cards without a forecast", as
   const emptyForecast = await (await request.get(`/api/v1/forecast/vehicles/${noPlan.id}`)).json();
   expect(emptyForecast.points).toEqual([]);
   await page.goto("/overview?source=official");
-  await expect(page.getByLabel("Полнота транспортных данных")).toContainText("30 ТС");
-  await expect(page.getByLabel("Полнота транспортных данных")).toContainText("17 контекстных");
+  await expect(page.locator(".network-totals")).toContainText(`${items.length} / 30`);
+  await expect(page.locator(".network-totals")).toContainText("GPS-позиции на карте");
   await expect(page.locator("[data-visible-vehicles]")).toHaveAttribute("data-visible-vehicles", String(items.length));
   await expect(page.locator("[data-road-paths]")).toHaveAttribute("data-road-paths", /[1-9][0-9]/);
   for (const mode of ["3D", "2D", "3D"]) {
     await page.getByRole("button", {name: `Переключить карту в ${mode}`, exact: true}).click();
     await expect(page.locator("[data-visible-vehicles]")).toHaveAttribute("data-visible-vehicles", String(items.length));
   }
-  await expect.poll(async () => Number(await page.locator(".map-shell").getAttribute("data-bus-models"))).toBeGreaterThan(0);
-  expect(Number(await page.locator(".map-shell").getAttribute("data-bus-models")))
-    .toBeLessThan(Number(await page.locator(".map-shell").getAttribute("data-visible-vehicles")));
+  const mapShell = page.locator(".map-shell");
+  await expect(mapShell).toHaveAttribute("data-map-mode", "flow");
+  if (await mapShell.getAttribute("data-map-ready") === "true") {
+    await expect.poll(async () => Number(await mapShell.getAttribute("data-bus-models"))).toBeGreaterThan(0);
+    expect(Number(await mapShell.getAttribute("data-bus-models")))
+      .toBeLessThan(Number(await mapShell.getAttribute("data-visible-vehicles")));
+  } else {
+    await expect(page.getByRole("group", { name: "Схема GPS-позиций до загрузки карты" })
+      .locator(".map-gps-preview-point")).toHaveCount(items.length);
+  }
   for (const vehicle of [noPlan, stale]) {
     await page.getByRole("button", {name:"Посмотреть транспорт на линии", exact: true}).click();
     await page.getByRole("button", {name: `Открыть ТС ${vehicle.id.replace("vehicle-", "")}`, exact: true}).click();
@@ -138,6 +145,16 @@ test("all GPS buses remain available in 2D, 3D and cards without a forecast", as
   await page.waitForTimeout(2500); // include a live WS update with nullable values
   expect(errors).toEqual([]);
   await page.screenshot({path:"/private/tmp/transit-fleet-card.png", fullPage:true});
+});
+
+test("GPS risk positions remain visible when the external map is unavailable", async ({ page, request }) => {
+  const { items } = await (await request.get("/api/v1/vehicles")).json();
+  await page.route("https://tiles.openfreemap.org/**", route => route.abort());
+  await page.goto("/overview?source=official");
+  const preview = page.getByRole("group", { name: "Схема GPS-позиций до загрузки карты" });
+  await expect(preview).toBeVisible({ timeout: 15000 });
+  await expect(preview.locator(".map-gps-preview-point")).toHaveCount(items.length);
+  await expect(preview).toContainText(`${items.length} позиций`);
 });
 
 test("official 3D map restores current weather without changing archive forecasts", async ({ page }) => {

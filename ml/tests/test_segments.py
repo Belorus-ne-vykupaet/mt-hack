@@ -42,6 +42,14 @@ def test_progression_observes_speed_dwell_and_next_segment():
     assert "predicted_delay_sec" not in second
 
 
+def test_missing_stop_names_use_visit_ids_instead_of_nan():
+    p = plan()
+    p.loc[0, "building_address"] = float("nan")
+    p.loc[1, "building_address"] = " "
+    result = match_segment(p, history([(110, 37.0, 0), (130, 37.001, 20)]), 130)
+    assert result["current_segment"]["name"] == "Остановка 1 → Остановка 2"
+
+
 def test_future_packets_and_actual_outcomes_cannot_change_result():
     p = plan()
     h = history([(110, 37.0, 0), (150, 37.001, 20), (170, 37.003, 20)])

@@ -484,6 +484,36 @@ h1 {
 .map-canvas canvas {
   outline: none;
 }
+.map-gps-preview {
+  position: absolute;
+  inset: 0;
+  background-color: var(--surface);
+  background-image: linear-gradient(var(--border) 1px, transparent 1px),
+    linear-gradient(90deg, var(--border) 1px, transparent 1px);
+  background-size: 12.5% 12.5%;
+}
+.app .map-gps-preview-point {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  min-height: 18px;
+  padding: 0;
+  transform: translate(-50%, -50%);
+  border: 3px solid var(--surface);
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px var(--text);
+  cursor: pointer;
+}
+.map-gps-preview-caption {
+  position: absolute;
+  left: 14px;
+  bottom: 115px;
+  padding: 5px 8px;
+  color: var(--secondary);
+  background: var(--glass);
+  border: 1px solid var(--border);
+  font-size: 10px;
+}
 .map-top {
   position: absolute;
   left: 16px;
