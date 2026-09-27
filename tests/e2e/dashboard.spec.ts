@@ -80,7 +80,7 @@ test("dispatcher follows alert → route → vehicle and forecast across pages",
     .getByRole("button", { name: /ТС 742/ })
     .click();
   await expect(page.locator(".detail-panel")).toContainText("ТС 742");
-  await page.getByRole("button", { name: "+15 мин", exact: true }).click();
+  await page.getByRole("button", { name: "15 мин", exact: true }).click();
   await expect(page.getByLabel("Горизонт прогноза в минутах")).toHaveValue(
     "15",
   );
@@ -187,7 +187,7 @@ test("continuous forecast supports fractional minutes without playback controls"
   ).toHaveCount(0);
   const slider = page.getByLabel("Горизонт прогноза в минутах");
   await slider.fill("7.5");
-  await expect(page.locator(".timeline-caption")).toContainText("+7 мин 30 с");
+  await expect(page.locator(".map-position-caption")).toContainText("+7 мин 30 с");
   await expect(page.locator(".detail-forecast")).toContainText("+5.3");
   await slider.press("ArrowRight");
   await expect(slider).toHaveValue("7.51");
@@ -213,7 +213,7 @@ test("3D renders pickable delay columns and supports layer visibility", async ({
   );
   const canvas = page.locator(".map-canvas canvas");
   expect((await canvas.boundingBox())!.height).toBeGreaterThan(300);
-  await page.getByRole("button", { name: "+15 мин", exact: true }).click();
+  await page.getByRole("button", { name: "15 мин", exact: true }).click();
   await page.getByRole("button", { name: "Слои карты", exact: true }).click();
   await page.getByLabel("Столбцы задержек").uncheck();
   await expect(page.locator(".map-shell")).toHaveAttribute("data-columns", "0");
@@ -245,7 +245,7 @@ for (const theme of ["dark", "light"])
       );
       // Analytics controls the selected route's forecast inside its detail card.
       if (path === "analytics") await page.locator(".alert-card").first().click();
-      await page.getByRole("button", { name: "+15 мин", exact: true }).click();
+      await page.getByRole("button", { name: "15 мин", exact: true }).click();
       await expect(page.getByLabel("Горизонт прогноза в минутах")).toHaveValue(
         "15",
       );
@@ -459,7 +459,7 @@ test("All routes footer opens list and in-map 3D rotates without navigation", as
     .getByRole("button", { name: "Открыть Маршрут с344", exact: true })
     .click();
   await expect(page.locator(".route-impact")).toContainText(
-    "0 из 12 участков · 3 из 8 автобусов",
+    "0 из 12 наблюдаемых участков · 3 из 8 автобусов",
   );
   const map = page.locator(".map-shell");
   await expect(map).toHaveAttribute("data-map-ready", "true", {
