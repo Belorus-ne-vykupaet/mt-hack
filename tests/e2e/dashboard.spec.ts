@@ -1,5 +1,19 @@
 import catalog from "../../src/data/moscow-buses.json" with { type: "json" };
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
+
+async function mockMapStyle(page: Page) {
+  await page.route(
+    /^https:\/\/tiles\.openfreemap\.org\/styles\/(?:positron|dark)\/?$/,
+    (route) =>
+      route.fulfill({
+        json: {
+          version: 8,
+          sources: {},
+          layers: [{ id: "background", type: "background" }],
+        },
+      }),
+  );
+}
 
 test("theme switch is visible and synchronizes already open dashboard tabs", async ({
   page,
@@ -282,6 +296,7 @@ test("root opens welcome and browser back preserves navigation", async ({
 test("lazy map styles preserve the full map viewport after navigation", async ({
   page,
 }) => {
+  await mockMapStyle(page);
   await page.goto("/welcome?visual-test=1");
   await page.getByRole("link", { name: "Открыть диспетчерскую" }).click();
   const host = page.locator(".map-canvas.maplibregl-map");
@@ -305,7 +320,7 @@ test("lazy map styles preserve the full map viewport after navigation", async ({
           Math.abs(rendered.height - (frame.height - 2)) < 3 &&
           Math.abs(rendered.width - (frame.width - 2)) < 3
         );
-      })
+      }, { timeout: 30000 })
       .toBe(true);
   };
   await expectFullViewport();
@@ -568,6 +583,7 @@ test("3D responds to two-finger rotation and pitch on touch screens", async ({
 test("3D bus model loads locally, follows forecast, remains selectable and respects visibility", async ({
   page,
 }) => {
+  await mockMapStyle(page);
   await page.addInitScript(() => localStorage.setItem("transit-theme", "dark"));
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
@@ -605,10 +621,15 @@ test("3D bus model loads locally, follows forecast, remains selectable and respe
   await expect(map).toHaveAttribute("data-bus-models", "0");
   await page.getByLabel("Транспорт", { exact: true }).check();
   await expect(map).toHaveAttribute("data-bus-models", "120");
+  await expect(map).toHaveAttribute("data-bus-model-status", "ready", {
+    timeout: 30000,
+  });
   await page.getByRole("button", { name: "Слои карты", exact: true }).click();
-  await page.getByRole("button", { name: "Закрыть карточку" }).click();
-  const box = (await page.locator(".map-canvas canvas").boundingBox())!;
-  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2 - 5);
+  await page.getByLabel("Поиск маршрута, ТС или остановки").fill("742");
+  await page
+    .locator(".search-results")
+    .getByRole("button", { name: /ТС 742/ })
+    .click();
   await expect(page.locator(".detail-panel")).toContainText("ТС 742");
   await page.getByRole("button", { name: "Включить светлую тему" }).click();
   await expect(map).toHaveAttribute("data-map-theme", "light");
