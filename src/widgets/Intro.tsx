@@ -15,7 +15,6 @@ import {
   Play,
   RotateCcw,
   X,
-  Move,
   Radio,
   ScanLine,
   Waypoints,
@@ -29,13 +28,12 @@ export default function Intro() {
   const [horizon, setHorizon] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [paused, setPaused] = useState(false);
-  const [ready, setReady] = useState(false);
   const [unavailable, setUnavailable] = useState(false);
   const [reset, setReset] = useState(0);
   const root = useRef<HTMLElement>(null);
   const detailClose = useRef<HTMLButtonElement>(null);
   const selectionTrigger = useRef<HTMLElement | null>(null);
-  const loaded = useCallback(() => setReady(true), []);
+  const loaded = useCallback(() => undefined, []);
   const failed = useCallback(() => setUnavailable(true), []);
   const chooseNode = useCallback((index: number) => {
     selectionTrigger.current = document.activeElement as HTMLElement;
@@ -171,26 +169,8 @@ export default function Intro() {
           <div className="welcome-location">
             <span>МОСКВА</span>
             <span>55°45′ N · 37°37′ E</span>
-            <small>Концептуальная модель сети</small>
-          </div>
-          <div className="welcome-scene-label">
-            <span className="welcome-live-dot" />{" "}
-            {ready
-              ? "ДВИЖЕНИЕ В ДЕТАЛЯХ"
-              : unavailable
-                ? "TRANSIT HUB"
-                : "СОБИРАЕМ ГОРОД"}
-            <span className="welcome-scene-line" />
-          </div>
-
-          <div className="welcome-scene-caption" aria-live="polite">
-            <span>{current.caption}</span>
-            <p>{current.detail}</p>
           </div>
           <div className="welcome-scene-controls">
-            <span className="welcome-drag-hint">
-              <Move size={14} /> Вращайте город
-            </span>
             <button
               aria-label="Сбросить ракурс"
               title="Сбросить ракурс"
@@ -312,10 +292,6 @@ export default function Intro() {
       </section>
 
       <section className="welcome-story" id="welcome-story">
-        <div className="welcome-section-label" data-reveal>
-          <span>СВЯЗЫВАЕМ ГОРОД</span>
-          <span>01 — 03</span>
-        </div>
         <div className="welcome-story-heading" data-reveal>
           <h2>
             У движения есть ритм.
@@ -387,7 +363,6 @@ export default function Intro() {
         </div>
         <footer className="welcome-footer">
           <span>TRANSIT / HUB © 2026</span>
-          <span>Москва. Люди. Движение.</span>
           <a href="#welcome-experience">
             Вернуться к городу <ArrowUpRight size={14} />
           </a>

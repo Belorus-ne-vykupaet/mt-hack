@@ -797,7 +797,7 @@ async def lifespan(app):
     app.state.engine = engine
     # The deadline includes decoding/validation of a full fleet's raw history,
     # not only model inference. Keep connection failures separately bounded.
-    async with httpx.AsyncClient(timeout=httpx.Timeout(3.5, connect=1.5)) as client:
+    async with httpx.AsyncClient(timeout=httpx.Timeout(3.5, connect=1.5), trust_env=False) as client:
         engine.client = client
         pump = asyncio.create_task(engine.stream_forecasts()) if engine.mode == "ndtp" else None
         tcp = await asyncio.start_server(

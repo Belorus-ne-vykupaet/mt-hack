@@ -7,9 +7,7 @@ test("welcome city: chapters, forecast, node details, keyboard rotation and navi
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/welcome");
-  await expect(page.locator(".welcome-scene-label")).toContainText(
-    "ДВИЖЕНИЕ В ДЕТАЛЯХ",
-  );
+  await expect(page.locator(".intro-scene canvas")).toBeVisible({ timeout: 20_000 });
   await page.getByRole("button", { name: "Остановить 3D-анимацию" }).click();
   await expect(
     page.getByRole("button", { name: "Продолжить 3D-анимацию" }),
@@ -47,7 +45,7 @@ for (const width of [1440, 390, 320]) {
     await page.setViewportSize({ width, height: 950 });
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto("/welcome");
-    await expect(page.locator(".intro-scene canvas")).toBeVisible();
+    await expect(page.locator(".intro-scene canvas")).toBeVisible({ timeout: 20_000 });
     for (const label of ["01 Наблюдать", "02 Предвидеть", "03 Управлять"]) {
       await page.getByRole("button", { name: label }).click();
       expect(

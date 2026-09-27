@@ -8,7 +8,7 @@ export default function Root() {
     <Boundary name="Приложение">
       <Suspense fallback={<div className="route-loading">Transit Hub</div>}>
         <Routes>
-          <Route path="/" element={<Navigate to="/overview" replace />} />
+          <Route path="/" element={<Navigate to="/welcome" replace />} />
           <Route path="/welcome" element={<Intro />} />
           <Route path="/overview" element={<Dashboard />} />
           <Route path="/analytics" element={<Dashboard />} />
