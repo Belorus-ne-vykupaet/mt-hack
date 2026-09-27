@@ -18,7 +18,7 @@ export class MockRealtimeClient implements RealtimeClient {
   }
   connect() {
     if (config.visualTest) simulation.seconds = 30;
-    this.emit("system.hello", { stream_id: "demo" });
+    if (!simulation.offline) this.emit("system.hello", { stream_id: "demo" });
     this.timer = setInterval(() => {
       if (simulation.offline) return;
       if (!simulation.paused && !config.visualTest)
