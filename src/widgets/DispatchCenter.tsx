@@ -1,3 +1,4 @@
+import { TrafficNotices } from "./TrafficNotices";
 import { matchesSearch } from "../shared/lib/search";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -272,6 +273,7 @@ export default function DispatchCenter({
   };
   return (
     <section className="dispatch-center">
+      <TrafficNotices vehicles={vehicles}/>
       {config.dispatchApi && (api.commands.isError || api.recommendations.isError) && (
         <div className="api-dispatch-notice">
             <p role="alert">

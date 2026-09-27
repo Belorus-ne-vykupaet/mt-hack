@@ -20,6 +20,7 @@ import { routeStreamVersion, sendStreamBatch, sendStreamEvent, vehicleStreamVers
 import { DriverOutbox } from "./driver-outbox";
 import { GigachatAdvisor } from "./gigachat";
 import { DailyReports } from "./daily-reports";
+import { RoadMonitor } from "./road-monitor";
 export interface ServerOptions {
   official?: OfficialSource;
   journal?: string;
@@ -28,6 +29,8 @@ export interface ServerOptions {
   origins?: string[];
   weather?: boolean;
   trafficKey?: string;
+  trafficEventsUrl?: string;
+  trafficEventsToken?: string;
   yandexWeatherKey?: string;
   modelUrl?: string;
   modelKey?: string;
@@ -61,6 +64,10 @@ export function createApi(options: ServerOptions = {}) {
     options.weather !== false,
     options.fetcher,
   );
+  const roadMonitor = new RoadMonitor(gigachat, {
+    routerKey: options.trafficKey, eventsUrl: options.trafficEventsUrl,
+    eventsToken: options.trafficEventsToken, fetcher: options.fetcher,
+  });
   const yandexWeather = new YandexWeather(
     options.yandexWeatherKey,
     options.weather !== false,
@@ -375,6 +382,25 @@ export function createApi(options: ServerOptions = {}) {
       }
       if (req.method === "GET" && path === "/external/weather")
         return json(res, 200, await providers.weather());
+      if (path === "/traffic/notifications" && req.method === "GET") {
+        if (roadMonitor.configured) {
+          const s = await snapshot();
+          const geo = options.official ? (await options.official.snapshot()).geometries.map(mapGeometry) : geometries;
+          void roadMonitor.refresh(s.vehicles.map(mapVehicle), s.routes.map(mapRoute), geo);
+        }
+        return json(res, 200, roadMonitor.state());
+      }
+      if (path === "/traffic/demo" && req.method === "POST") {
+        const body = await readBody(req) as {vehicleId?: unknown; clear?: unknown};
+        if (body.clear === true) { roadMonitor.clearDemo(); return json(res, 200, roadMonitor.state()); }
+        if (typeof body.vehicleId !== "string") throw new ApiError(400, "Выберите автобус.");
+        const s = await snapshot();
+        if (!s.vehicles.some(v => v.id === body.vehicleId)) throw new ApiError(404, "Автобус не найден.");
+        const geo = options.official ? (await options.official.snapshot()).geometries.map(mapGeometry) : geometries;
+        try { await roadMonitor.demo(body.vehicleId, s.vehicles.map(mapVehicle), s.routes.map(mapRoute), geo); }
+        catch { throw new ApiError(422, "Не удалось определить участок впереди автобуса. Выберите другой автобус."); }
+        return json(res, 200, roadMonitor.state());
+      }
       if (req.method === "GET" && path === "/external/traffic") {
         const route = base.routes.find(
           (r) => r.id === url.searchParams.get("route_id"),

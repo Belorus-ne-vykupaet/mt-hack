@@ -1,0 +1,119 @@
+.traffic-notices {
+  border:1px solid var(--border);
+  background:var(--surface);
+  padding:16px;
+  margin-bottom:16px;
+  font-family:inherit;
+  color:var(--text)
+}
+
+.traffic-notices>header {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin-bottom:12px
+}
+.traffic-notices h3 {
+  font-size:15px;
+  font-weight:600;
+  line-height:1.4;
+  margin:0
+}
+.traffic-notices header .count {
+  margin-left:auto
+}
+.traffic-notices small,.traffic-notice-location,.traffic-analysis-status,.traffic-empty {
+  color:var(--muted);
+  font-size:12px
+}
+.traffic-demo-controls {
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin:12px 0
+}
+.traffic-demo-controls select {
+  font:inherit;
+  font-size:12px;
+  padding:8px;
+  background:var(--surface);
+  color:var(--text);
+  border:1px solid var(--border);
+  min-width:130px
+}
+.traffic-notice {
+  border-top:1px solid var(--border);
+  padding:14px 0 0;
+  margin-top:12px
+}
+.traffic-notice-heading {
+  display:flex;
+  gap:8px;
+  align-items:center;
+  flex-wrap:wrap;
+  font-size:13px
+}
+.traffic-notice-heading svg {
+  color:#cf893e
+}
+.traffic-notice-heading>span {
+  font-size:10px;
+  color:var(--muted);
+  margin-left:auto
+}
+.traffic-notice p {
+  font-size:12px;
+  line-height:1.55;
+  margin:8px 0
+}
+.traffic-indefinite {
+  display:block;
+  font-size:14px;
+  color:#cb8641
+}
+.traffic-analysis {
+  border-left:2px solid var(--blue);
+  padding-left:12px;
+  margin-top:12px
+}
+.traffic-analysis small {
+  font-weight:600;
+  color:var(--blue)
+}
+.traffic-notice footer {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  font-size:11px;
+  color:var(--muted);
+  margin-top:12px
+}
+.traffic-error {
+  font-size:12px;
+  color:#c96550
+}
+.traffic-notices.compact {
+  padding:12px
+}
+.traffic-notices.compact h3 {
+  font-size:13px
+}
+.traffic-notices button:disabled {
+  opacity:.5;
+  cursor:wait
+}
+
+.traffic-demo-controls select {
+  width: auto;
+  max-width: 100%;
+  flex: 0 1 280px;
+}
+.traffic-demo-controls button {
+  font-family: inherit;
+  font-size: 12px;
+}
+.right-column > .traffic-notices {
+  max-height: 320px;
+  overflow-y: auto;
+  flex-shrink: 0;
+}

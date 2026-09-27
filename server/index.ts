@@ -29,6 +29,8 @@ const { server, close } = createApi({
   gigachatScope: process.env.GIGACHAT_SCOPE,
   gigachatModel: process.env.GIGACHAT_MODEL,
   trafficKey: process.env.YANDEX_ROUTER_KEY,
+  trafficEventsUrl: process.env.TRAFFIC_EVENTS_URL,
+  trafficEventsToken: process.env.TRAFFIC_EVENTS_TOKEN,
   modelUrl: process.env.ML_SERVICE_URL,
   modelKey: process.env.ML_SERVICE_TOKEN,
   frozen: process.env.API_FROZEN === "true",

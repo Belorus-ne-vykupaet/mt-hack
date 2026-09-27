@@ -1,3 +1,4 @@
+import { TrafficNotices } from "../widgets/TrafficNotices";
 import { attentionEvents } from "../entities/attention-events";
 import { matchesSearch } from "../shared/lib/search";
 import { Dialog } from "../shared/ui/Dialog";
@@ -602,6 +603,7 @@ export default function App() {
                 </Boundary>
               )}
               <aside className="right-column">
+                <TrafficNotices compact/>
                 {ui.rightPanel === "alerts" || ui.rightPanel === "settings" ? (
                   <AlertsPanel
                     alerts={visibleAlerts}
