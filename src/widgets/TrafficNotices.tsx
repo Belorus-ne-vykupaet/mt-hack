@@ -22,13 +22,15 @@ export function TrafficNotices({vehicles = [], compact = false}: {vehicles?: Veh
   const data = query.data;
   const candidates = vehicles.filter(v => !v.telemetryStale && v.nextStop);
   const vehicleId = candidates.some(v => v.id === selected) ? selected : candidates[0]?.id || "";
-  if (config.dataSource !== "api" || (compact && !data?.items.length)) return null;
+  if (config.dataSource !== "api" || !data ||
+    (!data.configured && !data.items.length && !config.visualTest) ||
+    (compact && !data.items.length)) return null;
   return <section className={`traffic-notices ${compact ? "compact" : ""}`} aria-label="Дорожные события">
     <header><RoadIcon size={18}/><div><h3>Дорожные события</h3>
       {!compact && <small>{data?.configured ? "Обстановка впереди автобусов" : "Живой источник не подключён · доступна демонстрация"}</small>}</div>
       {!!data?.items.length && <span className="count">{data.items.length}</span>}
     </header>
-    {!compact && <div className="traffic-demo-controls">
+    {!compact && config.visualTest && <div className="traffic-demo-controls">
       <select aria-label="Автобус для тестового ДТП" value={vehicleId} onChange={e => setSelected(e.target.value)}>
         {candidates.map(v => <option key={v.id} value={v.id}>ТС {v.id.replace("vehicle-", "")}</option>)}
       </select>

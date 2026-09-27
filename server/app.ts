@@ -246,7 +246,7 @@ export function createApi(options: ServerOptions = {}) {
         return json(res, 200, { authenticated: true });
       }
       if (!authorized(req) && !(options.publicRead && req.method === "GET"))
-        throw new ApiError(401, "Требуется вход в API. Откройте «Интеграции».");
+        throw new ApiError(401, "Для этого действия нужен ключ доступа к API.");
       if (req.method === "GET" && path === "/health")
         return json(res, 200, {
           status: "ok",

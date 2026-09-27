@@ -1,5 +1,14 @@
 import {test, expect} from "@playwright/test";
 
+test("unconfigured road source does not show integration or test controls", async ({page}) => {
+  await page.route("**/api/v1/traffic/notifications", route => route.fulfill({json:{
+    configured:false,status:"needs_key",checkedAt:null,usedInModel:false,items:[],
+  }}));
+  await page.goto("/dispatch?source=official");
+  await expect(page.getByRole("region",{name:"Дорожные события"})).toHaveCount(0);
+  await expect(page.getByRole("button",{name:"Тестовое ДТП"})).toHaveCount(0);
+});
+
 test("test road incident shows unknown delay and GigaChat advice, also on overview", async ({page,request}) => {
   const fleet = (await (await request.get("/api/v1/vehicles")).json()).items;
   const vehicle = fleet.find((v: {next_stop: unknown; status: string}) => v.next_stop && v.status !== "stale");

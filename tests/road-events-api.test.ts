@@ -13,7 +13,9 @@ it("keeps demo incidents separate from predictions and protects writes", async (
     const vehicle=aheadCorridors(csvSnapshot(900).vehicles.map(mapVehicle),csvGeometries.map(mapGeometry))[0].vehicle;
     const before=await (await fetch(`${url}/vehicles`)).json();
     const post=(body:object,auth=true)=>fetch(`${url}/traffic/demo`,{method:"POST",headers:{"Content-Type":"application/json",...(auth?{Authorization:`Bearer ${token}`}:{})},body:JSON.stringify(body)});
-    expect((await post({vehicleId:vehicle.id},false)).status).toBe(401);
+    const unauthorized=await post({vehicleId:vehicle.id},false);
+    expect(unauthorized.status).toBe(401);
+    expect((await unauthorized.json()).error.message).toBe("Для этого действия нужен ключ доступа к API.");
     expect((await post({vehicleId:"missing"})).status).toBe(404);
     const response=await post({vehicleId:vehicle.id});expect(response.status).toBe(200);
     const state=await response.json();
