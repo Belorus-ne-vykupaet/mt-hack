@@ -73,6 +73,7 @@ export class DispatchService {
   submit(
     input: { plan: DispatchPlan; mode: "plan" | "apply"; revision: number },
     key: string,
+    routes: RouteDto[] = this.routes,
   ) {
     if (!key || key.length > 100)
       throw new ApiError(400, "Нужен Idempotency-Key (до 100 символов).");
@@ -96,7 +97,7 @@ export class DispatchService {
     if (!["plan", "apply"].includes(input.mode))
       throw new ApiError(400, "Неизвестный режим команды.");
     const p = input.plan;
-    const route = this.routes.find((r) => r.id === p?.routeId);
+    const route = routes.find((r) => r.id === p?.routeId);
     const stop = route?.stops.find((s) => s.id === p?.stopId);
     if (!route || !stop)
       throw new ApiError(422, "Маршрут или остановка не найдены.");

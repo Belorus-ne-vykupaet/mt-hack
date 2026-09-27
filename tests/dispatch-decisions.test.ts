@@ -170,6 +170,24 @@ describe("dispatch decisions", () => {
     expect(barely.effects.find((e) => e.format === "delay")!.after).toBe(0);
     expect(decisions.some((d) => d.kind === "add_bus")).toBe(false);
   });
+  it("does not multiply the stop count and savings by repeated trips in a duty", () => {
+    const single = route("A", 1);
+    const vehicle = bus("A-1", "A", 3450, 200, 300);
+    const original = decide([single], [vehicle], 0).decisions[0];
+    const repeated = {
+      ...single,
+      stops: Array.from({ length: 12 }, (_, trip) => single.stops.map((stop) => ({
+        ...stop, id: `${stop.id}-trip-${trip}`, sequence: trip * 30 + stop.sequence,
+      }))).flat(),
+    };
+    // Preserve the target visit's identity while deduplicating physical stops for the count.
+    const nextStop = repeated.stops[30 + 9];
+    const decision = decide([repeated], [{ ...vehicle, nextStop }], 0).decisions[0];
+    expect(decision.dwell).toEqual(original.dwell);
+    expect(decision.dwell?.stops).toBe(11);
+    expect(decision.effects).toEqual(original.effects);
+    expect(decision.stopId).toBe(nextStop.id);
+  });
   it("ignores buses laying over at a terminal and judges spacing against the usual gap", () => {
     // Two buses wait at the first stop; six run 700 m apart — tighter than the even share, but regular.
     const vehicles = [

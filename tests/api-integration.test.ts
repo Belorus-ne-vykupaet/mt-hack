@@ -156,6 +156,43 @@ describe("real HTTP integration API", () => {
     expect(replay.commands).toHaveLength(1);
     expect(replay.revision).toBe(1);
   });
+  it("saves official stop instructions against the live fleet, not the empty startup catalog", async () => {
+    const snapshot = { ...csvSnapshot(900), geometries: csvGeometries };
+    snapshot.routes[0].vehicle_count = 1;
+    const official = {
+      routes: snapshot.routes.map((route) => ({ ...route, vehicle_count: 0 })),
+      stale: false,
+      snapshot: async () => structuredClone(snapshot),
+    } as unknown as OfficialSource;
+    const api = await start({ official });
+    const input = {
+      plan: { ...plan, baseFleet: 1, targetFleet: 1, vehicleId: snapshot.vehicles[0].id,
+        decisionKind: "shorten_late", dwellStops: 16 },
+      mode: "plan", revision: 0,
+    };
+    const response = await post(api.url + "/dispatch/commands", input);
+    expect(response.status).toBe(201);
+    const state = await response.json();
+    expect(state.commands).toHaveLength(1);
+    expect(state.commands[0]).toMatchObject({ status: "draft", plan: {
+      baseFleet: 1, targetFleet: 1, targetDwellSec: 20, dwellStops: 16,
+      vehicleId: snapshot.vehicles[0].id, decisionKind: "shorten_late",
+    } });
+    expect(official.routes[0].vehicle_count).toBe(0);
+    // A retry remains idempotent even if telemetry changes after acceptance.
+    snapshot.routes[0].vehicle_count = 2;
+    expect(await (await post(api.url + "/dispatch/commands", input)).json()).toEqual(state);
+    const stale = await post(api.url + "/dispatch/commands",
+      { ...input, revision: 1 }, "stale-fleet");
+    expect(stale.status).toBe(409);
+    expect((await stale.json()).error.message).toContain("Исходный выпуск");
+    const updated = await post(api.url + "/dispatch/commands",
+      { ...input, revision: 1, plan: { ...input.plan, baseFleet: 2, targetFleet: 2 } }, "updated-fleet");
+    expect(updated.status).toBe(201);
+    expect((await updated.json()).commands[0].plan.baseFleet).toBe(2);
+    expect((await post(api.url + "/dispatch/commands",
+      { ...input, revision: 2, mode: "apply" }, "apply-official")).status).toBe(409);
+  });
   it("requires authentication when configured, supports an HttpOnly session and blocks other origins", async () => {
     const api = await start({
       token: "test-token-1234567890123456",

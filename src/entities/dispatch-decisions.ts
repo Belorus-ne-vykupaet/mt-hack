@@ -1,6 +1,7 @@
 import type { DispatchSettings } from "./dispatch-settings";
 import type { DispatchPlan } from "./dispatch";
 import type { Route } from "./models";
+import { physicalStopKey } from "./map-stops";
 import type { LineBus, LineStop, RouteLine } from "./route-line";
 import { nextLineStop, operatingSpeed, secondsTo } from "./route-line";
 
@@ -161,7 +162,16 @@ function stopsWithin(
   const reach =
     bus.along +
     (Number.isFinite(own) && own >= 1 ? own : operatingSpeed(line)) * seconds;
-  return line.stops.filter((s) => s.along > bus.along && s.along <= reach);
+  // A duty repeats the same platforms across many trips. Count each platform
+  // once along this stretch, not every scheduled visit for the entire day.
+  const seen = new Set<string>();
+  return line.stops.filter((s) => {
+    if (s.along <= bus.along || s.along > reach) return false;
+    const key = physicalStopKey(s.stop);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 function headwayEffects(

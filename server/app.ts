@@ -485,7 +485,13 @@ export function createApi(options: ServerOptions = {}) {
         return json(
           res,
           201,
-          dispatch.submit(body, String(req.headers["idempotency-key"] || "")),
+          // The official catalog has zero fleet counts; validate against the
+          // same live source used by routes and dispatcher recommendations.
+          dispatch.submit(
+            body,
+            String(req.headers["idempotency-key"] || ""),
+            (await snapshot()).routes,
+          ),
         );
       }
       if (path === "/dispatch/commands" && req.method === "POST")

@@ -477,7 +477,9 @@ export default function DispatchCenter({
             onPrefill={prefillDecision}
             applyLabel={
               config.dispatchApi
-                ? "Отправить решение по API"
+                ? canApply
+                  ? "Отправить решение по API"
+                  : "Сохранить решение по API"
                 : canApply
                   ? "Применить решение"
                   : "Сохранить решение в плане"
