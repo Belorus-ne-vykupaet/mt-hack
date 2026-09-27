@@ -648,8 +648,15 @@ export function createApi(options: ServerOptions = {}) {
   });
   const wss = new WebSocketServer({ noServer: true, maxPayload: 65536 });
   server.on("upgrade", (req, socket, head) => {
+    let pathname: string;
+    try {
+      pathname = new URL(req.url || "", "http://localhost").pathname;
+    } catch {
+      socket.end("HTTP/1.1 400 Bad Request\r\nConnection: close\r\n\r\n");
+      return;
+    }
     if (
-      new URL(req.url!, "http://localhost").pathname !== "/api/v1/stream" ||
+      pathname !== "/api/v1/stream" ||
       !allowedOrigin(req) ||
       (!authorized(req) && !options.publicRead)
     ) {
@@ -662,19 +669,24 @@ export function createApi(options: ServerOptions = {}) {
     );
   });
   const sequences = new WeakMap<WebSocket, number>();
+  const deliveries = new WeakMap<WebSocket, {
+    busy: boolean;
+    routes: ReadonlyMap<string, string>;
+    vehicles: ReadonlyMap<string, string>;
+    segments: string;
+  }>();
   const send = (ws: WebSocket, type: string, payload: unknown) => {
     sequences.set(ws, sendStreamEvent(ws, sequences.get(ws) || 0, type, payload));
   };
-  // Each client has its own consecutive sequence; broadcasts share the same events below.
-  wss.on("connection", (ws) =>
-    send(ws, "system.hello", { stream_id: "api-sandbox" }),
-  );
-  let busy = false,
-    previous = new Set<string>(),
-    previousRoutes = new Set<string>(),
-    routeVersions = new Map<string, string>(),
-    vehicleVersions = new Map<string, string>(),
-    segmentVersion = "";
+  // Versions track what this client actually received, including late joiners.
+  wss.on("connection", (ws) => {
+    // A malformed/oversized frame emits `error` on this client. Without a
+    // listener Node treats it as an uncaught exception and exits the API.
+    ws.on("error", () => ws.terminate());
+    deliveries.set(ws, { busy: false, routes: new Map(), vehicles: new Map(), segments: "" });
+    send(ws, "system.hello", { stream_id: "api-sandbox" });
+  });
+  let busy = false;
   const timer = setInterval(async () => {
     if (!wss.clients.size || busy) return;
     // Deliver new official telemetry on the next stream tick. The downstream
@@ -682,26 +694,7 @@ export function createApi(options: ServerOptions = {}) {
     busy = true;
     try {
       const s = await snapshot();
-      const events: [string, unknown][] = [[
-        "system.heartbeat",
-        { stale: options.official?.stale ?? false },
-      ]];
-      const ids = new Set(s.vehicles.map((v) => v.id));
-      for (const id of previous)
-        if (!ids.has(id)) {
-          events.push(["vehicle.removed", { id }]);
-          vehicleVersions.delete(id);
-        }
-      previous = ids;
-      const routeIds = new Set(s.routes.map((r) => r.id));
-      const knownRoutes = previousRoutes;
-      for (const id of previousRoutes)
-        if (!routeIds.has(id)) {
-          events.push(["route.removed", { id }]);
-          routeVersions.delete(id);
-        }
-      previousRoutes = routeIds;
-      s.routes.forEach((r) => {
+      const routes = s.routes.map((r) => {
         const patch = {
           id: r.id,
           vehicle_count: r.vehicle_count,
@@ -712,29 +705,48 @@ export function createApi(options: ServerOptions = {}) {
           forecast_status: r.forecast_status,
         };
         const version = options.official ? routeStreamVersion(patch) : JSON.stringify(patch);
-        if (!knownRoutes.has(r.id) || routeVersions.get(r.id) !== version)
-          events.push(["route.updated", knownRoutes.has(r.id) ? patch : r]);
-        routeVersions.set(r.id, version);
+        return { route: r, patch, version };
       });
-      s.vehicles.forEach((v) => {
-        const version = options.official ? vehicleStreamVersion(v) : JSON.stringify(v);
-        if (vehicleVersions.get(v.id) !== version)
-          events.push(["vehicle.updated", v]);
-        vehicleVersions.set(v.id, version);
-      });
+      // Immutable maps can be shared by clients finishing the same snapshot.
+      const routeVersions = new Map(routes.map(({ route, version }) => [route.id, version]));
+      const vehicleVersions = new Map(s.vehicles.map(v => [v.id,
+        options.official ? vehicleStreamVersion(v) : JSON.stringify(v)]));
       const nextSegmentVersion = JSON.stringify(s.segments);
-      if (nextSegmentVersion !== segmentVersion) {
-        events.push(["forecast.updated", { segments: s.segments }]);
-        segmentVersion = nextSegmentVersion;
+      for (const ws of wss.clients) {
+        const delivery = deliveries.get(ws);
+        if (!delivery || delivery.busy || ws.readyState !== WebSocket.OPEN) continue;
+        const events: [string, unknown][] = [[
+          "system.heartbeat", { stale: options.official?.stale ?? false },
+        ]];
+        for (const id of delivery.vehicles.keys())
+          if (!vehicleVersions.has(id)) events.push(["vehicle.removed", { id }]);
+        for (const id of delivery.routes.keys())
+          if (!routeVersions.has(id)) events.push(["route.removed", { id }]);
+        for (const { route, patch, version } of routes)
+          if (delivery.routes.get(route.id) !== version)
+            events.push(["route.updated", delivery.routes.has(route.id) ? patch : route]);
+        for (const v of s.vehicles)
+          if (delivery.vehicles.get(v.id) !== vehicleVersions.get(v.id))
+            events.push(["vehicle.updated", v]);
+        if (delivery.segments !== nextSegmentVersion)
+          events.push(["forecast.updated", { segments: s.segments }]);
+        events.push(
+          ["network.updated", s.summary],
+          ["alerts.snapshot", { items: s.alerts }],
+          ["analytics.snapshot", { points: s.points }],
+        );
+        // One bounded batch per client. Skip busy clients without accumulating
+        // a queue; their next batch catches up from the last delivered versions.
+        delivery.busy = true;
+        const sequence = sequences.get(ws) || 0;
+        void sendStreamBatch(ws, sequence, events).then(last => {
+          sequences.set(ws, last);
+          if (last - sequence !== events.length) { ws.terminate(); return; }
+          delivery.routes = routeVersions;
+          delivery.vehicles = vehicleVersions;
+          delivery.segments = nextSegmentVersion;
+        }).catch(() => ws.terminate()).finally(() => { delivery.busy = false; });
       }
-      events.push(
-        ["network.updated", s.summary],
-        ["alerts.snapshot", { items: s.alerts }],
-        ["analytics.snapshot", { points: s.points }],
-      );
-      await Promise.all([...wss.clients].map(async (ws) => {
-        sequences.set(ws, await sendStreamBatch(ws, sequences.get(ws) || 0, events));
-      }));
     } catch {
       for (const ws of wss.clients) ws.close(1011, "Snapshot unavailable");
     } finally {

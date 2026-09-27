@@ -89,6 +89,23 @@ it("bounds a stalled batch and releases its close listener", async () => {
   expect(socket.listenerCount("close")).toBe(0);
 });
 
+it("allows a healthy batch to progress past a single frame timeout", async () => {
+  vi.useFakeTimers();
+  const socket = Object.assign(new EventEmitter(), {
+    readyState: WebSocket.OPEN, bufferedAmount: 0,
+    send: vi.fn((_message: string, callback: () => void) => setTimeout(callback, 15)),
+    terminate: vi.fn(),
+  });
+  try {
+    const result = sendStreamBatch(socket as unknown as WebSocket, 0,
+      [["route.updated", {}], ["vehicle.updated", {}], ["system.heartbeat", {}]], 20);
+    await vi.advanceTimersByTimeAsync(45);
+    expect(await result).toBe(3);
+    expect(socket.terminate).not.toHaveBeenCalled();
+    expect(socket.listenerCount("close")).toBe(0);
+  } finally { vi.useRealTimers(); }
+});
+
 it("keeps per-client sequence consecutive for accepted messages", () => {
   const send = vi.fn();
   const socket = {

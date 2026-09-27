@@ -21,7 +21,9 @@ const api = process.env.TRANSIT_API_URL || "http://127.0.0.1:8081";
 const backend = process.env.TRANSIT_BACKEND_URL || "http://127.0.0.1:8093";
 async function json(origin, path) {
   try {
-    const response = await fetch(new URL(path, origin), { signal: AbortSignal.timeout(2500) });
+    // The gateway bounds upstream status reads at 3500 ms. Allow it to return
+    // its explicit degraded state when Docker drops packets instead of refusing.
+    const response = await fetch(new URL(path, origin), { signal: AbortSignal.timeout(5000) });
     if (!response.ok) return null;
     return await response.json();
   } catch { return null; }

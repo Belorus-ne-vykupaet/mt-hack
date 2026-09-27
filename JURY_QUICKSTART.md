@@ -13,6 +13,17 @@ node scripts/start-official-docker.mjs -d
 docker compose -f compose.official.yaml ps
 ```
 
+В Windows PowerShell (Docker Desktop в режиме Linux-контейнеров):
+
+```powershell
+python scripts/prepare-official-data.py --archive 'C:\path\dataset.zip'
+$env:API_TOKEN = node -p "require('node:crypto').randomBytes(32).toString('hex')"
+node scripts/start-official-docker.mjs -d
+docker compose -f compose.official.yaml ps
+```
+
+После аварийного завершения процесса контейнеры перезапускаются автоматически; явный `docker compose stop` сохраняет остановку. Docker-журналы ограничены тремя файлами по 10 МБ на сервис. При `read-only file system` во время сборки проверьте свободное место и состояние хранилища Docker.
+
 При наличии ZIP скачивание можно заменить на `python3 scripts/prepare-official-data.py --archive /путь/к/архиву.zip`; для пункта 3 ниже сохраните этот ZIP как `ml/data/official-dataset.zip`. Ожидаются четыре контейнера `frontend`, `api`, `backend`, `ml`; три серверных имеют статус `healthy`.
 
 - [Обзор сети](http://127.0.0.1:8080/overview?source=official): GPS-позиции, доступные прогнозы, целевые остановки, риск и алерты. Время — из CSV, **06.01.2026**, а не текущее время Москвы.
@@ -76,6 +87,10 @@ python3 scripts/audit-live-ndtp-emulator.py \
 Скрипт завершает передачу конфигурации эмулятора по окончании, в том числе при ошибке. Если план устарел и до цели меньше десяти минут, пересоздайте его, перезапустите Backend и повторите сценарий.
 
 ## 4. Производительность и отказоустойчивость
+
+[Повторная проверка фиксов `karatai`](docs/28-karatai-reliability-review.md) описывает воспроизведённые ошибки, перенесённые исправления и отдельный замер с моделью Оли. Сохранённый ниже 30-минутный прогон относится к прежней версии и другому окружению; он не подтверждает производительность любой машины жюри.
+
+Для повторяемой HTTP/WS-нагрузки на собственном локальном стенде: `pnpm install --frozen-lockfile`, затем `node scripts/benchmark-jury-stress.mjs`. По умолчанию: три минуты, 25 WS-клиентов, 8 HTTP-работников; результат — `reports/jury-stress.json`. Скрипт включает некорректные запросы и ограничен localhost. Проверку аварийного перезапуска запускайте только на отдельном тестовом Compose-проекте по инструкции в отчёте выше.
 
 [Текущий 30-минутный отчёт](reports/reliability-fleet-current-2026-09-27.json): 100 автобусов, 19,97 бинарных кадров NDTP/с, 15 читающих WS-клиентов, потеря GPS одного ТС на 210 с и реконнект TCP; P95 Backend 1,69 с, ML 0,53 с. Один из 180 срезов был честно помечен шлюзом как временно устаревший, следующий восстановился. Синтетический генератор нагрузки отделён от официального эмулятора; MAE на нём не оценивается. Команда `python3 scripts/verify-fleet-report.py reports/reliability-fleet-current-2026-09-27.json` проверяет **18 условий**, включая долю временно устаревших срезов менее 1% и восстановление. [Предыдущий прогон и BI](docs/25-bi-and-fleet-validation.md) сохранены для сравнения.
 

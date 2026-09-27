@@ -327,6 +327,18 @@ class Engine:
                 row.update(outcome)
         self.journal.observe({(f"vehicle-{tr}", target): at for (tr, target), at in arrivals.items()}, cutoff, source)
 
+    async def read_snapshot(self):
+        """Serve complete state while the single forecast worker refreshes it."""
+        if self.cache is not None:
+            if self.lock.locked():
+                return self.cache
+            if self.mode == "ndtp":
+                # Also advance freshness when a unit stops sending packets.
+                if time.monotonic() - self.cache_at >= 5:
+                    self.packet_event.set()
+                return self.cache
+        return await self.snapshot()
+
     async def snapshot(self):
         async with self.lock:
             # NDTP packets already wake stream_forecasts. Read-only API polling
@@ -349,7 +361,6 @@ class Engine:
                 else cutoff
             )
             timestamp = iso(cutoff)
-            self.last_cutoff = cutoff
             vehicles = []
             items = []
             targets = {}
@@ -368,6 +379,9 @@ class Engine:
                     if rows:
                         live_histories.setdefault(tr, []).extend(rows)
             for route in self.catalog:
+                # Let TCP ingestion and cached HTTP reads run between vehicles;
+                # preparing a large fleet must not monopolize the event loop.
+                await asyncio.sleep(0)
                 tr = int(route["number"])
                 plan = self.plans.get(tr, self.dataset.schedule.iloc[:0])
                 if self.mode == "ndtp":
@@ -526,7 +540,7 @@ class Engine:
                         },
                     }
                 )
-            self.status = "no_targets" if not items else "baseline"
+            next_status = "no_targets" if not items else "baseline"
             if items:
                 try:
                     response = await self.client.post(
@@ -564,16 +578,16 @@ class Engine:
                         # evidence for a high/critical severity.
                         if p["lateProbability"] >= 0.5 and v["risk_level"] == "normal":
                             v["risk_level"] = "elevated"
-                    self.status = "connected"
+                    next_status = "connected"
                     self.last_ml_ms = result["latencyMs"]
                     self.last_error = None
                 except (httpx.HTTPError, ValueError, KeyError) as error:
-                    self.status = "fallback"
+                    next_status = "fallback"
                     self.last_error = type(error).__name__
             for v in vehicles:
                 if v["id"] not in features:
                     continue
-                if self.status != "connected":
+                if next_status != "connected":
                     v["forecast_status"] = "fallback" if v["current_delay_sec"] is not None else "unavailable"
                     v["predicted_delay_sec"] = v["current_delay_sec"]
                     v["risk_level"] = risk(v["current_delay_sec"]) if v["current_delay_sec"] is not None else "unknown"
@@ -581,7 +595,7 @@ class Engine:
                 v["forecast_target_time"] = iso(targets[v["id"]]["ts"])
                 v["forecast_model"] = (
                     self.metrics["modelVersion"]
-                    if self.status == "connected"
+                    if next_status == "connected"
                     else "persistence-fallback"
                 )
                 v["observed_factor"] = observed_factor(
@@ -714,7 +728,7 @@ class Engine:
                         "description": f"Остановка через {lead_time / 60:.1f} мин · план {iso(target['ts'])[11:16]}, ожидается {iso(eta)[11:16]} ({'часы текущего плана' if self.mode == 'ndtp' else 'часы CSV'}). Наблюдаемый фактор: {reason}. "
                         + (
                             "Предсказание модели; вероятность опоздания >120 с по отдельному классификатору."
-                            if self.status == "connected"
+                            if next_status == "connected"
                             else "ML недоступен: текущая задержка сохранится, вероятность не оценена."
                         ),
                         "risk_probability": v["risk_probability"] or 0,
@@ -770,6 +784,8 @@ class Engine:
                 "geometries": geometries,
             }
             self.cache_at = time.monotonic()
+            self.status = next_status
+            self.last_cutoff = cutoff
             self.last_ms = round((time.perf_counter() - begin) * 1000, 2)
             self.pipeline_samples_ms.append(self.last_ms)
             return self.cache
@@ -779,7 +795,9 @@ class Engine:
 async def lifespan(app):
     engine = Engine(journal_path=os.getenv("PREDICTION_JOURNAL", "ml/data/predictions.sqlite3"))
     app.state.engine = engine
-    async with httpx.AsyncClient(timeout=1.5) as client:
+    # The deadline includes decoding/validation of a full fleet's raw history,
+    # not only model inference. Keep connection failures separately bounded.
+    async with httpx.AsyncClient(timeout=httpx.Timeout(3.5, connect=1.5)) as client:
         engine.client = client
         pump = asyncio.create_task(engine.stream_forecasts()) if engine.mode == "ndtp" else None
         tcp = await asyncio.start_server(
@@ -807,7 +825,7 @@ app = FastAPI(
 
 @app.get("/snapshot")
 async def snapshot():
-    return await app.state.engine.snapshot()
+    return await app.state.engine.read_snapshot()
 
 
 @app.get("/catalog")
@@ -818,7 +836,7 @@ def catalog():
 @app.get("/status")
 async def status():
     e = app.state.engine
-    await e.snapshot()
+    await e.read_snapshot()
     vehicles = e.cache["vehicles"]
     located_scheduled = {
         int(v["id"].removeprefix("vehicle-"))
@@ -888,7 +906,7 @@ async def status():
 async def warning_audit():
     """Immutable first publication plus causally observed arrival/outcome evidence."""
     e = app.state.engine
-    await e.snapshot()
+    await e.read_snapshot()
     items = []
     for entry in e.warning_audit:
         if pd.Timestamp(entry["issued_at"]).timestamp() > e.last_cutoff:
@@ -904,5 +922,5 @@ async def warning_audit():
 async def forecast_evaluation(route_id: list[str] = Query(default=[]), limit: int = Query(default=200, ge=1, le=500)):
     """First model forecasts paired with observed arrivals; unknown outcomes are never zero."""
     e = app.state.engine
-    await e.snapshot()
+    await e.read_snapshot()
     return e.journal.report(e.last_cutoff, route_id, limit)
