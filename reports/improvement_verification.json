@@ -1,0 +1,11 @@
+{
+  "submission_rows": 151,
+  "max_csv_reproduction_error_s": 0.0,
+  "model_future_poisoning": "passed",
+  "future_rows_changed": 69030,
+  "checks": [
+    "csv_contract",
+    "saved_model_reproduction",
+    "future_and_label_poisoning"
+  ]
+}

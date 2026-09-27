@@ -63,3 +63,4 @@ reports/*predictions.csv
 reports/example_request.json
 reports/example_response.json
 docker/local-data/
+pytest-cache-files-*/

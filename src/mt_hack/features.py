@@ -28,7 +28,7 @@ def load_split(root, split):
     return points, traffic, plan
 
 
-def build_features(points, traffic, plan, *, include_sequence=True):
+def build_features(points, traffic, plan, sequence_bins=30, *, include_sequence=True):
     """Return numeric features and optional GRU tensors; tree inference skips unused bins."""
     p = points.copy()
     p['_t'] = seconds(p['T'])
@@ -92,9 +92,9 @@ def build_features(points, traffic, plan, *, include_sequence=True):
                 f['nearest_plan_distance_km']=np.nan; f['position_delay_proxy_s']=np.nan
         else:
             f.update(target_prev_gap_s=np.nan,planned_stops_ahead=0,nearest_plan_distance_km=np.nan,position_delay_proxy_s=np.nan)
-        seq=np.zeros((30,len(SEQ_NAMES)),dtype=np.float32)
+        seq=np.zeros((sequence_bins,len(SEQ_NAMES)),dtype=np.float32)
         # Each bin ends at T-870,...,T: never use a later observation.
-        for j,end in enumerate(t-np.arange(29,-1,-1)*30 if include_sequence else []):
+        for j,end in enumerate(t-np.arange(sequence_bins-1,-1,-1)*30 if include_sequence else []):
             h=hist[(hist['_t']>end-30)&(hist['_t']<=end)]
             if not len(h): continue
             s=h.speed.dropna(); v=h[h.valid]

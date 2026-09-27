@@ -1,0 +1,9 @@
+numpy==2.2.4
+pandas==2.2.3
+scipy==1.15.2
+scikit-learn==1.9.1
+joblib==1.6.0
+cloudpickle==3.1.2
+narwhals==2.26.0
+threadpoolctl==3.7.0
+catboost==1.2.10
